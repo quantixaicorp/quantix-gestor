@@ -126,8 +126,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       )}
     >
       {/* Logo header */}
-      <div className="flex h-16 items-center justify-center border-b border-sidebar-border px-4 shrink-0">
-        <img src="/logo.jpeg" alt="GestorAI" className="h-12 w-12 rounded-xl object-cover" />
+      <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3 shrink-0">
+        {collapsed ? (
+          <img src="/logo.jpeg" alt="GestorAI" className="h-12 w-12 rounded-lg object-cover" />
+        ) : (
+          <img src="/logo.jpeg" alt="GestorAI" className="h-16 w-full rounded-lg object-contain" />
+        )}
       </div>
 
       {/* Controls bar — theme + collapse */}

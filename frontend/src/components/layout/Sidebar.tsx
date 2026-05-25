@@ -1,49 +1,228 @@
-import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ShoppingCart, Package, Wallet, Users, BarChart3, ArrowDownToLine, ClipboardList, TrendingDown, TrendingUp, FileText, Calendar, UserCog } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  ClipboardList,
+  FileText,
+  Calendar,
+  UserCog,
+  Package,
+  ArrowDownToLine,
+  Wallet,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  BarChart3,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sun,
+  Moon,
+  ChevronDown,
+} from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
+import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
-const links = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/vendas/nova', icon: ShoppingCart, label: 'Nova Venda' },
-  { to: '/vendas', icon: ClipboardList, label: 'Histórico' },
-  { to: '/orcamentos', icon: FileText, label: 'Orçamentos' },
-  { to: '/agendamentos', icon: Calendar, label: 'Agendamentos' },
-  { to: '/profissionais', icon: UserCog, label: 'Profissionais' },
-  { to: '/estoque', icon: Package, label: 'Produtos' },
-  { to: '/estoque/movimentacoes', icon: ArrowDownToLine, label: 'Movimentações' },
-  { to: '/financeiro', icon: Wallet, label: 'Lançamentos' },
-  { to: '/financeiro/pagar', icon: TrendingDown, label: 'Contas a Pagar' },
-  { to: '/financeiro/receber', icon: TrendingUp, label: 'Contas a Receber' },
-  { to: '/clientes', icon: Users, label: 'Clientes' },
-  { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
+interface MenuItem {
+  icon: React.ElementType
+  label: string
+  path: string
+}
+
+interface MenuGroup {
+  label: string
+  items: MenuItem[]
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    label: 'Geral',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    ],
+  },
+  {
+    label: 'Vendas',
+    items: [
+      { icon: ShoppingCart,  label: 'Nova Venda',  path: '/vendas/nova' },
+      { icon: ClipboardList, label: 'Histórico',   path: '/vendas' },
+      { icon: FileText,      label: 'Orçamentos',  path: '/orcamentos' },
+    ],
+  },
+  {
+    label: 'Agenda',
+    items: [
+      { icon: Calendar, label: 'Agendamentos', path: '/agendamentos' },
+      { icon: UserCog,  label: 'Profissionais', path: '/profissionais' },
+    ],
+  },
+  {
+    label: 'Estoque',
+    items: [
+      { icon: Package,         label: 'Produtos',       path: '/estoque' },
+      { icon: ArrowDownToLine, label: 'Movimentações',  path: '/estoque/movimentacoes' },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { icon: Wallet,      label: 'Lançamentos',      path: '/financeiro' },
+      { icon: TrendingDown, label: 'Contas a Pagar',  path: '/financeiro/pagar' },
+      { icon: TrendingUp,   label: 'Contas a Receber', path: '/financeiro/receber' },
+    ],
+  },
+  {
+    label: 'Clientes / Relatórios',
+    items: [
+      { icon: Users,    label: 'Clientes',   path: '/clientes' },
+      { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
+    ],
+  },
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean
+  onToggle: () => void
+}
+
+export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+  const { resolved, toggleTheme } = useTheme()
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('sidebar-groups')
+      if (saved) return JSON.parse(saved)
+    } catch { /* ignore */ }
+    return Object.fromEntries(menuGroups.map((g) => [g.label, true]))
+  })
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] }
+      try { localStorage.setItem('sidebar-groups', JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/auth')
+  }
+
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose
+  const ThemeIcon = resolved === 'dark' ? Sun : Moon
+
   return (
-    <aside className="flex h-screen w-56 flex-col border-r bg-card px-3 py-4">
-      <div className="mb-6 px-2">
-        <span className="text-xl font-bold text-primary">GestorAI</span>
+    <aside
+      className={cn(
+        'fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border flex flex-col',
+        'transition-[width] duration-300 overflow-hidden',
+        collapsed ? 'w-16' : 'w-64'
+      )}
+    >
+      {/* Logo header */}
+      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4 shrink-0">
+        {collapsed ? (
+          <span className="text-xl font-bold text-sidebar-primary mx-auto">G</span>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-bold text-sidebar-primary">GestorAI</span>
+            <p className="text-xs text-sidebar-muted">ERP</p>
+          </div>
+        )}
       </div>
-      <nav className="flex flex-col gap-1">
-        {links.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )
-            }
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
-        ))}
+
+      {/* Controls bar — theme + collapse */}
+      <div className={cn(
+        'flex border-b border-sidebar-border shrink-0',
+        collapsed ? 'flex-col items-center gap-1 py-2' : 'justify-end gap-1 px-3 py-1'
+      )}>
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          title={resolved === 'dark' ? 'Modo claro' : 'Modo escuro'}
+        >
+          <ThemeIcon className="h-4 w-4" />
+        </button>
+        <button
+          onClick={onToggle}
+          className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          title={collapsed ? 'Expandir menu' : 'Retrair menu'}
+        >
+          <ToggleIcon className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-2 px-2">
+        {menuGroups.map((group, gi) => {
+          const isOpen = collapsed || openGroups[group.label] !== false
+          return (
+            <div key={group.label} className={cn(gi > 0 && 'mt-1')}>
+              {!collapsed && (
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className="w-full flex items-center justify-between px-2 pt-2 pb-1"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
+                    {group.label}
+                  </span>
+                  <ChevronDown className={cn(
+                    'h-3 w-3 text-sidebar-muted transition-transform duration-200',
+                    !isOpen && '-rotate-90'
+                  )} />
+                </button>
+              )}
+              {collapsed && gi > 0 && (
+                <div className="my-2 mx-2 border-t border-sidebar-border" />
+              )}
+
+              {isOpen && group.items.map((item) => {
+                const isActive =
+                  location.pathname === item.path ||
+                  (item.path !== '/' && location.pathname.startsWith(item.path))
+                const Icon = item.icon
+
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      'sidebar-link',
+                      isActive && 'sidebar-link-active',
+                      collapsed && 'justify-center px-0'
+                    )}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                )
+              })}
+            </div>
+          )
+        })}
       </nav>
+
+      {/* Logout */}
+      <div className="shrink-0 border-t border-sidebar-border p-2">
+        <button
+          onClick={handleLogout}
+          title={collapsed ? 'Sair' : undefined}
+          className={cn(
+            'sidebar-link w-full text-destructive hover:bg-destructive/10 hover:text-destructive',
+            collapsed && 'justify-center px-0'
+          )}
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          {!collapsed && <span>Sair</span>}
+        </button>
+      </div>
     </aside>
   )
 }

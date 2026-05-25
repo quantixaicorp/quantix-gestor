@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GestorAI.API/GestorAI.API.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GestorAI.Tests/GestorAI.Tests.csproj" />
+  </Folder>
+</Solution>

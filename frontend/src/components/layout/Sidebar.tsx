@@ -128,11 +128,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo header */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4 shrink-0">
         {collapsed ? (
-          <span className="text-xl font-bold text-sidebar-primary mx-auto">G</span>
+          <img src="/logo.jpeg" alt="GestorAI" className="h-9 w-9 rounded-lg object-cover mx-auto" />
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-sidebar-primary">GestorAI</span>
-            <p className="text-xs text-sidebar-muted">ERP</p>
+          <div className="flex items-center gap-2">
+            <img src="/logo.jpeg" alt="GestorAI" className="h-9 w-9 rounded-lg object-cover shrink-0" />
+            <div>
+              <h1 className="text-base font-semibold text-sidebar-foreground">GestorAI</h1>
+              <p className="text-xs" style={{ color: 'hsl(var(--sidebar-muted))' }}>ERP</p>
+            </div>
           </div>
         )}
       </div>

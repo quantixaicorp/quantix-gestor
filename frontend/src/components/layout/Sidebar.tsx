@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ShoppingCart, Package, Wallet, Users, BarChart3, ArrowDownToLine, ClipboardList, TrendingDown, TrendingUp, FileText } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Package, Wallet, Users, BarChart3, ArrowDownToLine, ClipboardList, TrendingDown, TrendingUp, FileText, Calendar, UserCog } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
@@ -7,6 +7,8 @@ const links = [
   { to: '/vendas/nova', icon: ShoppingCart, label: 'Nova Venda' },
   { to: '/vendas', icon: ClipboardList, label: 'Histórico' },
   { to: '/orcamentos', icon: FileText, label: 'Orçamentos' },
+  { to: '/agendamentos', icon: Calendar, label: 'Agendamentos' },
+  { to: '/profissionais', icon: UserCog, label: 'Profissionais' },
   { to: '/estoque', icon: Package, label: 'Produtos' },
   { to: '/estoque/movimentacoes', icon: ArrowDownToLine, label: 'Movimentações' },
   { to: '/financeiro', icon: Wallet, label: 'Lançamentos' },

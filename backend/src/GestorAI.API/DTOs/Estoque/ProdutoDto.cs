@@ -12,7 +12,8 @@ public record ProdutoResponse(
     decimal EstoqueMinimo,
     string? CodigoBarras,
     bool Ativo,
-    bool EstoqueBaixo);
+    bool EstoqueBaixo,
+    int? DuracaoMinutos);
 
 public record CreateProdutoRequest(
     Guid CategoriaId,
@@ -31,7 +32,8 @@ public record UpdateProdutoRequest(
     decimal PrecoVenda,
     decimal EstoqueMinimo,
     string? CodigoBarras,
-    bool Ativo);
+    bool Ativo,
+    int? DuracaoMinutos);
 
 public record EntradaEstoqueRequest(
     Guid ProdutoId,

@@ -15,6 +15,7 @@ public class Produto : ITenantEntity
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+    public int? DuracaoMinutos { get; set; }
     public Categoria? Categoria { get; set; }
     public ICollection<ItemVenda> ItensVenda { get; set; } = [];
     public ICollection<MovimentacaoEstoque> Movimentacoes { get; set; } = [];

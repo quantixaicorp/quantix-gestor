@@ -13,6 +13,7 @@ export interface ProdutoResponse {
   codigoBarras: string | null
   ativo: boolean
   estoqueBaixo: boolean
+  duracaoMinutos: number | null
 }
 
 export interface CreateProdutoRequest {
@@ -34,6 +35,7 @@ export interface UpdateProdutoRequest {
   estoqueMinimo: number
   codigoBarras?: string
   ativo: boolean
+  duracaoMinutos?: number | null
 }
 
 export interface EntradaEstoqueRequest {

@@ -1,10 +1,12 @@
 using FluentValidation;
+using GestorAI.API.DTOs.Agendamentos;
 using GestorAI.API.DTOs.Clientes;
 using GestorAI.API.DTOs.Estoque;
 using GestorAI.API.DTOs.Financeiro;
 using GestorAI.API.DTOs.Vendas;
 using GestorAI.API.Endpoints;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Agendamentos;
 using GestorAI.API.Services.Clientes;
 using GestorAI.API.Services.Dashboard;
 using GestorAI.API.Services.Estoque;
@@ -65,7 +67,11 @@ builder.Services.AddScoped<LancamentoService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<OrcamentoService>();
+// Services — Agendamentos
+builder.Services.AddScoped<ProfissionalService>();
+builder.Services.AddScoped<AgendamentoService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
+builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamentoValidator>();
 // Validators
 builder.Services.AddScoped<IValidator<CreateProdutoRequest>, CreateProdutoValidator>();
 builder.Services.AddScoped<IValidator<EntradaEstoqueRequest>, EntradaEstoqueValidator>();
@@ -86,6 +92,8 @@ app.MapVendas();
 app.MapFinanceiro();
 app.MapDashboard();
 app.MapOrcamentos();
+app.MapProfissionais();
+app.MapAgendamentos();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
    .AllowAnonymous();

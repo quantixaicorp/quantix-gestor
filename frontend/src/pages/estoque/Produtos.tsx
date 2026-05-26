@@ -20,13 +20,21 @@ export default function Produtos() {
   useEffect(() => { listProdutos(); listCategorias() }, [listProdutos, listCategorias])
 
   async function handleCreate(data: CreateProdutoRequest) {
-    await createProduto(data)
-    setModalAberto(false)
+    try {
+      await createProduto(data)
+      setModalAberto(false)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao salvar produto')
+    }
   }
 
   async function handleUpdate(id: string, data: UpdateProdutoRequest) {
-    await updateProduto(id, data)
-    setProdutoEditando(null)
+    try {
+      await updateProduto(id, data)
+      setProdutoEditando(null)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao salvar produto')
+    }
   }
 
   const produtosFiltrados = produtos.filter(p =>

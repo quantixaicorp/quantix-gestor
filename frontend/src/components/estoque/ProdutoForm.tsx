@@ -33,7 +33,10 @@ interface Props {
 
 export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCancel, onCreateCategoria }: Props) {
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
-    useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { tipo: 'Produto', ...defaultValues } })
+    useForm<FormValues>({
+      resolver: zodResolver(schema),
+      defaultValues: { tipo: 'Produto', precoVenda: 0, custoMedio: 0, estoqueAtual: 0, estoqueMinimo: 0, ...defaultValues },
+    })
 
   const tipo = watch('tipo') as TipoProduto
 
@@ -142,6 +145,7 @@ export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCan
         <div className="grid gap-2">
           <Label>Custo Médio (R$)</Label>
           <Input type="number" step="0.01" {...register('custoMedio', { valueAsNumber: true })} />
+          {errors.custoMedio && <p className="text-xs text-destructive">{errors.custoMedio.message}</p>}
         </div>
       </div>
 
@@ -149,10 +153,12 @@ export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCan
         <div className="grid gap-2">
           <Label>Estoque Inicial</Label>
           <Input type="number" step="0.01" {...register('estoqueAtual', { valueAsNumber: true })} />
+          {errors.estoqueAtual && <p className="text-xs text-destructive">{errors.estoqueAtual.message}</p>}
         </div>
         <div className="grid gap-2">
           <Label>Estoque Mínimo</Label>
           <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
+          {errors.estoqueMinimo && <p className="text-xs text-destructive">{errors.estoqueMinimo.message}</p>}
         </div>
       </div>
 

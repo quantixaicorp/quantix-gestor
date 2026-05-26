@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       response_type: 'code',
       client_id: CLIENT_ID,
       redirect_uri: `${window.location.origin}/auth/callback`,
-      scope: 'openid profile offline_access',
+      scope: 'openid profile offline_access quantix',
       code_challenge: challenge,
       code_challenge_method: 'S256',
     })

@@ -50,6 +50,7 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
             EstoqueAtual = req.EstoqueAtual,
             EstoqueMinimo = req.EstoqueMinimo,
             CodigoBarras = req.CodigoBarras,
+            Tipo = req.Tipo,
         };
         db.Produtos.Add(produto);
 
@@ -81,6 +82,7 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
         produto.CodigoBarras = req.CodigoBarras;
         produto.Ativo = req.Ativo;
         produto.DuracaoMinutos = req.DuracaoMinutos;
+        produto.Tipo = req.Tipo;
         produto.AtualizadoEm = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
@@ -132,5 +134,5 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
         p.Id, p.CategoriaId, p.Categoria?.Nome ?? "",
         p.Nome, p.Descricao, p.PrecoVenda, p.CustoMedio,
         p.EstoqueAtual, p.EstoqueMinimo, p.CodigoBarras,
-        p.Ativo, p.EstoqueAtual <= p.EstoqueMinimo, p.DuracaoMinutos);
+        p.Ativo, p.EstoqueAtual <= p.EstoqueMinimo, p.DuracaoMinutos, p.Tipo);
 }

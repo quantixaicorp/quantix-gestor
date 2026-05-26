@@ -1,3 +1,5 @@
+using GestorAI.API.Domain.Enums;
+
 namespace GestorAI.API.Domain.Entities;
 
 public class Produto : ITenantEntity
@@ -15,6 +17,7 @@ public class Produto : ITenantEntity
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+    public TipoProduto Tipo { get; set; } = TipoProduto.Produto;
     public int? DuracaoMinutos { get; set; }
     public Categoria? Categoria { get; set; }
     public ICollection<ItemVenda> ItensVenda { get; set; } = [];

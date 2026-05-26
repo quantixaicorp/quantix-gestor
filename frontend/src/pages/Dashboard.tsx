@@ -12,14 +12,24 @@ import TopProdutos from '@/components/dashboard/TopProdutos'
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function Dashboard() {
-  const { data, loading, load } = useDashboard()
+  const { data, loading, error, load } = useDashboard()
 
   useEffect(() => { void load() }, [load])
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <p className="text-muted-foreground">Carregando dashboard...</p>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex h-64 items-center justify-center flex-col gap-2">
+        <p className="text-destructive font-medium">Erro ao carregar dashboard</p>
+        <p className="text-sm text-muted-foreground">{error ?? 'Sem dados'}</p>
+        <button onClick={() => void load()} className="text-sm text-primary underline">Tentar novamente</button>
       </div>
     )
   }

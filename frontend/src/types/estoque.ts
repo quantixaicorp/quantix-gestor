@@ -1,3 +1,5 @@
+export type TipoProduto = 'Produto' | 'Servico'
+
 export interface CategoriaResponse { id: string; nome: string }
 
 export interface ProdutoResponse {
@@ -14,6 +16,7 @@ export interface ProdutoResponse {
   ativo: boolean
   estoqueBaixo: boolean
   duracaoMinutos: number | null
+  tipo: TipoProduto
 }
 
 export interface CreateProdutoRequest {
@@ -25,6 +28,7 @@ export interface CreateProdutoRequest {
   estoqueAtual: number
   estoqueMinimo: number
   codigoBarras?: string
+  tipo: TipoProduto
 }
 
 export interface UpdateProdutoRequest {
@@ -36,6 +40,7 @@ export interface UpdateProdutoRequest {
   codigoBarras?: string
   ativo: boolean
   duracaoMinutos?: number | null
+  tipo: TipoProduto
 }
 
 export interface EntradaEstoqueRequest {

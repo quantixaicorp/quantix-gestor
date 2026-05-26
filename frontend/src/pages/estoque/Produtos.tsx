@@ -50,6 +50,7 @@ export default function Produtos() {
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left font-medium">Nome</th>
+                <th className="px-4 py-3 text-left font-medium">Tipo</th>
                 <th className="px-4 py-3 text-left font-medium">Categoria</th>
                 <th className="px-4 py-3 text-right font-medium">Preço</th>
                 <th className="px-4 py-3 text-right font-medium">Estoque</th>
@@ -61,6 +62,11 @@ export default function Produtos() {
               {produtosFiltrados.map(p => (
                 <tr key={p.id} className="border-b">
                   <td className="px-4 py-3 font-medium">{p.nome}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant={p.tipo === 'Servico' ? 'secondary' : 'outline'}>
+                      {p.tipo === 'Servico' ? '✂️ Serviço' : '📦 Produto'}
+                    </Badge>
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.categoriaNome}</td>
                   <td className="px-4 py-3 text-right">
                     {p.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -84,7 +90,7 @@ export default function Produtos() {
               ))}
               {produtosFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     Nenhum produto encontrado
                   </td>
                 </tr>

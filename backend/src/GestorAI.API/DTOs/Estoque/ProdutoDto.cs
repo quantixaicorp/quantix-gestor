@@ -1,3 +1,5 @@
+using GestorAI.API.Domain.Enums;
+
 namespace GestorAI.API.DTOs.Estoque;
 
 public record ProdutoResponse(
@@ -13,7 +15,8 @@ public record ProdutoResponse(
     string? CodigoBarras,
     bool Ativo,
     bool EstoqueBaixo,
-    int? DuracaoMinutos);
+    int? DuracaoMinutos,
+    TipoProduto Tipo);
 
 public record CreateProdutoRequest(
     Guid CategoriaId,
@@ -23,7 +26,8 @@ public record CreateProdutoRequest(
     decimal CustoMedio,
     decimal EstoqueAtual,
     decimal EstoqueMinimo,
-    string? CodigoBarras);
+    string? CodigoBarras,
+    TipoProduto Tipo = TipoProduto.Produto);
 
 public record UpdateProdutoRequest(
     Guid CategoriaId,
@@ -33,7 +37,8 @@ public record UpdateProdutoRequest(
     decimal EstoqueMinimo,
     string? CodigoBarras,
     bool Ativo,
-    int? DuracaoMinutos);
+    int? DuracaoMinutos,
+    TipoProduto Tipo = TipoProduto.Produto);
 
 public record EntradaEstoqueRequest(
     Guid ProdutoId,

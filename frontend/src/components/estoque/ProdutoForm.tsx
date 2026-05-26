@@ -6,9 +6,10 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { CategoriaResponse, CreateProdutoRequest } from '@/types/estoque'
+import type { CategoriaResponse, CreateProdutoRequest, TipoProduto } from '@/types/estoque'
 
 const schema = z.object({
+  tipo: z.enum(['Produto', 'Servico']),
   categoriaId: z.string().min(1, 'Selecione uma categoria'),
   nome: z.string().min(1, 'Nome obrigatório').max(200),
   descricao: z.string().optional(),
@@ -17,6 +18,7 @@ const schema = z.object({
   estoqueAtual: z.number().min(0),
   estoqueMinimo: z.number().min(0),
   codigoBarras: z.string().optional(),
+  duracaoMinutos: z.number().int().min(1).optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -30,8 +32,10 @@ interface Props {
 }
 
 export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCancel, onCreateCategoria }: Props) {
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } =
-    useForm<FormValues>({ resolver: zodResolver(schema), defaultValues })
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
+    useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { tipo: 'Produto', ...defaultValues } })
+
+  const tipo = watch('tipo') as TipoProduto
 
   const [novaCategoria, setNovaCategoria] = useState('')
   const [criandoCategoria, setCriandoCategoria] = useState(false)
@@ -56,6 +60,21 @@ export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCan
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Tipo */}
+      <div className="grid grid-cols-2 gap-2">
+        {(['Produto', 'Servico'] as TipoProduto[]).map(t => (
+          <label
+            key={t}
+            className={`flex items-center justify-center gap-2 rounded-md border-2 py-2 cursor-pointer text-sm font-medium transition-colors ${
+              tipo === t ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'
+            }`}
+          >
+            <input type="radio" value={t} {...register('tipo')} className="sr-only" />
+            {t === 'Produto' ? '📦 Produto' : '✂️ Serviço'}
+          </label>
+        ))}
+      </div>
+
       <div className="grid gap-2">
         <div className="flex items-center justify-between">
           <Label>Categoria</Label>
@@ -136,6 +155,14 @@ export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCan
           <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
         </div>
       </div>
+
+      {tipo === 'Servico' && (
+        <div className="grid gap-2">
+          <Label>Duração (minutos)</Label>
+          <Input type="number" {...register('duracaoMinutos', { valueAsNumber: true })} placeholder="Ex: 60" />
+          {errors.duracaoMinutos && <p className="text-xs text-destructive">{errors.duracaoMinutos.message}</p>}
+        </div>
+      )}
 
       <div className="grid gap-2">
         <Label>Código de Barras (opcional)</Label>

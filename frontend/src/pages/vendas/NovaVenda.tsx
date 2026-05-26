@@ -1,6 +1,6 @@
-// frontend/src/pages/vendas/NovaVenda.tsx
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import { useVendas } from '@/hooks/useVendas'
 import { useClientes } from '@/hooks/useClientes'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,16 @@ import SeletorProduto from '@/components/vendas/SeletorProduto'
 import ResumoPedido from '@/components/vendas/ResumoPedido'
 import type { ItemCarrinho, CreateVendaRequest, FecharVendaRequest } from '@/types/vendas'
 
-type Etapa = 1 | 2 | 3
+const FORMAS = [
+  { value: 'Pix',      label: 'Pix',     emoji: '⚡' },
+  { value: 'Dinheiro', label: 'Dinheiro', emoji: '💵' },
+  { value: 'Cartao',   label: 'Cartão',   emoji: '💳' },
+  { value: 'Outro',    label: 'Outro',    emoji: '🔖' },
+] as const
+
+type FormaPagamento = typeof FORMAS[number]['value']
+
+const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function NovaVenda() {
   const navigate = useNavigate()
@@ -20,19 +29,19 @@ export default function NovaVenda() {
   const { create, fechar, get } = useVendas()
   const { clientes, list: listClientes } = useClientes()
 
-  const [etapa, setEtapa] = useState<Etapa>(vendaIdParam ? 2 : 1)
   const [itens, setItens] = useState<ItemCarrinho[]>([])
   const [desconto, setDesconto] = useState(0)
   const [clienteId, setClienteId] = useState('')
-  const [formaPagamento, setFormaPagamento] = useState<CreateVendaRequest['formaPagamento']>('Pix')
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>('Pix')
   const [parcelas, setParcelas] = useState(1)
   const [salvando, setSalvando] = useState(false)
-  const [carregandoVenda, setCarregandoVenda] = useState(false)
   const [vendaFinalizada, setVendaFinalizada] = useState<{ id: string; total: number } | null>(null)
+  const [carregando, setCarregando] = useState(false)
 
   useEffect(() => {
+    listClientes()
     if (!vendaIdParam) return
-    setCarregandoVenda(true)
+    setCarregando(true)
     void get(vendaIdParam).then(venda => {
       setItens(venda.itens.map(i => ({
         produtoId: i.produtoId,
@@ -42,8 +51,7 @@ export default function NovaVenda() {
         desconto: 0,
         total: i.precoUnitario * i.quantidade,
       })))
-      listClientes()
-    }).finally(() => setCarregandoVenda(false))
+    }).finally(() => setCarregando(false))
   }, [vendaIdParam, get, listClientes])
 
   function adicionarItem(item: ItemCarrinho) {
@@ -64,10 +72,6 @@ export default function NovaVenda() {
       : i))
   }
 
-  function removerItem(produtoId: string) {
-    setItens(prev => prev.filter(i => i.produtoId !== produtoId))
-  }
-
   async function confirmarVenda() {
     if (itens.length === 0) return
     setSalvando(true)
@@ -79,7 +83,6 @@ export default function NovaVenda() {
         }
         const result = await fechar(vendaIdParam, req)
         setVendaFinalizada({ id: result.id, total: result.total })
-        setEtapa(3)
       } else {
         const req: CreateVendaRequest = {
           clienteId: clienteId || undefined,
@@ -90,7 +93,6 @@ export default function NovaVenda() {
         }
         const result = await create(req)
         setVendaFinalizada({ id: result.id, total: result.total })
-        setEtapa(3)
       }
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao finalizar venda')
@@ -99,133 +101,155 @@ export default function NovaVenda() {
     }
   }
 
-  if (carregandoVenda) return <p className="text-muted-foreground">Carregando venda...</p>
+  const subtotal = itens.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0)
+  const total = Math.max(0, subtotal - desconto)
 
-  if (etapa === 3 && vendaFinalizada) {
-    const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  if (carregando) return (
+    <div className="flex h-64 items-center justify-center text-muted-foreground">
+      Carregando venda...
+    </div>
+  )
+
+  /* ── Tela de sucesso ── */
+  if (vendaFinalizada) {
     return (
-      <div className="max-w-md mx-auto space-y-6 pt-8 text-center">
-        <div className="text-6xl">✅</div>
-        <h1 className="text-2xl font-bold">Venda finalizada!</h1>
-        <p className="text-muted-foreground">Total: <strong>{fmt(vendaFinalizada.total)}</strong></p>
-        <div className="flex gap-3 justify-center">
-          <Button variant="outline" onClick={() => window.print()}>Imprimir comprovante</Button>
-          <Button onClick={() => navigate('/vendas')}>Ver histórico</Button>
-          <Button variant="secondary" onClick={() => {
-            setItens([]); setDesconto(0); setClienteId(''); setEtapa(1); setVendaFinalizada(null)
-          }}>Nova venda</Button>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center space-y-5 max-w-sm">
+          <CheckCircle2 size={64} className="mx-auto text-green-500" />
+          <div>
+            <h2 className="text-2xl font-bold">Venda finalizada!</h2>
+            <p className="text-muted-foreground mt-1">
+              Total cobrado: <span className="font-semibold text-foreground">{fmt(vendaFinalizada.total)}</span>
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => {
+              setItens([]); setDesconto(0); setClienteId(''); setVendaFinalizada(null)
+            }}>
+              Nova venda
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/vendas')}>
+              Ver histórico
+            </Button>
+          </div>
         </div>
       </div>
     )
   }
 
-  const etapas = vendaIdParam
-    ? ['1. Itens do orçamento', '2. Pagamento']
-    : ['1. Produtos', '2. Pagamento']
-
+  /* ── Layout PDV ── */
   return (
-    <div className="space-y-4">
-      {vendaIdParam && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
-          Venda gerada a partir de orçamento. Confirme o pagamento para concluir.
-        </div>
-      )}
-
-      <div className="flex items-center gap-2 text-sm">
-        {etapas.map((label, i) => (
-          <span key={label}
-            className={`px-3 py-1 rounded-full ${etapa === i + 1
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground'}`}>
-            {label}
-          </span>
-        ))}
+    <div className="flex flex-col gap-4 h-full">
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate('/vendas')}
+          className="text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="text-xl font-bold">
+          {vendaIdParam ? 'Finalizar Orçamento' : 'Nova Venda'}
+        </h1>
       </div>
 
-      {etapa === 1 && !vendaIdParam && (
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <h2 className="font-semibold">Adicionar produtos</h2>
-            <SeletorProduto onAdd={adicionarItem} />
-          </div>
-          <div className="space-y-3">
-            <h2 className="font-semibold">Pedido</h2>
-            <ResumoPedido
-              itens={itens} desconto={desconto}
-              onChangeQuantidade={alterarQuantidade}
-              onRemover={removerItem}
-              onChangeDesconto={setDesconto}
-            />
-            <Button
-              className="w-full"
-              disabled={itens.length === 0}
-              onClick={() => { setEtapa(2); listClientes() }}>
-              Próximo →
-            </Button>
-          </div>
+      {vendaIdParam && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 px-4 py-2.5 text-sm text-blue-700 dark:text-blue-300">
+          Venda gerada a partir de orçamento — confirme o pagamento para concluir.
         </div>
       )}
 
-      {etapa === 2 && (
-        <div className="max-w-md space-y-4">
-          <h2 className="font-semibold text-lg">Forma de pagamento</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 items-start">
 
-          {vendaIdParam && itens.length > 0 && (
-            <div className="rounded-md border p-4 space-y-2">
-              <p className="text-sm font-medium">Itens da venda</p>
-              {itens.map(i => (
-                <div key={i.produtoId} className="flex justify-between text-sm text-muted-foreground">
-                  <span>{i.produtoNome} × {i.quantidade}</span>
-                  <span>{i.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </div>
-              ))}
+        {/* ── Coluna esquerda: produtos + carrinho ── */}
+        <div className="space-y-4">
+          {!vendaIdParam && (
+            <div className="rounded-xl border bg-card shadow-sm p-4 space-y-3">
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Adicionar item
+              </p>
+              <SeletorProduto onAdd={adicionarItem} />
             </div>
           )}
 
+          <div className="rounded-xl border bg-card shadow-sm p-4">
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Carrinho
+            </p>
+            <ResumoPedido
+              itens={itens}
+              desconto={desconto}
+              onChangeQuantidade={alterarQuantidade}
+              onRemover={id => setItens(prev => prev.filter(i => i.produtoId !== id))}
+              onChangeDesconto={setDesconto}
+            />
+          </div>
+        </div>
+
+        {/* ── Coluna direita: pagamento ── */}
+        <div className="rounded-xl border bg-card shadow-sm p-5 space-y-5 lg:sticky lg:top-4">
+          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Pagamento
+          </p>
+
           {!vendaIdParam && (
-            <div className="grid gap-2">
-              <Label>Cliente (opcional)</Label>
-              <select
-                value={clienteId}
-                onChange={e => setClienteId(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
-                <option value="">Sem cliente (balcão)</option>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Cliente (opcional)</Label>
+              <select value={clienteId} onChange={e => setClienteId(e.target.value)}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
+                <option value="">Balcão (sem cliente)</option>
                 {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
               </select>
             </div>
           )}
 
-          <div className="grid gap-2">
-            <Label>Forma de pagamento</Label>
-            <div className="grid grid-cols-4 gap-2">
-              {(['Dinheiro', 'Pix', 'Cartao', 'Outro'] as const).map(f => (
-                <Button key={f} type="button"
-                  variant={formaPagamento === f ? 'default' : 'outline'}
-                  onClick={() => setFormaPagamento(f)}>
-                  {f}
-                </Button>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Forma de pagamento</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {FORMAS.map(f => (
+                <button key={f.value} type="button"
+                  onClick={() => setFormaPagamento(f.value)}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
+                    formaPagamento === f.value
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground'
+                  }`}>
+                  <span>{f.emoji}</span>
+                  {f.label}
+                </button>
               ))}
             </div>
           </div>
 
           {formaPagamento === 'Cartao' && (
-            <div className="grid gap-2">
-              <Label>Parcelas</Label>
-              <Input type="number" min="1" max="12" value={parcelas}
-                onChange={e => setParcelas(Number(e.target.value))} />
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Parcelas</Label>
+              <select value={parcelas} onChange={e => setParcelas(Number(e.target.value))}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                  <option key={n} value={n}>{n}x {n > 1 ? fmt(total / n) : ''}</option>
+                ))}
+              </select>
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
-            {!vendaIdParam && (
-              <Button variant="outline" onClick={() => setEtapa(1)}>← Voltar</Button>
-            )}
-            <Button className="flex-1" onClick={confirmarVenda} disabled={salvando}>
-              {salvando ? 'Finalizando...' : '✓ Finalizar venda'}
-            </Button>
+          {/* Total em destaque */}
+          <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Total</span>
+            <span className="text-3xl font-bold text-primary tabular-nums">{fmt(total)}</span>
           </div>
+
+          <Button
+            className="w-full h-12 text-base font-semibold"
+            disabled={itens.length === 0 || salvando}
+            onClick={confirmarVenda}>
+            {salvando ? 'Finalizando...' : '✓ Finalizar Venda'}
+          </Button>
+
+          {itens.length === 0 && (
+            <p className="text-xs text-center text-muted-foreground">
+              Adicione ao menos um item para finalizar
+            </p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

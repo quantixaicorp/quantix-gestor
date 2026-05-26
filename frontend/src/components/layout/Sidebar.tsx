@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Users,
   BarChart3,
+  Scissors,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -54,8 +55,9 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Agenda',
     items: [
-      { icon: Calendar, label: 'Agendamentos', path: '/agendamentos' },
-      { icon: UserCog,  label: 'Profissionais', path: '/profissionais' },
+      { icon: Calendar,  label: 'Agendamentos',  path: '/agendamentos' },
+      { icon: UserCog,   label: 'Profissionais', path: '/profissionais' },
+      { icon: Scissors,  label: 'Serviços',      path: '/servicos' },
     ],
   },
   {

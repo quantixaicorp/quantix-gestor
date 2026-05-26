@@ -20,6 +20,7 @@ import NovoAgendamento from '@/pages/agendamentos/NovoAgendamento'
 import DetalheAgendamento from '@/pages/agendamentos/DetalheAgendamento'
 import Profissionais from '@/pages/profissionais/Profissionais'
 import DisponibilidadeProfissional from '@/pages/profissionais/DisponibilidadeProfissional'
+import Servicos from '@/pages/servicos/Servicos'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth /> },
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
       { path: '/profissionais/:id/disponibilidade', element: <DisponibilidadeProfissional /> },
       { path: '/estoque', element: <Produtos /> },
       { path: '/estoque/movimentacoes', element: <Movimentacoes /> },
+      { path: '/servicos', element: <Servicos /> },
       { path: '/financeiro', element: <Lancamentos /> },
       { path: '/financeiro/pagar', element: <ContasPagar /> },
       { path: '/financeiro/receber', element: <ContasReceber /> },

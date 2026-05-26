@@ -32,6 +32,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         opt.Authority = builder.Configuration["Jwt:Authority"];
         opt.Audience = builder.Configuration["Jwt:Audience"];
+        opt.RequireHttpsMetadata = false;
         opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

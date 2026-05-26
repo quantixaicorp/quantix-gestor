@@ -128,9 +128,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo header */}
       <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3 shrink-0">
         {collapsed ? (
-          <img src="/logo.jpeg" alt="GestorAI" className="h-12 w-12 rounded-lg object-cover" />
+          <img
+            src="/logo.jpeg"
+            alt="GestorAI"
+            className="h-14 w-14 rounded-xl object-cover"
+          />
         ) : (
-          <img src="/logo.jpeg" alt="GestorAI" className="h-16 w-full rounded-lg object-contain" />
+          <div
+            className="w-full h-14 rounded-xl"
+            style={{
+              backgroundImage: 'url(/logo-gestorai.jpeg)',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '100% 200%',
+              backgroundPosition: resolved === 'dark' ? '0% 0%' : '0% 100%',
+            }}
+          />
         )}
       </div>
 

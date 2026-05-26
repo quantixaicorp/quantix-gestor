@@ -11,7 +11,7 @@ import EntradaEstoqueDialog from '@/components/estoque/EntradaEstoqueDialog'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
 export default function Produtos() {
-  const { produtos, categorias, loading, listProdutos, listCategorias, createCategoria, createProduto, entradaEstoque } = useEstoque()
+  const { produtos, categorias, loading, listProdutos, listCategorias, createCategoria, createProduto, updateProduto, entradaEstoque } = useEstoque()
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
   const [produtoEditando, setProdutoEditando] = useState<ProdutoResponse | null>(null)

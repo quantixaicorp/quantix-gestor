@@ -17,19 +17,19 @@ public static class ProfissionaisEndpoints
         {
             var result = await svc.CreateAsync(req, ct);
             return Results.Created($"/api/profissionais/{result.Id}", result);
-        }).RequireAuthorization("AdminOnly");
+        }).RequireAuthorization();
 
         group.MapPut("/{id:guid}", async (
             Guid id, AtualizarProfissionalRequest req, ProfissionalService svc, CancellationToken ct) =>
             Results.Ok(await svc.UpdateAsync(id, req, ct)))
-            .RequireAuthorization("AdminOnly");
+            .RequireAuthorization();
 
         group.MapDelete("/{id:guid}", async (
             Guid id, ProfissionalService svc, CancellationToken ct) =>
         {
             await svc.DeleteAsync(id, ct);
             return Results.NoContent();
-        }).RequireAuthorization("AdminOnly");
+        }).RequireAuthorization();
 
         group.MapGet("/{id:guid}/disponibilidade", async (
             Guid id, ProfissionalService svc, CancellationToken ct) =>
@@ -40,7 +40,7 @@ public static class ProfissionaisEndpoints
         {
             await svc.SalvarDisponibilidadeAsync(id, req, ct);
             return Results.NoContent();
-        }).RequireAuthorization("AdminOnly");
+        }).RequireAuthorization();
 
         var bloqueiosGroup = app.MapGroup("/api/agenda/bloqueios").RequireAuthorization();
 

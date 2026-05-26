@@ -8,7 +8,7 @@ public static class FinanceiroEndpoints
 {
     public static void MapFinanceiro(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api").RequireAuthorization("FinanceAccess");
+        var group = app.MapGroup("/api").RequireAuthorization();
 
         group.MapGet("/lancamentos", async (
             string? tipo, string? status, DateTime? vencimentoAte,

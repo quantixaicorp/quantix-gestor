@@ -7,7 +7,7 @@ public static class OrcamentosEndpoints
 {
     public static void MapOrcamentos(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/orcamentos").RequireAuthorization("VendasAccess");
+        var group = app.MapGroup("/api/orcamentos").RequireAuthorization();
 
         group.MapGet("/", async (
             string? status, OrcamentoService svc, CancellationToken ct) =>

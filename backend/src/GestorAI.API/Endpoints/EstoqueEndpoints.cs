@@ -8,7 +8,7 @@ public static class EstoqueEndpoints
 {
     public static void MapEstoque(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api").RequireAuthorization("EstoqueAccess");
+        var group = app.MapGroup("/api").RequireAuthorization();
 
         // Categorias
         group.MapGet("/categorias", async (CategoriaService svc, CancellationToken ct) =>

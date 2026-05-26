@@ -8,7 +8,7 @@ public static class VendasEndpoints
 {
     public static void MapVendas(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/vendas").RequireAuthorization("VendasAccess");
+        var group = app.MapGroup("/api/vendas").RequireAuthorization();
 
         group.MapGet("/", async (
             DateTime? de, DateTime? ate, string? status,

@@ -36,15 +36,19 @@ export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCan
   const [novaCategoria, setNovaCategoria] = useState('')
   const [criandoCategoria, setCriandoCategoria] = useState(false)
   const [mostraCriarCategoria, setMostraCriarCategoria] = useState(false)
+  const [erroCategoria, setErroCategoria] = useState<string | null>(null)
 
   async function handleCriarCategoria() {
     if (!novaCategoria.trim() || !onCreateCategoria) return
+    setErroCategoria(null)
     setCriandoCategoria(true)
     try {
       const criada = await onCreateCategoria(novaCategoria.trim())
       setValue('categoriaId', criada.id)
       setNovaCategoria('')
       setMostraCriarCategoria(false)
+    } catch (e) {
+      setErroCategoria(e instanceof Error ? e.message : 'Erro ao criar categoria')
     } finally {
       setCriandoCategoria(false)
     }
@@ -67,17 +71,30 @@ export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCan
         </div>
 
         {mostraCriarCategoria && (
-          <div className="flex gap-2">
-            <Input
-              value={novaCategoria}
-              onChange={e => setNovaCategoria(e.target.value)}
-              placeholder="Nome da categoria"
-              className="flex-1"
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCriarCategoria() } }}
-            />
-            <Button type="button" size="sm" onClick={() => void handleCriarCategoria()} disabled={criandoCategoria || !novaCategoria.trim()}>
-              {criandoCategoria ? '...' : 'Criar'}
-            </Button>
+          <div className="space-y-1">
+            <div className="flex gap-2">
+              <Input
+                value={novaCategoria}
+                onChange={e => setNovaCategoria(e.target.value)}
+                placeholder="Nome da categoria"
+                className="flex-1"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleCriarCategoria().catch(console.error)
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={criandoCategoria || !novaCategoria.trim()}
+                onClick={() => { handleCriarCategoria().catch(console.error) }}
+              >
+                {criandoCategoria ? 'Criando...' : 'Criar'}
+              </Button>
+            </div>
+            {erroCategoria && <p className="text-xs text-destructive">{erroCategoria}</p>}
           </div>
         )}
 

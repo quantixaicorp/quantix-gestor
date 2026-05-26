@@ -125,31 +125,31 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Logo header */}
+      {/* Logo header — invert(1) hue-rotate(180deg): white bg→dark, dark text→white, blue≈blue */}
       <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3 shrink-0">
         {collapsed ? (
-          <div className="bg-white rounded-xl p-1 flex items-center justify-center">
-            <div
+          <div className="rounded-xl overflow-hidden mx-auto" style={{ width: '48px', height: '48px' }}>
+            <img
+              src="/logo-gestorai.jpeg"
+              alt="GestorAI"
               style={{
-                backgroundImage: 'url(/logo-gestorai.jpeg)',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '60% 240%',
-                backgroundPosition: '5% 100%',
-                width: '44px',
-                height: '44px',
+                width: 'auto',
+                height: '200%',
+                transform: 'translateY(-50%)',
+                filter: 'invert(1) hue-rotate(180deg)',
               }}
             />
           </div>
         ) : (
-          <div className="bg-white rounded-xl p-1 flex items-center justify-center w-full">
-            <div
+          <div className="rounded-xl overflow-hidden w-full" style={{ height: '52px' }}>
+            <img
+              src="/logo-gestorai.jpeg"
+              alt="GestorAI"
               style={{
-                backgroundImage: 'url(/logo-gestorai.jpeg)',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '100% 200%',
-                backgroundPosition: '0% 100%',
                 width: '100%',
-                height: '52px',
+                height: 'auto',
+                transform: 'translateY(-50%)',
+                filter: 'invert(1) hue-rotate(180deg)',
               }}
             />
           </div>

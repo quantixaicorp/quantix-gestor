@@ -35,6 +35,12 @@ export function useEstoque() {
     setCategorias(data)
   }, [])
 
+  const createCategoria = useCallback(async (nome: string) => {
+    const result = await api.post<CategoriaResponse>('/api/categorias', { nome })
+    setCategorias(prev => [...prev, result])
+    return result
+  }, [])
+
   const createProduto = useCallback(async (req: CreateProdutoRequest) => {
     const result = await api.post<ProdutoResponse>('/api/produtos', req)
     setProdutos(prev => [...prev, result])
@@ -61,7 +67,7 @@ export function useEstoque() {
 
   return {
     produtos, categorias, movimentacoes, loading, error,
-    listProdutos, listCategorias, createProduto, updateProduto,
+    listProdutos, listCategorias, createCategoria, createProduto, updateProduto,
     entradaEstoque, listMovimentacoes,
   }
 }

@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,18 +26,65 @@ interface Props {
   defaultValues?: Partial<FormValues>
   onSubmit: (data: CreateProdutoRequest) => Promise<void>
   onCancel: () => void
+  onCreateCategoria?: (nome: string) => Promise<CategoriaResponse>
 }
 
-export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCancel }: Props) {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+export default function ProdutoForm({ categorias, defaultValues, onSubmit, onCancel, onCreateCategoria }: Props) {
+  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({ resolver: zodResolver(schema), defaultValues })
+
+  const [novaCategoria, setNovaCategoria] = useState('')
+  const [criandoCategoria, setCriandoCategoria] = useState(false)
+  const [mostraCriarCategoria, setMostraCriarCategoria] = useState(false)
+
+  async function handleCriarCategoria() {
+    if (!novaCategoria.trim() || !onCreateCategoria) return
+    setCriandoCategoria(true)
+    try {
+      const criada = await onCreateCategoria(novaCategoria.trim())
+      setValue('categoriaId', criada.id)
+      setNovaCategoria('')
+      setMostraCriarCategoria(false)
+    } finally {
+      setCriandoCategoria(false)
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-2">
-        <Label>Categoria</Label>
-        <select {...register('categoriaId')}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
+        <div className="flex items-center justify-between">
+          <Label>Categoria</Label>
+          {onCreateCategoria && (
+            <button
+              type="button"
+              onClick={() => setMostraCriarCategoria(v => !v)}
+              className="flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <Plus size={12} /> Nova categoria
+            </button>
+          )}
+        </div>
+
+        {mostraCriarCategoria && (
+          <div className="flex gap-2">
+            <Input
+              value={novaCategoria}
+              onChange={e => setNovaCategoria(e.target.value)}
+              placeholder="Nome da categoria"
+              className="flex-1"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCriarCategoria() } }}
+            />
+            <Button type="button" size="sm" onClick={() => void handleCriarCategoria()} disabled={criandoCategoria || !novaCategoria.trim()}>
+              {criandoCategoria ? '...' : 'Criar'}
+            </Button>
+          </div>
+        )}
+
+        <select
+          {...register('categoriaId')}
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+        >
           <option value="">Selecione...</option>
           {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
         </select>

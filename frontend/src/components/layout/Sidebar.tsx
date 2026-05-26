@@ -128,21 +128,31 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo header */}
       <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3 shrink-0">
         {collapsed ? (
-          <img
-            src="/logo.jpeg"
-            alt="GestorAI"
-            className="h-14 w-14 rounded-xl object-cover"
-          />
+          <div className="bg-white rounded-xl p-1 flex items-center justify-center">
+            <div
+              style={{
+                backgroundImage: 'url(/logo-gestorai.jpeg)',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '60% 240%',
+                backgroundPosition: '5% 100%',
+                width: '44px',
+                height: '44px',
+              }}
+            />
+          </div>
         ) : (
-          <div
-            className="w-full h-14 rounded-xl"
-            style={{
-              backgroundImage: 'url(/logo-gestorai.jpeg)',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '100% 200%',
-              backgroundPosition: resolved === 'dark' ? '0% 0%' : '0% 100%',
-            }}
-          />
+          <div className="bg-white rounded-xl p-1 flex items-center justify-center w-full">
+            <div
+              style={{
+                backgroundImage: 'url(/logo-gestorai.jpeg)',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '100% 200%',
+                backgroundPosition: '0% 100%',
+                width: '100%',
+                height: '52px',
+              }}
+            />
+          </div>
         )}
       </div>
 

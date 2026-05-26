@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Plus, PackageX, ArrowDownToLine } from 'lucide-react'
+import { Plus, PackageX, ArrowDownToLine, Pencil } from 'lucide-react'
 import { useEstoque } from '@/hooks/useEstoque'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ProdutoForm from '@/components/estoque/ProdutoForm'
+import ProdutoEditForm from '@/components/estoque/ProdutoEditForm'
 import EntradaEstoqueDialog from '@/components/estoque/EntradaEstoqueDialog'
-import type { ProdutoResponse, CreateProdutoRequest } from '@/types/estoque'
+import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
 export default function Produtos() {
   const { produtos, categorias, loading, listProdutos, listCategorias, createCategoria, createProduto, entradaEstoque } = useEstoque()
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [produtoEditando, setProdutoEditando] = useState<ProdutoResponse | null>(null)
   const [produtoEntrada, setProdutoEntrada] = useState<ProdutoResponse | null>(null)
 
   useEffect(() => { listProdutos(); listCategorias() }, [listProdutos, listCategorias])
@@ -20,6 +22,11 @@ export default function Produtos() {
   async function handleCreate(data: CreateProdutoRequest) {
     await createProduto(data)
     setModalAberto(false)
+  }
+
+  async function handleUpdate(id: string, data: UpdateProdutoRequest) {
+    await updateProduto(id, data)
+    setProdutoEditando(null)
   }
 
   const produtosFiltrados = produtos.filter(p =>
@@ -82,9 +89,14 @@ export default function Produtos() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Button size="sm" variant="outline" onClick={() => setProdutoEntrada(p)}>
-                      <ArrowDownToLine size={14} className="mr-1" /> Entrada
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="outline" onClick={() => setProdutoEditando(p)}>
+                        <Pencil size={14} />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setProdutoEntrada(p)}>
+                        <ArrowDownToLine size={14} className="mr-1" /> Entrada
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -109,6 +121,20 @@ export default function Produtos() {
             onCancel={() => setModalAberto(false)}
             onCreateCategoria={createCategoria}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!produtoEditando} onOpenChange={open => { if (!open) setProdutoEditando(null) }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Editar Produto</DialogTitle></DialogHeader>
+          {produtoEditando && (
+            <ProdutoEditForm
+              produto={produtoEditando}
+              categorias={categorias}
+              onSubmit={handleUpdate}
+              onCancel={() => setProdutoEditando(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

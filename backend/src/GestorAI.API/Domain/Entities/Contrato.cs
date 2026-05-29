@@ -21,4 +21,5 @@ public class Contrato : ITenantEntity
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public Cliente? Cliente { get; set; }
     public ICollection<ContratoItem> Itens { get; set; } = [];
+    public ICollection<Cobranca> Cobrancas { get; set; } = [];
 }

@@ -21,6 +21,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<DisponibilidadeSemanal> DisponibilidadeSemanais => Set<DisponibilidadeSemanal>();
     public DbSet<BloqueioAgenda> BloqueiosAgenda => Set<BloqueioAgenda>();
     public DbSet<Agendamento> Agendamentos => Set<Agendamento>();
+    public DbSet<NotaFiscal> NotasFiscais => Set<NotaFiscal>();
+    public DbSet<NotaFiscalItem> NotaFiscalItens => Set<NotaFiscalItem>();
+    public DbSet<ConfiguracaoEmpresa> ConfiguracoesEmpresa => Set<ConfiguracaoEmpresa>();
+    public DbSet<Contrato> Contratos => Set<Contrato>();
+    public DbSet<ContratoItem> ContratoItens => Set<ContratoItem>();
+    public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,5 +51,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<Profissional>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<BloqueioAgenda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Agendamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<NotaFiscal>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<NotaFiscalItem>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<ConfiguracaoEmpresa>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<Contrato>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<Cobranca>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
     }
 }

@@ -23,6 +23,7 @@ export default function DetalheCobranca() {
   const [dataPagamento, setDataPagamento] = useState('')
   const [formaPagamento, setFormaPagamento] = useState('Pix')
   const [actionError, setActionError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => { if (id) void get(id) }, [id, get])
 
@@ -38,10 +39,12 @@ export default function DetalheCobranca() {
   const handlePagar = async () => {
     if (!id || !dataPagamento) return
     setActionError('')
+    setSaving(true)
     try {
       await pagar(id, { dataPagamento, formaPagamento })
       setModalPagar(false)
     } catch (e) { setActionError(e instanceof Error ? e.message : 'Erro ao registrar pagamento') }
+    finally { setSaving(false) }
   }
 
   const handleWhatsapp = async () => {
@@ -121,7 +124,9 @@ export default function DetalheCobranca() {
               </select>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handlePagar} disabled={!dataPagamento}>Confirmar</Button>
+              <Button onClick={handlePagar} disabled={!dataPagamento || saving}>
+                {saving ? 'Salvando...' : 'Confirmar'}
+              </Button>
               <Button variant="outline" onClick={() => setModalPagar(false)}>Cancelar</Button>
             </div>
           </div>

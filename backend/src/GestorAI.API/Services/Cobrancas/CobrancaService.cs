@@ -1,0 +1,147 @@
+using GestorAI.API.Domain.Entities;
+using GestorAI.API.Domain.Enums;
+using GestorAI.API.DTOs.Cobrancas;
+using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Shared.Exceptions;
+using GestorAI.API.Shared.MultiTenancy;
+using Microsoft.EntityFrameworkCore;
+
+namespace GestorAI.API.Services.Cobrancas;
+
+public class CobrancaService(AppDbContext db, TenantContext tenantContext)
+{
+    public async Task<List<CobrancaListItem>> ListAsync(
+        string? status, Guid? clienteId, string? mes, CancellationToken ct)
+    {
+        var query = db.Cobrancas
+            .Include(c => c.Cliente)
+            .Include(c => c.Contrato)
+            .AsQueryable();
+
+        if (clienteId.HasValue)
+            query = query.Where(c => c.ClienteId == clienteId.Value);
+
+        if (mes != null && DateOnly.TryParseExact(mes + "-01", "yyyy-MM-dd",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var mesDate))
+        {
+            var fimMes = mesDate.AddMonths(1).AddDays(-1);
+            query = query.Where(c => c.DataVencimento >= mesDate && c.DataVencimento <= fimMes);
+        }
+
+        var list = await query.OrderBy(c => c.DataVencimento).ToListAsync(ct);
+
+        if (status != null)
+        {
+            var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+            list = status switch
+            {
+                "Vencido" => list.Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje).ToList(),
+                _ when Enum.TryParse<CobrancaStatus>(status, out var s) => list.Where(c => c.Status == s).ToList(),
+                _ => list
+            };
+        }
+
+        return list.Select(ToListItem).ToList();
+    }
+
+    public async Task<CobrancaResponse> GetAsync(Guid id, CancellationToken ct)
+    {
+        var c = await db.Cobrancas
+            .Include(c => c.Cliente)
+            .Include(c => c.Contrato)
+            .FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Cobrança não encontrada.", 404);
+        return ToResponse(c);
+    }
+
+    public async Task<CobrancaResponse> CreateAsync(CreateCobrancaRequest req, CancellationToken ct)
+    {
+        _ = await db.Clientes.FirstOrDefaultAsync(c => c.Id == req.ClienteId, ct)
+            ?? throw new AppException("Cliente não encontrado.", 404);
+
+        var cobranca = new Cobranca
+        {
+            EmpresaId = tenantContext.EmpresaId,
+            ClienteId = req.ClienteId,
+            Referencia = req.Referencia,
+            Valor = req.Valor,
+            DataVencimento = req.DataVencimento,
+            Observacao = req.Observacao,
+        };
+        db.Cobrancas.Add(cobranca);
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(cobranca.Id, ct);
+    }
+
+    public async Task<CobrancaResponse> PagarAsync(Guid id, PagarCobrancaRequest req, CancellationToken ct)
+    {
+        var c = await FindAsync(id, ct);
+        if (c.Status != CobrancaStatus.Pendente)
+            throw new AppException("Apenas cobranças pendentes podem ser pagas.", 400);
+        if (!Enum.TryParse<FormaPagamento>(req.FormaPagamento, out var forma))
+            throw new AppException($"FormaPagamento inválida: {req.FormaPagamento}.", 400);
+
+        c.Status = CobrancaStatus.Pago;
+        c.DataPagamento = req.DataPagamento;
+        c.FormaPagamento = forma;
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
+    public async Task<CobrancaResponse> CancelarAsync(Guid id, CancellationToken ct)
+    {
+        var c = await FindAsync(id, ct);
+        if (c.Status == CobrancaStatus.Pago)
+            throw new AppException("Cobranças pagas não podem ser canceladas.", 400);
+        c.Status = CobrancaStatus.Cancelado;
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
+    public async Task<WhatsappUrlResponse> GetWhatsappUrlAsync(Guid id, CancellationToken ct)
+    {
+        var c = await db.Cobrancas
+            .Include(c => c.Cliente)
+            .FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Cobrança não encontrada.", 404);
+
+        var fone = new string(c.Cliente!.Whatsapp.Where(char.IsDigit).ToArray());
+        var msg = $"Olá {c.Cliente.Nome}, segue cobrança referente a {c.Referencia}: " +
+                  $"R$ {c.Valor:N2} com vencimento em {c.DataVencimento:dd/MM/yyyy}. " +
+                  "Em caso de dúvidas, entre em contato.";
+        var encodedMsg = Uri.EscapeDataString(msg).Replace("%20", "+");
+        var url = $"https://wa.me/55{fone}?text={encodedMsg}";
+        return new WhatsappUrlResponse(url);
+    }
+
+    private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>
+        await db.Cobrancas.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Cobrança não encontrada.", 404);
+
+    private static CobrancaListItem ToListItem(Cobranca c)
+    {
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var statusDisplay = c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje
+            ? "Vencido"
+            : c.Status.ToString();
+        return new CobrancaListItem(
+            c.Id, c.Cliente?.Nome ?? "", c.ContratoId,
+            c.Contrato?.Titulo, c.Referencia, c.Valor,
+            c.DataVencimento, statusDisplay);
+    }
+
+    private static CobrancaResponse ToResponse(Cobranca c)
+    {
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var statusDisplay = c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje
+            ? "Vencido"
+            : c.Status.ToString();
+        return new CobrancaResponse(
+            c.Id, c.Cliente?.Nome ?? "", c.Cliente?.Whatsapp ?? "",
+            c.ContratoId, c.Contrato?.Titulo,
+            c.Referencia, c.Valor, c.DataVencimento,
+            c.DataPagamento, statusDisplay,
+            c.FormaPagamento?.ToString(), c.Observacao, c.CriadoEm);
+    }
+}

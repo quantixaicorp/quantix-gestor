@@ -25,7 +25,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<NotaFiscalItem> NotaFiscalItens => Set<NotaFiscalItem>();
     public DbSet<ConfiguracaoEmpresa> ConfiguracoesEmpresa => Set<ConfiguracaoEmpresa>();
     public DbSet<Contrato> Contratos => Set<Contrato>();
-    public DbSet<ContratoItem> ContratoItens => Set<ContratoItem>();
     public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

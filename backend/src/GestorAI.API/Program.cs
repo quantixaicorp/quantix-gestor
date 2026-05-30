@@ -9,8 +9,11 @@ using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Services.Agendamentos;
 using GestorAI.API.Services.Clientes;
 using GestorAI.API.Services.Dashboard;
+using GestorAI.API.Services.Fiscal;
 using GestorAI.API.Services.Estoque;
 using GestorAI.API.Services.Financeiro;
+using GestorAI.API.Services.Contratos;
+using GestorAI.API.Services.Cobrancas;
 using GestorAI.API.Services.Orcamentos;
 using GestorAI.API.Services.Relatorios;
 using GestorAI.API.Services.Vendas;
@@ -77,6 +80,11 @@ builder.Services.AddScoped<OrcamentoService>();
 // Services — Agendamentos
 builder.Services.AddScoped<ProfissionalService>();
 builder.Services.AddScoped<AgendamentoService>();
+// Services — Fiscal
+builder.Services.AddScoped<NotaFiscalService>();
+builder.Services.AddScoped<ConfiguracaoEmpresaService>();
+builder.Services.AddScoped<ContratoService>();
+builder.Services.AddScoped<CobrancaService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
 builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamentoValidator>();
 // Validators
@@ -101,6 +109,9 @@ app.MapDashboard();
 app.MapOrcamentos();
 app.MapProfissionais();
 app.MapAgendamentos();
+app.MapFiscal();
+app.MapContratos();
+app.MapCobrancas();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
    .AllowAnonymous();

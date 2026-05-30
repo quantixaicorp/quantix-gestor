@@ -846,7 +846,7 @@ namespace GestorAI.API.Migrations
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany()
                         .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("GestorAI.API.Domain.Entities.Contrato", "Contrato")
@@ -863,7 +863,7 @@ namespace GestorAI.API.Migrations
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany()
                         .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cliente");

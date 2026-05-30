@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GestorAI.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260530115051_FixClienteFkRestrict")]
+    [Migration("20260530115446_FixClienteFkRestrict")]
     partial class FixClienteFkRestrict
     {
         /// <inheritdoc />
@@ -849,7 +849,7 @@ namespace GestorAI.API.Migrations
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany()
                         .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("GestorAI.API.Domain.Entities.Contrato", "Contrato")
@@ -866,7 +866,7 @@ namespace GestorAI.API.Migrations
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany()
                         .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cliente");

@@ -4,7 +4,7 @@ import { ChevronLeft, Plus, Trash2 } from 'lucide-react'
 import { useContratos } from '@/hooks/useContratos'
 import { useClientes } from '@/hooks/useClientes'
 import { Button } from '@/components/ui/button'
-import type { ContratoItemRequest } from '@/types/contrato'
+import type { ContratoItemRequest, TipoCobranca, Periodicidade } from '@/types/contrato'
 
 export default function NovoContrato() {
   const navigate = useNavigate()
@@ -16,11 +16,11 @@ export default function NovoContrato() {
   const [clienteId, setClienteId] = useState('')
   const [titulo, setTitulo] = useState('')
   const [objeto, setObjeto] = useState('')
-  const [tipoCobranca, setTipoCobranca] = useState('Recorrente')
+  const [tipoCobranca, setTipoCobranca] = useState<TipoCobranca>('Recorrente')
   const [valor, setValor] = useState('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
-  const [periodicidade, setPeriodicidade] = useState('Mensal')
+  const [periodicidade, setPeriodicidade] = useState<Periodicidade>('Mensal')
   const [diaVencimento, setDiaVencimento] = useState('10')
   const [observacao, setObservacao] = useState('')
   const [itens, setItens] = useState<ContratoItemRequest[]>([{ descricao: '', quantidade: 1, valorUnitario: 0 }])
@@ -91,14 +91,14 @@ export default function NovoContrato() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Tipo de Cobrança</label>
-            <select value={tipoCobranca} onChange={e => setTipoCobranca(e.target.value)} className={inputClass}>
+            <select value={tipoCobranca} onChange={e => setTipoCobranca(e.target.value as TipoCobranca)} className={inputClass}>
               <option value="Recorrente">Recorrente</option>
               <option value="ParceladoPrazoFixo">Parcelado (Prazo Fixo)</option>
             </select>
           </div>
           <div>
             <label className={labelClass}>Periodicidade</label>
-            <select value={periodicidade} onChange={e => setPeriodicidade(e.target.value)} className={inputClass}>
+            <select value={periodicidade} onChange={e => setPeriodicidade(e.target.value as Periodicidade)} className={inputClass}>
               {['Mensal', 'Trimestral', 'Semestral', 'Anual'].map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>

@@ -51,11 +51,11 @@ export interface CreateContratoRequest {
   clienteId: string
   titulo: string
   objeto: string
-  tipoCobranca: string
+  tipoCobranca: TipoCobranca
   valor: number
   dataInicio: string
   dataFim?: string
-  periodicidade: string
+  periodicidade: Periodicidade
   diaVencimento: number
   observacao?: string
   itens: ContratoItemRequest[]

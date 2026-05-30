@@ -65,9 +65,11 @@ export default function DetalheContrato() {
           </span>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => downloadPdf(c.id)}>
-            <FileDown className="h-4 w-4 mr-1" /> PDF
-          </Button>
+          {c.status !== 'Rascunho' && (
+            <Button variant="outline" size="sm" onClick={() => downloadPdf(c.id)}>
+              <FileDown className="h-4 w-4 mr-1" /> PDF
+            </Button>
+          )}
           {c.status === 'Ativo' && (
             <Button size="sm" onClick={() => setModalGerar(true)}>
               <Zap className="h-4 w-4 mr-1" /> Gerar Cobranças

@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FileText,
   Calendar,
+  CalendarDays,
   UserCog,
   Package,
   ArrowDownToLine,
@@ -15,6 +16,8 @@ import {
   Users,
   BarChart3,
   Scissors,
+  Receipt,
+  DollarSign,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -55,9 +58,10 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Agenda',
     items: [
-      { icon: Calendar,  label: 'Agendamentos',  path: '/agendamentos' },
-      { icon: UserCog,   label: 'Profissionais', path: '/profissionais' },
-      { icon: Scissors,  label: 'Serviços',      path: '/servicos' },
+      { icon: CalendarDays, label: 'Agenda Geral',   path: '/agenda' },
+      { icon: Calendar,     label: 'Agendamentos',   path: '/agendamentos' },
+      { icon: UserCog,      label: 'Profissionais',  path: '/profissionais' },
+      { icon: Scissors,     label: 'Serviços',       path: '/servicos' },
     ],
   },
   {
@@ -80,6 +84,19 @@ const menuGroups: MenuGroup[] = [
     items: [
       { icon: Users,    label: 'Clientes',   path: '/clientes' },
       { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
+    ],
+  },
+  {
+    label: 'Fiscal',
+    items: [
+      { icon: Receipt, label: 'Notas Fiscais', path: '/fiscal' },
+    ],
+  },
+  {
+    label: 'Contratos',
+    items: [
+      { icon: FileText,    label: 'Contratos', path: '/contratos' },
+      { icon: DollarSign, label: 'Cobranças',  path: '/cobrancas' },
     ],
   },
 ]
@@ -128,9 +145,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       )}
     >
       {/* Logo header — invert(1) hue-rotate(180deg): white bg→dark, dark text→white, blue≈blue */}
-      <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-3 shrink-0">
+      <div className="flex flex-col items-center justify-center border-b border-sidebar-border px-3 pt-2 pb-2 shrink-0 gap-1">
         {collapsed ? (
-          <div className="rounded-xl overflow-hidden mx-auto" style={{ width: '48px', height: '48px' }}>
+          <div className="rounded-xl overflow-hidden mx-auto" style={{ width: '48px', height: '48px', position: 'relative' }}>
             <img
               src="/logo-gestorai.jpeg"
               alt="GestorAI"
@@ -143,18 +160,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             />
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden w-full" style={{ height: '52px' }}>
-            <img
-              src="/logo-gestorai.jpeg"
-              alt="GestorAI"
-              style={{
-                width: '100%',
-                height: 'auto',
-                transform: 'translateY(-50%)',
-                filter: 'invert(1) hue-rotate(180deg)',
-              }}
-            />
-          </div>
+          <>
+            <div className="rounded-xl overflow-hidden w-full" style={{ height: '52px', position: 'relative' }}>
+              <img
+                src="/logo-gestorai.jpeg"
+                alt="GestorAI"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  transform: 'translateY(-50%)',
+                  filter: 'invert(1) hue-rotate(180deg)',
+                }}
+              />
+            </div>
+            <span className="text-[10px] text-sidebar-muted tracking-wide">by QuantixAI</span>
+          </>
         )}
       </div>
 

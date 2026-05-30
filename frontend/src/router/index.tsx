@@ -18,9 +18,17 @@ import DetalheOrcamento from '@/pages/orcamentos/DetalheOrcamento'
 import Agendamentos from '@/pages/agendamentos/Agendamentos'
 import NovoAgendamento from '@/pages/agendamentos/NovoAgendamento'
 import DetalheAgendamento from '@/pages/agendamentos/DetalheAgendamento'
+import AgendaProfissional from '@/pages/agendamentos/AgendaProfissional'
 import Profissionais from '@/pages/profissionais/Profissionais'
 import DisponibilidadeProfissional from '@/pages/profissionais/DisponibilidadeProfissional'
 import Servicos from '@/pages/servicos/Servicos'
+import Fiscal from '@/pages/fiscal/Fiscal'
+import Contratos from '@/pages/contratos/Contratos'
+import NovoContrato from '@/pages/contratos/NovoContrato'
+import DetalheContrato from '@/pages/contratos/DetalheContrato'
+import Cobrancas from '@/pages/cobrancas/Cobrancas'
+import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
+import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth /> },
@@ -37,6 +45,7 @@ export const router = createBrowserRouter([
       { path: '/agendamentos', element: <Agendamentos /> },
       { path: '/agendamentos/novo', element: <NovoAgendamento /> },
       { path: '/agendamentos/:id', element: <DetalheAgendamento /> },
+      { path: '/agenda', element: <AgendaProfissional /> },
       { path: '/profissionais', element: <Profissionais /> },
       { path: '/profissionais/:id/disponibilidade', element: <DisponibilidadeProfissional /> },
       { path: '/estoque', element: <Produtos /> },
@@ -47,6 +56,13 @@ export const router = createBrowserRouter([
       { path: '/financeiro/receber', element: <ContasReceber /> },
       { path: '/clientes', element: <Clientes /> },
       { path: '/relatorios', element: <Relatorios /> },
+      { path: '/fiscal', element: <Fiscal /> },
+      { path: '/contratos', element: <Contratos /> },
+      { path: '/contratos/novo', element: <NovoContrato /> },
+      { path: '/contratos/:id', element: <DetalheContrato /> },
+      { path: '/cobrancas', element: <Cobrancas /> },
+      { path: '/cobrancas/nova', element: <NovaCobranca /> },
+      { path: '/cobrancas/:id', element: <DetalheCobranca /> },
     ],
   },
 ])

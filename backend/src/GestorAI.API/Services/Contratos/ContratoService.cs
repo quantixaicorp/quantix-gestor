@@ -139,9 +139,18 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
                 ? $"Parcela {parcela}/{totalParcelas} — {contrato.Titulo}"
                 : GerarReferenciaRecorrente(contrato, venc);
 
-            var valorCobranca = contrato.TipoCobranca == TipoCobranca.ParceladoPrazoFixo
-                ? Math.Round(contrato.Valor / totalParcelas, 2)
-                : contrato.Valor;
+            decimal valorCobranca;
+            if (contrato.TipoCobranca == TipoCobranca.ParceladoPrazoFixo)
+            {
+                var eachValue = Math.Round(contrato.Valor / totalParcelas, 2);
+                valorCobranca = parcela == totalParcelas
+                    ? contrato.Valor - eachValue * (totalParcelas - 1)
+                    : eachValue;
+            }
+            else
+            {
+                valorCobranca = contrato.Valor;
+            }
 
             var cobranca = new Cobranca
             {

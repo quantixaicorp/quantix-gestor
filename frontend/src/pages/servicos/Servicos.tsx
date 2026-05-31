@@ -29,7 +29,9 @@ export default function Servicos() {
 
   async function handleUpdate(id: string, data: UpdateProdutoRequest) {
     try {
-      await updateProduto(id, data)
+      const result = await updateProduto(id, data)
+      console.log('[Servicos] resultado do update:', result)
+      await listProdutos()
       setEditando(null)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço')

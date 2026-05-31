@@ -11,45 +11,43 @@ const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório').max(200),
   descricao: z.string().optional(),
   precoVenda: z.number().positive('Preço deve ser maior que zero'),
-  estoqueMinimo: z.number().min(0),
-  codigoBarras: z.string().optional(),
+  duracaoMinutos: z.number().int().min(1, 'Informe a duração'),
   ativo: z.boolean(),
 })
 
 type FormValues = z.infer<typeof schema>
 
 interface Props {
-  produto: ProdutoResponse
+  servico: ProdutoResponse
   categorias: CategoriaResponse[]
   onSubmit: (id: string, data: UpdateProdutoRequest) => Promise<void>
   onCancel: () => void
 }
 
-export default function ProdutoEditForm({ produto, categorias, onSubmit, onCancel }: Props) {
+export default function ServicoEditForm({ servico, categorias, onSubmit, onCancel }: Props) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
       defaultValues: {
-        categoriaId: produto.categoriaId,
-        nome: produto.nome,
-        descricao: produto.descricao ?? '',
-        precoVenda: produto.precoVenda,
-        estoqueMinimo: produto.estoqueMinimo,
-        codigoBarras: produto.codigoBarras ?? '',
-        ativo: produto.ativo,
+        categoriaId: servico.categoriaId,
+        nome: servico.nome,
+        descricao: servico.descricao ?? '',
+        precoVenda: servico.precoVenda,
+        duracaoMinutos: servico.duracaoMinutos ?? 60,
+        ativo: servico.ativo,
       },
     })
 
   async function submit(values: FormValues) {
-    await onSubmit(produto.id, {
+    await onSubmit(servico.id, {
       categoriaId: values.categoriaId,
       nome: values.nome,
       descricao: values.descricao || undefined,
       precoVenda: values.precoVenda,
-      estoqueMinimo: values.estoqueMinimo,
-      codigoBarras: values.codigoBarras || undefined,
+      estoqueMinimo: 0,
+      codigoBarras: undefined,
       ativo: values.ativo,
-      duracaoMinutos: null,
+      duracaoMinutos: values.duracaoMinutos,
     })
   }
 
@@ -68,31 +66,32 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
       </div>
 
       <div className="grid gap-2">
-        <Label>Nome</Label>
+        <Label>Nome do Serviço</Label>
         <Input {...register('nome')} />
         {errors.nome && <p className="text-xs text-destructive">{errors.nome.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label>Preço de Venda (R$)</Label>
+          <Label>Preço (R$)</Label>
           <Input type="number" step="0.01" {...register('precoVenda', { valueAsNumber: true })} />
           {errors.precoVenda && <p className="text-xs text-destructive">{errors.precoVenda.message}</p>}
         </div>
         <div className="grid gap-2">
-          <Label>Estoque Mínimo</Label>
-          <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
+          <Label>Duração (minutos)</Label>
+          <Input type="number" {...register('duracaoMinutos', { valueAsNumber: true })} placeholder="Ex: 60" />
+          {errors.duracaoMinutos && <p className="text-xs text-destructive">{errors.duracaoMinutos.message}</p>}
         </div>
       </div>
 
       <div className="grid gap-2">
-        <Label>Código de Barras (opcional)</Label>
-        <Input {...register('codigoBarras')} placeholder="EAN-13" />
+        <Label>Descrição (opcional)</Label>
+        <Input {...register('descricao')} placeholder="Detalhes do serviço" />
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="ativo-produto" {...register('ativo')} className="h-4 w-4 rounded border" />
-        <Label htmlFor="ativo-produto">Produto ativo</Label>
+        <input type="checkbox" id="ativo-servico" {...register('ativo')} className="h-4 w-4 rounded border" />
+        <Label htmlFor="ativo-servico">Serviço ativo</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ServicoCriarForm from '@/components/estoque/ServicoCriarForm'
-import ProdutoEditForm from '@/components/estoque/ProdutoEditForm'
+import ServicoEditForm from '@/components/estoque/ServicoEditForm'
 import { toast } from '@/hooks/useToast'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
@@ -123,8 +123,8 @@ export default function Servicos() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Editar Serviço</DialogTitle></DialogHeader>
           {editando && (
-            <ProdutoEditForm
-              produto={editando}
+            <ServicoEditForm
+              servico={editando}
               categorias={categorias}
               onSubmit={handleUpdate}
               onCancel={() => setEditando(null)}

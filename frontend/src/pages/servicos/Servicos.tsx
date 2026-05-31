@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Plus, Pencil } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { api } from '@/services/api'
 import { useEstoque } from '@/hooks/useEstoque'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,21 +8,41 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ServicoCriarForm from '@/components/estoque/ServicoCriarForm'
 import ServicoEditForm from '@/components/estoque/ServicoEditForm'
+import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
 export default function Servicos() {
-  const { produtos, categorias, loading, listProdutos, listCategorias, createCategoria, createProduto, updateProduto } = useEstoque()
+  const { categorias, listCategorias, createCategoria, createProduto } = useEstoque()
+  const [servicos, setServicos] = useState<ProdutoResponse[]>([])
+  const [loading, setLoading] = useState(false)
   const [busca, setBusca] = useState('')
   const [modalCriar, setModalCriar] = useState(false)
   const [editando, setEditando] = useState<ProdutoResponse | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
-  useEffect(() => { listProdutos(); listCategorias() }, [listProdutos, listCategorias])
+  const carregar = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await api.get<ProdutoResponse[]>('/api/produtos')
+      setServicos(data.filter(p => p.tipo === 'Servico'))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao carregar serviços')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void carregar()
+    listCategorias()
+  }, [carregar, listCategorias])
 
   async function handleCreate(data: CreateProdutoRequest) {
     try {
       await createProduto(data)
       setModalCriar(false)
+      await carregar()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço')
     }
@@ -29,17 +50,26 @@ export default function Servicos() {
 
   async function handleUpdate(id: string, data: UpdateProdutoRequest) {
     try {
-      await updateProduto(id, data)
-      await listProdutos({ silent: true })
+      await api.put(`/api/produtos/${id}`, data)
       setEditando(null)
+      await carregar()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço')
     }
   }
 
-  const servicos = produtos
-    .filter(p => p.tipo === 'Servico')
-    .filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()))
+  async function handleDelete(id: string, nome: string) {
+    const ok = await confirm({ title: `Excluir "${nome}"?`, description: 'Esta ação não pode ser desfeita.' })
+    if (!ok) return
+    try {
+      await api.delete(`/api/produtos/${id}`)
+      await carregar()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir serviço')
+    }
+  }
+
+  const filtrados = servicos.filter(s => s.nome.toLowerCase().includes(busca.toLowerCase()))
 
   return (
     <div className="space-y-4">
@@ -73,7 +103,7 @@ export default function Servicos() {
               </tr>
             </thead>
             <tbody>
-              {servicos.map(s => (
+              {filtrados.map(s => (
                 <tr key={s.id} className="border-b last:border-b-0">
                   <td className="px-4 py-3 font-medium">{s.nome}</td>
                   <td className="px-4 py-3 text-muted-foreground">{s.categoriaNome}</td>
@@ -89,13 +119,19 @@ export default function Servicos() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Button size="sm" variant="outline" onClick={() => setEditando(s)}>
-                      <Pencil size={14} />
-                    </Button>
+                    <div className="flex gap-1 justify-end">
+                      <Button size="sm" variant="outline" onClick={() => setEditando(s)}>
+                        <Pencil size={14} />
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(s.id, s.nome)}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
-              {servicos.length === 0 && (
+              {filtrados.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     Nenhum serviço encontrado
@@ -124,6 +160,7 @@ export default function Servicos() {
           <DialogHeader><DialogTitle>Editar Serviço</DialogTitle></DialogHeader>
           {editando && (
             <ServicoEditForm
+              key={editando.id}
               servico={editando}
               categorias={categorias}
               onSubmit={handleUpdate}
@@ -132,6 +169,8 @@ export default function Servicos() {
           )}
         </DialogContent>
       </Dialog>
+
+      {ConfirmDialogNode}
     </div>
   )
 }

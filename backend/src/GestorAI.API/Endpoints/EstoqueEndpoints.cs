@@ -39,6 +39,13 @@ public static class EstoqueEndpoints
             Guid id, UpdateProdutoRequest req, ProdutoService svc, CancellationToken ct) =>
             Results.Ok(await svc.UpdateAsync(id, req, ct)));
 
+        group.MapDelete("/produtos/{id:guid}", async (
+            Guid id, ProdutoService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        });
+
         // Estoque
         group.MapPost("/estoque/movimentar", async (
             EntradaEstoqueRequest req, ProdutoService svc, CancellationToken ct) =>

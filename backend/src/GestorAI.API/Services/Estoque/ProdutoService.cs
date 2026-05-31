@@ -88,6 +88,14 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
         return await GetAsync(id, ct);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var produto = await db.Produtos.FindAsync([id], ct)
+            ?? throw new AppException("Produto não encontrado", 404);
+        db.Produtos.Remove(produto);
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task<ProdutoResponse> EntradaEstoqueAsync(EntradaEstoqueRequest req, CancellationToken ct)
     {
         var produto = await db.Produtos.FindAsync([req.ProdutoId], ct)

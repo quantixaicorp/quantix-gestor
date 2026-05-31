@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Plus, PackageX, ArrowDownToLine, Pencil } from 'lucide-react'
+import { Plus, PackageX, ArrowDownToLine, Pencil, Trash2 } from 'lucide-react'
 import { useEstoque } from '@/hooks/useEstoque'
+import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import ProdutoCriarForm from '@/components/estoque/ProdutoCriarForm'
 import ProdutoEditForm from '@/components/estoque/ProdutoEditForm'
 import EntradaEstoqueDialog from '@/components/estoque/EntradaEstoqueDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
@@ -17,6 +19,7 @@ export default function Produtos() {
   const [modalCriar, setModalCriar] = useState(false)
   const [produtoEditando, setProdutoEditando] = useState<ProdutoResponse | null>(null)
   const [produtoEntrada, setProdutoEntrada] = useState<ProdutoResponse | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { listProdutos(); listCategorias() }, [listProdutos, listCategorias])
 
@@ -35,6 +38,17 @@ export default function Produtos() {
       setProdutoEditando(null)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar produto')
+    }
+  }
+
+  async function handleDelete(id: string, nome: string) {
+    const ok = await confirm({ title: `Excluir "${nome}"?`, description: 'Esta ação não pode ser desfeita.' })
+    if (!ok) return
+    try {
+      await api.delete(`/api/produtos/${id}`)
+      await listProdutos()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir produto')
     }
   }
 
@@ -103,6 +117,10 @@ export default function Produtos() {
                       <Button size="sm" variant="outline" onClick={() => setProdutoEntrada(p)}>
                         <ArrowDownToLine size={14} className="mr-1" /> Entrada
                       </Button>
+                      <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(p.id, p.nome)}>
+                        <Trash2 size={14} />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -136,6 +154,7 @@ export default function Produtos() {
           <DialogHeader><DialogTitle>Editar Produto</DialogTitle></DialogHeader>
           {produtoEditando && (
             <ProdutoEditForm
+              key={produtoEditando.id}
               produto={produtoEditando}
               categorias={categorias}
               onSubmit={handleUpdate}
@@ -154,6 +173,8 @@ export default function Produtos() {
           setProdutoEntrada(null)
         }}
       />
+
+      {ConfirmDialogNode}
     </div>
   )
 }

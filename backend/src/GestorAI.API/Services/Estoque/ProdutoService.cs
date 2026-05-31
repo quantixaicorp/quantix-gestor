@@ -82,7 +82,6 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
         produto.CodigoBarras = req.CodigoBarras;
         produto.Ativo = req.Ativo;
         produto.DuracaoMinutos = req.DuracaoMinutos;
-        produto.Tipo = req.Tipo;
         produto.AtualizadoEm = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);

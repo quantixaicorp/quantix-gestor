@@ -4,10 +4,9 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { CategoriaResponse, ProdutoResponse, TipoProduto, UpdateProdutoRequest } from '@/types/estoque'
+import type { CategoriaResponse, ProdutoResponse, UpdateProdutoRequest } from '@/types/estoque'
 
 const schema = z.object({
-  tipo: z.enum(['Produto', 'Servico']),
   categoriaId: z.string().min(1, 'Selecione uma categoria'),
   nome: z.string().min(1, 'Nome obrigatório').max(200),
   descricao: z.string().optional(),
@@ -28,11 +27,10 @@ interface Props {
 }
 
 export default function ProdutoEditForm({ produto, categorias, onSubmit, onCancel }: Props) {
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } =
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
       defaultValues: {
-        tipo: produto.tipo,
         categoriaId: produto.categoriaId,
         nome: produto.nome,
         descricao: produto.descricao ?? '',
@@ -44,8 +42,6 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
       },
     })
 
-  const tipo = watch('tipo') as TipoProduto
-
   async function submit(values: FormValues) {
     await onSubmit(produto.id, {
       categoriaId: values.categoriaId,
@@ -56,27 +52,11 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
       codigoBarras: values.codigoBarras || undefined,
       ativo: values.ativo,
       duracaoMinutos: values.duracaoMinutos ?? null,
-      tipo: values.tipo,
     })
   }
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
-      {/* Tipo */}
-      <div className="grid grid-cols-2 gap-2">
-        {(['Produto', 'Servico'] as TipoProduto[]).map(t => (
-          <label
-            key={t}
-            className={`flex items-center justify-center gap-2 rounded-md border-2 py-2 cursor-pointer text-sm font-medium transition-colors ${
-              tipo === t ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'
-            }`}
-          >
-            <input type="radio" value={t} {...register('tipo')} className="sr-only" />
-            {t === 'Produto' ? '📦 Produto' : '✂️ Serviço'}
-          </label>
-        ))}
-      </div>
-
       <div className="grid gap-2">
         <Label>Categoria</Label>
         <select
@@ -107,7 +87,7 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
         </div>
       </div>
 
-      {tipo === 'Servico' && (
+      {produto.tipo === 'Servico' && (
         <div className="grid gap-2">
           <Label>Duração (minutos)</Label>
           <Input type="number" {...register('duracaoMinutos', { valueAsNumber: true, setValueAs: v => v === '' ? null : Number(v) })} placeholder="Ex: 60" />
@@ -122,7 +102,7 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
 
       <div className="flex items-center gap-2">
         <input type="checkbox" id="ativo" {...register('ativo')} className="h-4 w-4 rounded border" />
-        <Label htmlFor="ativo">Produto ativo</Label>
+        <Label htmlFor="ativo">{produto.tipo === 'Servico' ? 'Serviço ativo' : 'Produto ativo'}</Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

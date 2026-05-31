@@ -40,7 +40,6 @@ export interface UpdateProdutoRequest {
   codigoBarras?: string
   ativo: boolean
   duracaoMinutos?: number | null
-  tipo: TipoProduto
 }
 
 export interface EntradaEstoqueRequest {

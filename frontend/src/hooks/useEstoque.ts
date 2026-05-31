@@ -13,9 +13,9 @@ export function useEstoque() {
   const [error, setError] = useState<string | null>(null)
 
   const listProdutos = useCallback(async (params?: {
-    busca?: string; categoriaId?: string; estoqueBaixo?: boolean
+    busca?: string; categoriaId?: string; estoqueBaixo?: boolean; silent?: boolean
   }) => {
-    setLoading(true)
+    if (!params?.silent) setLoading(true)
     try {
       const qs = new URLSearchParams()
       if (params?.busca) qs.set('busca', params.busca)
@@ -26,7 +26,7 @@ export function useEstoque() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao carregar produtos')
     } finally {
-      setLoading(false)
+      if (!params?.silent) setLoading(false)
     }
   }, [])
 

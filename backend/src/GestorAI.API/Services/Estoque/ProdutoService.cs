@@ -51,6 +51,7 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
             EstoqueMinimo = req.EstoqueMinimo,
             CodigoBarras = req.CodigoBarras,
             Tipo = req.Tipo,
+            DuracaoMinutos = req.DuracaoMinutos,
         };
         db.Produtos.Add(produto);
 
@@ -93,7 +94,8 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
         var produto = await db.Produtos.FindAsync([id], ct)
             ?? throw new AppException("Produto não encontrado", 404);
         db.Produtos.Remove(produto);
-        await db.SaveChangesAsync(ct);
+        try { await db.SaveChangesAsync(ct); }
+        catch (DbUpdateException) { throw new AppException("Não é possível excluir: item possui movimentações vinculadas.", 409); }
     }
 
     public async Task<ProdutoResponse> EntradaEstoqueAsync(EntradaEstoqueRequest req, CancellationToken ct)

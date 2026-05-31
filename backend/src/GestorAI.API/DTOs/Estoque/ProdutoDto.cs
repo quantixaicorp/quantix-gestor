@@ -27,7 +27,8 @@ public record CreateProdutoRequest(
     decimal EstoqueAtual,
     decimal EstoqueMinimo,
     string? CodigoBarras,
-    TipoProduto Tipo = TipoProduto.Produto);
+    TipoProduto Tipo = TipoProduto.Produto,
+    int? DuracaoMinutos = null);
 
 public record UpdateProdutoRequest(
     Guid CategoriaId,

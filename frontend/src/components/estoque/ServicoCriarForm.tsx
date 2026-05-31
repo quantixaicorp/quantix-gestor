@@ -65,6 +65,7 @@ export default function ServicoCriarForm({ categorias, onSubmit, onCancel, onCre
       estoqueMinimo: 0,
       codigoBarras: values.codigoBarras,
       tipo: 'Servico',
+      duracaoMinutos: values.duracaoMinutos,
     })
   }
 

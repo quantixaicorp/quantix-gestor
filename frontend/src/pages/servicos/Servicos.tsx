@@ -51,8 +51,8 @@ export default function Servicos() {
   async function handleUpdate(id: string, data: UpdateProdutoRequest) {
     try {
       await api.put(`/api/produtos/${id}`, data)
-      setEditando(null)
       await carregar()
+      setEditando(null)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço')
     }

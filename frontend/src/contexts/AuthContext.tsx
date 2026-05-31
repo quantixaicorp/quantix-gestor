@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('ga_token')
     localStorage.removeItem('ga_refresh_token')
     setIsAuthenticated(false)
-    window.location.href = '/auth'
+    window.location.href = `${ADMIN_URL}/Account/Logout`
   }, [])
 
   return (

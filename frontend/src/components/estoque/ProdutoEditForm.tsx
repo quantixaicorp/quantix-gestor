@@ -81,12 +81,10 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
           <Input type="number" step="0.01" {...register('precoVenda', { valueAsNumber: true })} />
           {errors.precoVenda && <p className="text-xs text-destructive">{errors.precoVenda.message}</p>}
         </div>
-        {produto.tipo === 'Produto' && (
-          <div className="grid gap-2">
-            <Label>Estoque Mínimo</Label>
-            <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
-          </div>
-        )}
+        <div className={`grid gap-2 ${produto.tipo === 'Servico' ? 'hidden' : ''}`}>
+          <Label>Estoque Mínimo</Label>
+          <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
+        </div>
       </div>
 
       {produto.tipo === 'Servico' && (

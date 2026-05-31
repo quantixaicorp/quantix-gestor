@@ -56,6 +56,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<Contrato>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Cobranca>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
 
+        modelBuilder.Entity<ContratoItem>().ToTable("ContratoItens");
+
         modelBuilder.Entity<Contrato>()
             .HasOne(c => c.Cliente)
             .WithMany()

@@ -14,6 +14,11 @@ public static class AgendamentosEndpoints
             AgendamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.SlotsAsync(profissionalId, data, servicoId, ct)));
 
+        group.MapGet("/semana", async (
+            DateOnly de, DateOnly ate, Guid? profissionalId,
+            AgendamentoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.ListSemanaAsync(de, ate, profissionalId, ct)));
+
         group.MapGet("/", async (
             DateOnly data, AgendamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.ListAsync(data, ct)));

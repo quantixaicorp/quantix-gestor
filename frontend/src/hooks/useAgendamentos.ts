@@ -25,6 +25,22 @@ export function useAgendamentos() {
     }
   }, [])
 
+  const listSemana = useCallback(async (de: string, ate: string, profissionalId?: string) => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ de, ate })
+      if (profissionalId) params.set('profissionalId', profissionalId)
+      const items = await api.get<AgendamentoListItem[]>(`/api/agendamentos/semana?${params}`)
+      setAgendamentos(items)
+      return items
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao carregar agenda')
+      return []
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const get = useCallback(async (id: string) => {
     setLoading(true)
     try {
@@ -69,6 +85,7 @@ export function useAgendamentos() {
     loading,
     error,
     list,
+    listSemana,
     get,
     create,
     confirmar,

@@ -32,6 +32,34 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
             .ToListAsync(ct);
     }
 
+    public async Task<List<AgendamentoListItem>> ListSemanaAsync(
+        DateOnly de, DateOnly ate, Guid? profissionalId, CancellationToken ct)
+    {
+        var inicio = de.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var fim = ate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).AddDays(1);
+
+        var query = db.Agendamentos
+            .Include(a => a.Profissional)
+            .Include(a => a.Servico)
+            .Where(a => a.DataHoraInicio >= inicio && a.DataHoraInicio < fim);
+
+        if (profissionalId.HasValue)
+            query = query.Where(a => a.ProfissionalId == profissionalId.Value);
+
+        return await query
+            .OrderBy(a => a.DataHoraInicio)
+            .Select(a => new AgendamentoListItem(
+                a.Id,
+                a.ProfissionalId,
+                a.Profissional!.Nome,
+                a.ClienteNome,
+                a.Servico!.Nome,
+                a.DataHoraInicio,
+                a.DataHoraFim,
+                a.Status))
+            .ToListAsync(ct);
+    }
+
     public async Task<AgendamentoResponse> GetAsync(Guid id, CancellationToken ct)
     {
         var a = await db.Agendamentos

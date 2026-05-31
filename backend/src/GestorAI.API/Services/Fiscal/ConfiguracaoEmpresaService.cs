@@ -1,0 +1,92 @@
+using GestorAI.API.Domain.Entities;
+using GestorAI.API.DTOs.Fiscal;
+using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Shared.MultiTenancy;
+using Microsoft.EntityFrameworkCore;
+
+namespace GestorAI.API.Services.Fiscal;
+
+public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantContext)
+{
+    public async Task<ConfiguracaoEmpresaResponse> ObterAsync(CancellationToken ct)
+    {
+        var config = await db.ConfiguracoesEmpresa
+            .FirstOrDefaultAsync(ct);
+
+        if (config is null)
+        {
+            config = new ConfiguracaoEmpresa
+            {
+                Id = Guid.NewGuid(),
+                EmpresaId = tenantContext.EmpresaId,
+                Ambiente = 2,
+            };
+            db.ConfiguracoesEmpresa.Add(config);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return ToResponse(config);
+    }
+
+    public async Task<ConfiguracaoEmpresaResponse> AtualizarAsync(
+        AtualizarConfiguracaoEmpresaRequest req, CancellationToken ct)
+    {
+        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct);
+
+        if (config is null)
+        {
+            config = new ConfiguracaoEmpresa
+            {
+                Id = Guid.NewGuid(),
+                EmpresaId = tenantContext.EmpresaId,
+                Ambiente = 2,
+            };
+            db.ConfiguracoesEmpresa.Add(config);
+        }
+
+        if (req.RazaoSocial is not null) config.RazaoSocial = req.RazaoSocial;
+        if (req.NomeFantasia is not null) config.NomeFantasia = req.NomeFantasia;
+        if (req.Cnpj is not null) config.Cnpj = req.Cnpj;
+        if (req.InscricaoEstadual is not null) config.InscricaoEstadual = req.InscricaoEstadual;
+        if (req.InscricaoMunicipal is not null) config.InscricaoMunicipal = req.InscricaoMunicipal;
+        if (req.Logradouro is not null) config.Logradouro = req.Logradouro;
+        if (req.Numero is not null) config.Numero = req.Numero;
+        if (req.Complemento is not null) config.Complemento = req.Complemento;
+        if (req.Bairro is not null) config.Bairro = req.Bairro;
+        if (req.CodigoMunicipio is not null) config.CodigoMunicipio = req.CodigoMunicipio;
+        if (req.Municipio is not null) config.Municipio = req.Municipio;
+        if (req.Uf is not null) config.Uf = req.Uf;
+        if (req.Cep is not null) config.Cep = req.Cep;
+        if (req.RegimeTributario is not null) config.RegimeTributario = req.RegimeTributario;
+        if (req.CscId is not null) config.CscId = req.CscId;
+        if (req.CscToken is not null) config.CscToken = req.CscToken;
+        if (req.Ambiente is not null) config.Ambiente = req.Ambiente;
+        if (req.SerieNfe is not null) config.SerieNfe = req.SerieNfe;
+        if (req.SerieNfce is not null) config.SerieNfce = req.SerieNfce;
+        if (req.FocusNfeToken is not null) config.FocusNfeToken = req.FocusNfeToken;
+
+        await db.SaveChangesAsync(ct);
+        return ToResponse(config);
+    }
+
+    private static ConfiguracaoEmpresaResponse ToResponse(ConfiguracaoEmpresa c) => new(
+        c.Id,
+        c.RazaoSocial,
+        c.NomeFantasia,
+        c.Cnpj,
+        c.InscricaoEstadual,
+        c.InscricaoMunicipal,
+        c.Logradouro,
+        c.Numero,
+        c.Complemento,
+        c.Bairro,
+        c.CodigoMunicipio,
+        c.Municipio,
+        c.Uf,
+        c.Cep,
+        c.RegimeTributario,
+        c.Ambiente,
+        c.SerieNfe,
+        c.SerieNfce,
+        c.FocusNfeToken is not null);
+}

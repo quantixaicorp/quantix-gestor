@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Círculo de fundo azul -->
+  <circle cx="32" cy="32" r="30" fill="url(#bg)" stroke="#1a7fd4" stroke-width="2"/>
+  <!-- Cabeça do robô -->
+  <rect x="18" y="14" width="28" height="22" rx="6" fill="white"/>
+  <!-- Visor escuro -->
+  <rect x="20" y="17" width="24" height="14" rx="4" fill="#0d1b2e"/>
+  <!-- Olhos brilhantes -->
+  <ellipse cx="26" cy="24" rx="4" ry="3" fill="#00cfff" opacity="0.9"/>
+  <ellipse cx="38" cy="24" rx="4" ry="3" fill="#00cfff" opacity="0.9"/>
+  <!-- Sorriso -->
+  <path d="M25 29 Q32 34 39 29" stroke="#00cfff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Antena -->
+  <line x1="32" y1="14" x2="32" y2="8" stroke="#1a7fd4" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="32" cy="6" r="3" fill="#1a7fd4"/>
+  <!-- Corpo -->
+  <rect x="22" y="38" width="20" height="14" rx="4" fill="white" opacity="0.9"/>
+  <!-- Gravata / detalhe no peito -->
+  <rect x="30" y="40" width="4" height="8" rx="2" fill="#1a7fd4"/>
+  <!-- Fone / orelhas -->
+  <circle cx="16" cy="24" r="4" fill="#1a7fd4"/>
+  <circle cx="48" cy="24" r="4" fill="#1a7fd4"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2196f3"/>
+      <stop offset="100%" stop-color="#0d47a1"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -138,7 +138,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
             .Where(i => i.Tipo == OrcamentoItemTipo.Produto)
             .ToList();
 
-        var subtotal = itensProduto.Sum(i => i.Quantidade * i.ValorUnitario);
+        var subtotal = o.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
 
         var venda = new Venda
         {

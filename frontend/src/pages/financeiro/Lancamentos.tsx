@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import LancamentoForm from '@/components/financeiro/LancamentoForm'
+import { useConfirm } from '@/hooks/useConfirm'
 import type { CreateLancamentoRequest, LancamentoResponse } from '@/types/financeiro'
 
 const tipoVariant = (tipo: string) => tipo === 'Receita' ? 'secondary' : 'destructive'
@@ -20,6 +21,7 @@ export default function Lancamentos() {
   const { lancamentos, loading, list, create, pagar } = useFinanceiro()
   const [modalAberto, setModalAberto] = useState(false)
   const [pagando, setPagando] = useState<string | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { void list() }, [list])
 
@@ -29,7 +31,11 @@ export default function Lancamentos() {
   }
 
   async function handlePagar(l: LancamentoResponse) {
-    if (!confirm(`Confirmar pagamento de ${fmt(l.valor)} — ${l.descricao}?`)) return
+    const ok = await confirm({
+      title: 'Confirmar pagamento?',
+      description: `${fmt(l.valor)} — ${l.descricao}`,
+    })
+    if (!ok) return
     setPagando(l.id)
     try {
       await pagar(l.id, { dataPagamento: new Date().toISOString() })
@@ -103,6 +109,7 @@ export default function Lancamentos() {
           <LancamentoForm onSubmit={handleCreate} onCancel={() => setModalAberto(false)} />
         </DialogContent>
       </Dialog>
+      {ConfirmDialogNode}
     </div>
   )
 }

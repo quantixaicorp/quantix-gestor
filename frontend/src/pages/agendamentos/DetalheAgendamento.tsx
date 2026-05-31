@@ -4,6 +4,8 @@ import { MessageCircle } from 'lucide-react'
 import { useAgendamentos } from '@/hooks/useAgendamentos'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useConfirm } from '@/hooks/useConfirm'
+import { toast } from '@/hooks/useToast'
 import type { AgendamentoStatus } from '@/types/agendamento'
 
 const statusClassName = (s: AgendamentoStatus): string => {
@@ -25,27 +27,33 @@ export default function DetalheAgendamento() {
   const navigate = useNavigate()
   const { agendamento, loading, error, get, confirmar, concluir, cancelar } = useAgendamentos()
   const [acao, setAcao] = useState<string | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => {
     if (id) void get(id)
   }, [get, id])
 
   async function executar(fn: () => Promise<unknown>, label: string) {
-    if (!confirm(`Confirmar: ${label}?`)) return
+    const ok = await confirm({ title: `Confirmar: ${label}?` })
+    if (!ok) return
     setAcao(label)
-    try { await fn() } catch (e) { alert(e instanceof Error ? e.message : 'Erro') }
+    try { await fn() } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setAcao(null) }
   }
 
   async function handleConcluir() {
     if (!id) return
-    if (!confirm('Concluir agendamento? Uma Venda será criada automaticamente.')) return
+    const ok = await confirm({
+      title: 'Concluir agendamento?',
+      description: 'Uma Venda será criada automaticamente.',
+    })
+    if (!ok) return
     setAcao('concluir')
     try {
       const result = await concluir(id)
-      navigate(`/vendas/nova?vendaId=${result.vendaId}`)
+      navigate(`/vendas/nova?vendaId=${result.vendaId}&origem=agendamento`)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao concluir')
+      toast.error(e instanceof Error ? e.message : 'Erro ao concluir')
     } finally {
       setAcao(null)
     }
@@ -140,6 +148,7 @@ export default function DetalheAgendamento() {
       </div>
 
       <Button variant="ghost" onClick={() => navigate('/agendamentos')}>← Voltar</Button>
+      {ConfirmDialogNode}
     </div>
   )
 }

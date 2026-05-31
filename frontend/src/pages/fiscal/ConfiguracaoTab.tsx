@@ -3,6 +3,7 @@ import { useConfiguracaoEmpresa } from '@/hooks/useConfiguracaoEmpresa'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from '@/hooks/useToast'
 import type { AtualizarConfiguracaoEmpresaRequest } from '@/types/fiscal'
 
 const REGIMES = [
@@ -71,9 +72,9 @@ export default function ConfiguracaoTab() {
       if (focusNfeToken.trim()) req.focusNfeToken = focusNfeToken.trim()
       await atualizar(req)
       setFocusNfeToken('')
-      alert('Configuração salva com sucesso!')
+      toast.success('Configuração salva com sucesso!')
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar configuração')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar configuração')
     } finally {
       setSalvando(false)
     }

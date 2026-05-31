@@ -4,6 +4,8 @@ import { useProfissionais } from '@/hooks/useProfissionais'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useConfirm } from '@/hooks/useConfirm'
+import { toast } from '@/hooks/useToast'
 import type { ProfissionalResponse } from '@/types/agendamento'
 
 export default function Profissionais() {
@@ -15,6 +17,7 @@ export default function Profissionais() {
   const [telefone, setTelefone] = useState('')
   const [ativo, setAtivo] = useState(true)
   const [saving, setSaving] = useState(false)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { void list() }, [list])
 
@@ -45,15 +48,16 @@ export default function Profissionais() {
       }
       setShowForm(false)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar')
     } finally {
       setSaving(false)
     }
   }
 
   async function excluir(id: string) {
-    if (!confirm('Excluir profissional?')) return
-    try { await remove(id) } catch (e) { alert(e instanceof Error ? e.message : 'Erro ao excluir') }
+    const ok = await confirm({ title: 'Excluir profissional?', variant: 'destructive' })
+    if (!ok) return
+    try { await remove(id) } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao excluir') }
   }
 
   if (loading) return <p className="text-muted-foreground">Carregando...</p>
@@ -142,6 +146,7 @@ export default function Profissionais() {
           </tbody>
         </table>
       </div>
+      {ConfirmDialogNode}
     </div>
   )
 }

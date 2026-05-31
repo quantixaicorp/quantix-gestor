@@ -6,6 +6,8 @@ import { useOrcamentos } from '@/hooks/useOrcamentos'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useConfirm } from '@/hooks/useConfirm'
+import { toast } from '@/hooks/useToast'
 import type { OrcamentoStatus } from '@/types/orcamento'
 
 const statusClassName = (s: OrcamentoStatus): string => {
@@ -27,15 +29,17 @@ export default function DetalheOrcamento() {
   const navigate = useNavigate()
   const { orcamento, loading, error, get, enviar, aprovar, rejeitar, cancelar, converter } = useOrcamentos()
   const [acao, setAcao] = useState<string | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => {
     if (id) void get(id)
   }, [get, id])
 
   async function executar(fn: () => Promise<unknown>, label: string) {
-    if (!confirm(`Confirmar: ${label}?`)) return
+    const ok = await confirm({ title: `Confirmar: ${label}?` })
+    if (!ok) return
     setAcao(label)
-    try { await fn() } catch (e) { alert(e instanceof Error ? e.message : 'Erro') }
+    try { await fn() } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setAcao(null) }
   }
 
@@ -48,7 +52,7 @@ export default function DetalheOrcamento() {
       w.document.close()
       w.print()
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao abrir PDF')
+      toast.error(e instanceof Error ? e.message : 'Erro ao abrir PDF')
     }
   }
 
@@ -69,13 +73,17 @@ export default function DetalheOrcamento() {
 
   async function handleConverter() {
     if (!id) return
-    if (!confirm('Converter este orçamento em venda? Uma Venda Aberta será criada.')) return
+    const ok = await confirm({
+      title: 'Converter em venda?',
+      description: 'Uma Venda Aberta será criada.',
+    })
+    if (!ok) return
     setAcao('converter')
     try {
       const result = await converter(id)
       if (result.vendaId) navigate(`/vendas/nova?vendaId=${result.vendaId}`)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao converter')
+      toast.error(e instanceof Error ? e.message : 'Erro ao converter')
     } finally {
       setAcao(null)
     }
@@ -193,6 +201,7 @@ export default function DetalheOrcamento() {
       </div>
 
       <Button variant="ghost" onClick={() => navigate('/orcamentos')}>← Voltar</Button>
+      {ConfirmDialogNode}
     </div>
   )
 }

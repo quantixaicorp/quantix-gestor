@@ -3,6 +3,7 @@ import { FileText, RefreshCw, XCircle, ExternalLink, CheckCircle2, Clock, AlertC
 import { useNotasFiscais } from '@/hooks/useNotasFiscais'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { toast } from '@/hooks/useToast'
 import type { NotaFiscalResponse } from '@/types/fiscal'
 
 type StatusKey = 'Pendente' | 'Processando' | 'Autorizada' | 'Rejeitada' | 'Cancelada'
@@ -45,7 +46,7 @@ export default function ListaNotas() {
       setCancelModal(null)
       setMotivo('')
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao cancelar nota')
+      toast.error(e instanceof Error ? e.message : 'Erro ao cancelar nota')
     } finally {
       setActionId(null)
     }
@@ -56,7 +57,7 @@ export default function ListaNotas() {
     try {
       await consultar(id)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao consultar nota')
+      toast.error(e instanceof Error ? e.message : 'Erro ao consultar nota')
     } finally {
       setActionId(null)
     }

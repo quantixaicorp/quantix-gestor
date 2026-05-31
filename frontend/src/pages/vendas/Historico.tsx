@@ -3,6 +3,7 @@ import { useVendas } from '@/hooks/useVendas'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useConfirm } from '@/hooks/useConfirm'
 
 const statusVariant = (s: string): 'secondary' | 'destructive' | 'outline' =>
   s === 'Concluida' ? 'secondary' :
@@ -14,13 +15,19 @@ export default function Historico() {
   const [ate, setAte] = useState('')
   const [status, setStatus] = useState('')
   const [cancelando, setCancelando] = useState<string | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { list() }, [list])
 
   function buscar() { list({ de: de || undefined, ate: ate || undefined, status: status || undefined }) }
 
   async function handleCancelar(id: string) {
-    if (!confirm('Cancelar esta venda? O estoque será estornado.')) return
+    const ok = await confirm({
+      title: 'Cancelar esta venda?',
+      description: 'O estoque será estornado.',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setCancelando(id)
     try { await cancelar(id) } finally { setCancelando(null) }
   }
@@ -97,6 +104,7 @@ export default function Historico() {
           </table>
         </div>
       )}
+      {ConfirmDialogNode}
     </div>
   )
 }

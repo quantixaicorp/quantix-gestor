@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import ProdutoCriarForm from '@/components/estoque/ProdutoCriarForm'
 import ProdutoEditForm from '@/components/estoque/ProdutoEditForm'
 import EntradaEstoqueDialog from '@/components/estoque/EntradaEstoqueDialog'
+import { toast } from '@/hooks/useToast'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
 export default function Produtos() {
@@ -24,7 +25,7 @@ export default function Produtos() {
       await createProduto(data)
       setModalCriar(false)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar produto')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar produto')
     }
   }
 
@@ -33,7 +34,7 @@ export default function Produtos() {
       await updateProduto(id, data)
       setProdutoEditando(null)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar produto')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar produto')
     }
   }
 

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import SeletorProduto from '@/components/vendas/SeletorProduto'
 import ResumoPedido from '@/components/vendas/ResumoPedido'
+import { toast } from '@/hooks/useToast'
 import type { ItemCarrinho, CreateVendaRequest, FecharVendaRequest } from '@/types/vendas'
 
 const FORMAS = [
@@ -25,6 +26,7 @@ export default function NovaVenda() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const vendaIdParam = searchParams.get('vendaId')
+  const origemParam = searchParams.get('origem')
 
   const { create, fechar, get } = useVendas()
   const { clientes, list: listClientes } = useClientes()
@@ -95,7 +97,7 @@ export default function NovaVenda() {
         setVendaFinalizada({ id: result.id, total: result.total })
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao finalizar venda')
+      toast.error(e instanceof Error ? e.message : 'Erro ao finalizar venda')
     } finally {
       setSalvando(false)
     }
@@ -146,13 +148,15 @@ export default function NovaVenda() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-xl font-bold">
-          {vendaIdParam ? 'Finalizar Orçamento' : 'Nova Venda'}
+          {!vendaIdParam ? 'Nova Venda' : origemParam === 'agendamento' ? 'Finalizar Agendamento' : 'Finalizar Orçamento'}
         </h1>
       </div>
 
       {vendaIdParam && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 px-4 py-2.5 text-sm text-blue-700 dark:text-blue-300">
-          Venda gerada a partir de orçamento — confirme o pagamento para concluir.
+          {origemParam === 'agendamento'
+            ? 'Venda gerada a partir de agendamento — confirme o pagamento para concluir.'
+            : 'Venda gerada a partir de orçamento — confirme o pagamento para concluir.'}
         </div>
       )}
 

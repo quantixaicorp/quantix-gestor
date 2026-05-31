@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useConfirm } from '@/hooks/useConfirm'
 import type { LancamentoResponse } from '@/types/financeiro'
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -11,6 +12,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 export default function ContasPagar() {
   const { lancamentos, loading, list, pagar } = useFinanceiro()
   const [pagando, setPagando] = useState<string | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { void list({ tipo: 'Despesa', status: 'Pendente' }) }, [list])
 
@@ -19,7 +21,11 @@ export default function ContasPagar() {
   const totalPendente = lancamentos.reduce((s, l) => s + l.valor, 0)
 
   async function handlePagar(l: LancamentoResponse) {
-    if (!confirm(`Confirmar pagamento de ${fmt(l.valor)} — ${l.descricao}?`)) return
+    const ok = await confirm({
+      title: 'Confirmar pagamento?',
+      description: `${fmt(l.valor)} — ${l.descricao}`,
+    })
+    if (!ok) return
     setPagando(l.id)
     try { await pagar(l.id, { dataPagamento: new Date().toISOString() }) }
     finally { setPagando(null) }
@@ -87,6 +93,7 @@ export default function ContasPagar() {
           </table>
         </div>
       )}
+      {ConfirmDialogNode}
     </div>
   )
 }

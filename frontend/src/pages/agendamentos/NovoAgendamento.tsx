@@ -7,6 +7,7 @@ import { useClientes } from '@/hooks/useClientes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from '@/hooks/useToast'
 
 const fmtHora = (iso: string) =>
   new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -92,7 +93,7 @@ export default function NovoAgendamento() {
       })
       navigate('/agendamentos')
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao criar agendamento')
+      toast.error(e instanceof Error ? e.message : 'Erro ao criar agendamento')
     } finally {
       setSaving(false)
     }

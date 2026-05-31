@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ServicoCriarForm from '@/components/estoque/ServicoCriarForm'
 import ProdutoEditForm from '@/components/estoque/ProdutoEditForm'
+import { toast } from '@/hooks/useToast'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
 
 export default function Servicos() {
@@ -22,7 +23,7 @@ export default function Servicos() {
       await createProduto(data)
       setModalCriar(false)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar serviço')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço')
     }
   }
 
@@ -31,7 +32,7 @@ export default function Servicos() {
       await updateProduto(id, data)
       setEditando(null)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar serviço')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço')
     }
   }
 

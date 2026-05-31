@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useProfissionais } from '@/hooks/useProfissionais'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/hooks/useToast'
 import type { DisponibilidadeItem } from '@/types/agendamento'
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -40,9 +41,9 @@ export default function DisponibilidadeProfissional() {
     setSaving(true)
     try {
       await saveDisponibilidade(id, faixas)
-      alert('Disponibilidade salva!')
+      toast.success('Disponibilidade salva!')
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao salvar')
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar')
     } finally {
       setSaving(false)
     }

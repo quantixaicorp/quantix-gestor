@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
+import { toast } from '@/hooks/useToast'
 import type {
   ContratoListItem, ContratoResponse,
   CreateContratoRequest, GerarCobrancasRequest,
@@ -65,7 +66,7 @@ export function useContratos() {
 
   const downloadPdf = useCallback((id: string) => {
     const win = window.open(`${import.meta.env.VITE_API_URL}/api/contratos/${id}/pdf`, '_blank')
-    if (!win) alert('Permite popups para abrir o PDF.')
+    if (!win) toast('Permite popups para abrir o PDF.')
   }, [])
 
   return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf }

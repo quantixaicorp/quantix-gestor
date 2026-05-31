@@ -62,7 +62,8 @@ export default function DetalheOrcamento() {
       `Segue o Orçamento ORC-${num}: "${orcamento.titulo}"\n` +
       `Total: ${total} | Válido até: ${validade}`
     )
-    const phone = orcamento.clienteWhatsapp.replace(/\D/g, '')
+    const digits = orcamento.clienteWhatsapp.replace(/\D/g, '')
+    const phone = digits.startsWith('55') ? digits : `55${digits}`
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank')
   }
 

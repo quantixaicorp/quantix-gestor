@@ -53,7 +53,8 @@ export default function DetalheAgendamento() {
 
   function abrirWhatsapp() {
     if (!agendamento?.clienteTelefone) return
-    const phone = agendamento.clienteTelefone.replace(/\D/g, '')
+    const digits = agendamento.clienteTelefone.replace(/\D/g, '')
+    const phone = digits.startsWith('55') ? digits : `55${digits}`
     const dt = fmtDt(agendamento.dataHoraInicio)
     const msg = encodeURIComponent(
       `Olá ${agendamento.clienteNome}! ` +

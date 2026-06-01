@@ -85,7 +85,7 @@ export default function Lancamentos() {
                       <Button size="sm" variant="outline"
                         disabled={pagando === l.id}
                         onClick={() => handlePagar(l)}>
-                        {pagando === l.id ? '...' : 'Pagar'}
+                        {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
                       </Button>
                     )}
                   </td>

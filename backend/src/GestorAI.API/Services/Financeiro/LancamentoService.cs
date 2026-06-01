@@ -49,7 +49,8 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
             Descricao = req.Descricao,
             Valor = req.Valor,
             DataVencimento = req.DataVencimento,
-            Status = StatusLancamento.Pendente,
+            Status = tipo == TipoLancamento.Receita ? StatusLancamento.Pago : StatusLancamento.Pendente,
+            DataPagamento = tipo == TipoLancamento.Receita ? req.DataVencimento : null,
             Categoria = req.Categoria,
             Observacao = req.Observacao,
         };

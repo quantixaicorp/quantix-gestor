@@ -15,11 +15,21 @@ public class DashboardService(AppDbContext db)
 
         var vendasHoje = await db.Vendas
             .Where(v => v.Status == StatusVenda.Concluida && v.DataHora.Date == hoje)
-            .SumAsync(v => v.Total, ct);
+            .SumAsync(v => v.Total, ct)
+            + await db.Lancamentos
+            .Where(l => l.Tipo == TipoLancamento.Receita
+                && l.Status == StatusLancamento.Pago
+                && l.DataPagamento.HasValue && l.DataPagamento!.Value.Date == hoje)
+            .SumAsync(l => l.Valor, ct);
 
         var vendasMes = await db.Vendas
             .Where(v => v.Status == StatusVenda.Concluida && v.DataHora >= inicioMes)
-            .SumAsync(v => v.Total, ct);
+            .SumAsync(v => v.Total, ct)
+            + await db.Lancamentos
+            .Where(l => l.Tipo == TipoLancamento.Receita
+                && l.Status == StatusLancamento.Pago
+                && l.DataPagamento.HasValue && l.DataPagamento!.Value.Date >= inicioMes)
+            .SumAsync(l => l.Valor, ct);
 
         var lucroEstimado = await db.ItensVenda
             .Where(i => i.Venda!.Status == StatusVenda.Concluida && i.Venda.DataHora >= inicioMes)

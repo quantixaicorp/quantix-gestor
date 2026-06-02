@@ -49,5 +49,13 @@ public static class AgendamentosEndpoints
         group.MapPost("/{id:guid}/cancelar", async (
             Guid id, AgendamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.CancelarAsync(id, ct)));
+
+        group.MapPost("/{id:guid}/recusar", async (
+            Guid id, AgendamentoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.RecusarAsync(id, ct)));
+
+        group.MapGet("/pendentes-confirmacao", async (
+            AgendamentoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.PendentesConfirmacaoAsync(ct)));
     }
 }

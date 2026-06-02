@@ -147,8 +147,8 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
     public async Task<AgendamentoResponse> ConfirmarAsync(Guid id, CancellationToken ct)
     {
         var a = await FindAsync(id, ct);
-        if (a.Status != AgendamentoStatus.Agendado)
-            throw new AppException("Apenas agendamentos no status Agendado podem ser confirmados.", 400);
+        if (a.Status != AgendamentoStatus.Agendado && a.Status != AgendamentoStatus.AguardandoConfirmacao)
+            throw new AppException("Apenas agendamentos nos status Agendado ou AguardandoConfirmacao podem ser confirmados.", 400);
         a.Status = AgendamentoStatus.Confirmado;
         await db.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
@@ -210,6 +210,33 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
         await db.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
     }
+
+    public async Task<AgendamentoResponse> RecusarAsync(Guid id, CancellationToken ct)
+    {
+        var a = await FindAsync(id, ct);
+        if (a.Status != AgendamentoStatus.AguardandoConfirmacao)
+            throw new AppException("Apenas agendamentos AguardandoConfirmacao podem ser recusados.", 400);
+        a.Status = AgendamentoStatus.Cancelado;
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
+    public async Task<List<AgendamentoListItem>> PendentesConfirmacaoAsync(CancellationToken ct) =>
+        await db.Agendamentos
+            .Include(a => a.Profissional)
+            .Include(a => a.Servico)
+            .Where(a => a.Status == AgendamentoStatus.AguardandoConfirmacao)
+            .OrderBy(a => a.DataHoraInicio)
+            .Select(a => new AgendamentoListItem(
+                a.Id,
+                a.ProfissionalId,
+                a.Profissional!.Nome,
+                a.ClienteNome,
+                a.Servico!.Nome,
+                a.DataHoraInicio,
+                a.DataHoraFim,
+                a.Status))
+            .ToListAsync(ct);
 
     public async Task<List<DateTime>> SlotsAsync(
         Guid profissionalId, DateOnly data, Guid servicoId, CancellationToken ct)

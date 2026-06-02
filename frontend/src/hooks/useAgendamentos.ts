@@ -73,6 +73,15 @@ export function useAgendamentos() {
     setAgendamento(result)
   }, [])
 
+  const recusar = useCallback(async (id: string) => {
+    const result = await api.post<AgendamentoResponse>(`/api/agendamentos/${id}/recusar`, {})
+    setAgendamento(result)
+  }, [])
+
+  const pendentesConfirmacao = useCallback(async () => {
+    return api.get<AgendamentoListItem[]>('/api/agendamentos/pendentes-confirmacao')
+  }, [])
+
   const slots = useCallback(async (profissionalId: string, data: string, servicoId: string) => {
     return api.get<string[]>(
       `/api/agendamentos/slots?profissionalId=${profissionalId}&data=${data}&servicoId=${servicoId}`
@@ -91,6 +100,8 @@ export function useAgendamentos() {
     confirmar,
     concluir,
     cancelar,
+    recusar,
+    pendentesConfirmacao,
     slots,
   }
 }

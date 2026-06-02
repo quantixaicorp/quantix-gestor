@@ -112,6 +112,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
 
         var isNew = config.Id == Guid.Empty;
         config.Slug = req.Slug;
+        if (req.NomeExibicao is not null) config.NomeFantasia = req.NomeExibicao;
         config.CorPrimaria = req.CorPrimaria;
         config.DescricaoPublica = req.DescricaoPublica;
 

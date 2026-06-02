@@ -37,7 +37,11 @@ public static class FiscalEndpoints
             Results.Ok(await svc.SalvarBrandingAsync(req, ct)));
 
         group.MapPost("/configuracao-empresa/logo", async (
-            IFormFile file, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
-            Results.Ok(new { logoUrl = await svc.UploadLogoAsync(file, ct) }));
+            HttpContext ctx, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+        {
+            var file = ctx.Request.Form.Files.GetFile("file");
+            if (file is null) return Results.BadRequest(new { error = "Arquivo não encontrado" });
+            return Results.Ok(new { logoUrl = await svc.UploadLogoAsync(file, ct) });
+        });
     }
 }

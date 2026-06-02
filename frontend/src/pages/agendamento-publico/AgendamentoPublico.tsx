@@ -35,6 +35,13 @@ function buildCalendar(year: number, month: number, diasDisponiveis: number[]) {
   return cells
 }
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
+
+function logoSrc(url: string | null) {
+  if (!url) return null
+  return url.startsWith('http') ? url : `${API_BASE}${url}`
+}
+
 export default function AgendamentoPublico() {
   const { slug } = useParams<{ slug: string }>()
   const bk = usePublicBooking(slug!)
@@ -70,8 +77,8 @@ export default function AgendamentoPublico() {
       {/* Header com branding */}
       <div className="shadow-sm" style={{ backgroundColor: cor }}>
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
-          {bk.info?.logoUrl && (
-            <img src={bk.info.logoUrl} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
+          {logoSrc(bk.info?.logoUrl ?? null) && (
+            <img src={logoSrc(bk.info!.logoUrl)!} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
           )}
           <div>
             <h1 className="text-white font-bold text-lg leading-tight">{bk.info?.nome}</h1>

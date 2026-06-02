@@ -7,6 +7,7 @@ import { toast } from '@/hooks/useToast'
 
 interface BrandingConfig {
   slug: string | null
+  nomeExibicao: string | null
   corPrimaria: string | null
   descricaoPublica: string | null
   logoUrl: string | null
@@ -14,6 +15,7 @@ interface BrandingConfig {
 
 interface ConfiguracaoEmpresaBranding {
   slug?: string
+  nomeFantasia?: string
   corPrimaria?: string
   descricaoPublica?: string
   logoUrl?: string
@@ -22,6 +24,7 @@ interface ConfiguracaoEmpresaBranding {
 export default function AgendamentoPublicoConfig() {
   const [config, setConfig] = useState<BrandingConfig>({
     slug: '',
+    nomeExibicao: '',
     corPrimaria: '#3B82F6',
     descricaoPublica: '',
     logoUrl: null,
@@ -34,6 +37,7 @@ export default function AgendamentoPublicoConfig() {
     api.get<ConfiguracaoEmpresaBranding>('/api/configuracao-empresa')
       .then(data => setConfig({
         slug: data.slug ?? '',
+        nomeExibicao: data.nomeFantasia ?? '',
         corPrimaria: data.corPrimaria ?? '#3B82F6',
         descricaoPublica: data.descricaoPublica ?? '',
         logoUrl: data.logoUrl ?? null,
@@ -55,6 +59,7 @@ export default function AgendamentoPublicoConfig() {
     try {
       await api.put('/api/configuracao-empresa/branding', {
         slug: config.slug,
+        nomeExibicao: config.nomeExibicao || null,
         corPrimaria: config.corPrimaria,
         descricaoPublica: config.descricaoPublica,
       })
@@ -131,6 +136,16 @@ export default function AgendamentoPublicoConfig() {
         </div>
 
         <div className="grid gap-2">
+          <Label>Nome exibido</Label>
+          <Input
+            value={config.nomeExibicao ?? ''}
+            onChange={e => setConfig(c => ({ ...c, nomeExibicao: e.target.value }))}
+            placeholder="Ex: Barbearia do João"
+          />
+          <p className="text-xs text-muted-foreground">Nome que aparece no topo da página de agendamento.</p>
+        </div>
+
+        <div className="grid gap-2">
           <Label>Cor principal</Label>
           <div className="flex items-center gap-3">
             <input
@@ -194,6 +209,45 @@ export default function AgendamentoPublicoConfig() {
             </Button>
           </div>
         )}
+      </div>
+
+      <div className="rounded-md border p-4 space-y-3">
+        <h2 className="font-semibold">Pré-visualização</h2>
+        <p className="text-xs text-muted-foreground">Como o header da sua página pública vai aparecer</p>
+        <div
+          className="rounded-lg overflow-hidden"
+          style={{ backgroundColor: config.corPrimaria ?? '#3B82F6' }}
+        >
+          <div className="px-4 py-4 flex items-center gap-3">
+            {config.logoUrl ? (
+              <img
+                src={`${apiBase}${config.logoUrl}`}
+                alt="Logo"
+                className="h-10 w-10 rounded-full object-cover border-2 border-white/30"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+                {(config.nomeExibicao?.[0] ?? 'E').toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-white font-bold text-base leading-tight">
+                {config.nomeExibicao || 'Nome da sua empresa'}
+              </p>
+              {config.descricaoPublica && (
+                <p className="text-white/80 text-xs">{config.descricaoPublica}</p>
+              )}
+            </div>
+          </div>
+          <div className="bg-white/10 px-4 py-2 flex gap-1">
+            {['Serviço', 'Profissional', 'Data', 'Horário', 'Dados'].map((s, i) => (
+              <div key={s} className="flex-1">
+                <div className="h-1 rounded-full" style={{ backgroundColor: i === 0 ? 'white' : 'rgba(255,255,255,0.3)' }} />
+                <p className="text-white/70 text-[10px] mt-1 text-center hidden sm:block">{s}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Button onClick={() => void handleSave()} disabled={saving}>

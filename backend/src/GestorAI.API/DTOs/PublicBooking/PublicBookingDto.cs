@@ -36,5 +36,6 @@ public record PublicAgendamentoConfirmado(
 
 public record ConfigurarBrandingRequest(
     string Slug,
+    string? NomeExibicao,
     string? CorPrimaria,
     string? DescricaoPublica);

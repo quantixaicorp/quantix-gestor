@@ -15,6 +15,7 @@ using GestorAI.API.Services.Financeiro;
 using GestorAI.API.Services.Contratos;
 using GestorAI.API.Services.Cobrancas;
 using GestorAI.API.Services.Orcamentos;
+using GestorAI.API.Services.PublicBooking;
 using GestorAI.API.Services.Relatorios;
 using GestorAI.API.Services.Vendas;
 using GestorAI.API.Shared.Exceptions;
@@ -85,6 +86,7 @@ builder.Services.AddScoped<NotaFiscalService>();
 builder.Services.AddScoped<ConfiguracaoEmpresaService>();
 builder.Services.AddScoped<ContratoService>();
 builder.Services.AddScoped<CobrancaService>();
+builder.Services.AddScoped<PublicBookingService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
 builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamentoValidator>();
 // Validators
@@ -96,6 +98,7 @@ builder.Services.AddScoped<IValidator<CreateVendaRequest>, CreateVendaValidator>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseStaticFiles();
 app.UseCors();
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
@@ -112,6 +115,7 @@ app.MapAgendamentos();
 app.MapFiscal();
 app.MapContratos();
 app.MapCobrancas();
+app.MapPublicBooking();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
    .AllowAnonymous();

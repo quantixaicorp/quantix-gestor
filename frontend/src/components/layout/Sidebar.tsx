@@ -24,6 +24,7 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  Link as LinkIcon,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -97,6 +98,12 @@ const menuGroups: MenuGroup[] = [
     items: [
       { icon: FileText,    label: 'Contratos', path: '/contratos' },
       { icon: DollarSign, label: 'Cobranças',  path: '/cobrancas' },
+    ],
+  },
+  {
+    label: 'Configurações',
+    items: [
+      { icon: LinkIcon, label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
     ],
   },
 ]

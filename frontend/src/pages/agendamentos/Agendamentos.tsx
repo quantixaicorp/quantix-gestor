@@ -5,13 +5,14 @@ import { useAgendamentos } from '@/hooks/useAgendamentos'
 import { useProfissionais } from '@/hooks/useProfissionais'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import type { AgendamentoStatus } from '@/types/agendamento'
+import type { AgendamentoListItem, AgendamentoStatus } from '@/types/agendamento'
 
 const statusClassName = (s: AgendamentoStatus): string => {
   if (s === 'Agendado')   return 'bg-blue-100 text-blue-700 border-blue-200'
   if (s === 'Confirmado') return 'bg-green-100 text-green-700 border-green-200'
   if (s === 'Concluido')  return 'bg-purple-100 text-purple-700 border-purple-200'
   if (s === 'Cancelado')  return 'bg-red-100 text-red-700 border-red-200'
+  if (s === 'AguardandoConfirmacao') return 'bg-yellow-100 text-yellow-700 border-yellow-200'
   return ''
 }
 
@@ -23,11 +24,17 @@ const toDateStr = (d: Date) => d.toISOString().slice(0, 10)
 export default function Agendamentos() {
   const navigate = useNavigate()
   const [data, setData] = useState(toDateStr(new Date()))
-  const { agendamentos, loading, error, list } = useAgendamentos()
+  const [pendentes, setPendentes] = useState<AgendamentoListItem[]>([])
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
+  const [recusandoId, setRecusandoId] = useState<string | null>(null)
+  const { agendamentos, loading, error, list, confirmar, recusar, pendentesConfirmacao } = useAgendamentos()
   const { profissionais, list: listProfs } = useProfissionais()
 
   useEffect(() => { void listProfs() }, [listProfs])
   useEffect(() => { void list(data) }, [list, data])
+  useEffect(() => {
+    pendentesConfirmacao().then(setPendentes).catch(() => {})
+  }, [pendentesConfirmacao])
 
   function mudarDia(delta: number) {
     const d = new Date(data + 'T12:00:00Z')
@@ -63,6 +70,43 @@ export default function Agendamentos() {
           Hoje
         </Button>
       </div>
+
+      {pendentes.length > 0 && (
+        <div className="rounded-md border border-yellow-300 bg-yellow-50 p-4 space-y-2">
+          <h2 className="font-semibold text-yellow-800 text-sm">
+            {pendentes.length} agendamento(s) aguardando confirmação
+          </h2>
+          {pendentes.map(a => (
+            <div key={a.id} className="flex items-center justify-between bg-white rounded-md border px-3 py-2 text-sm">
+              <div>
+                <p className="font-medium">{a.clienteNome}</p>
+                <p className="text-muted-foreground text-xs">
+                  {a.servicoNome} · {a.profissionalNome} · {new Date(a.dataHoraInicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" disabled={confirmandoId === a.id}
+                  onClick={async () => {
+                    setConfirmandoId(a.id)
+                    try { await confirmar(a.id); setPendentes(p => p.filter(x => x.id !== a.id)) }
+                    finally { setConfirmandoId(null) }
+                  }}>
+                  {confirmandoId === a.id ? '...' : 'Confirmar'}
+                </Button>
+                <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
+                  disabled={recusandoId === a.id}
+                  onClick={async () => {
+                    setRecusandoId(a.id)
+                    try { await recusar(a.id); setPendentes(p => p.filter(x => x.id !== a.id)) }
+                    finally { setRecusandoId(null) }
+                  }}>
+                  {recusandoId === a.id ? '...' : 'Recusar'}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>

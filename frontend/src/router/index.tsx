@@ -29,10 +29,13 @@ import DetalheContrato from '@/pages/contratos/DetalheContrato'
 import Cobrancas from '@/pages/cobrancas/Cobrancas'
 import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
+import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
+import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth /> },
   { path: '/auth/callback', element: <AuthCallback /> },
+  { path: '/agendar/:slug', element: <AgendamentoPublico /> },
   {
     element: <AppLayout />,
     children: [
@@ -63,6 +66,7 @@ export const router = createBrowserRouter([
       { path: '/cobrancas', element: <Cobrancas /> },
       { path: '/cobrancas/nova', element: <NovaCobranca /> },
       { path: '/cobrancas/:id', element: <DetalheCobranca /> },
+      { path: '/configuracoes/agendamento-publico', element: <AgendamentoPublicoConfig /> },
     ],
   },
 ])

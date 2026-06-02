@@ -54,7 +54,7 @@ public class DashboardService(AppDbContext db)
             .SumAsync(l => l.Valor, ct);
 
         var estoqueBaixo = await db.Produtos
-            .CountAsync(p => p.Ativo && p.EstoqueAtual <= p.EstoqueMinimo, ct);
+            .CountAsync(p => p.Ativo && p.Tipo == TipoProduto.Produto && p.EstoqueAtual <= p.EstoqueMinimo, ct);
 
         // Vendas últimos 7 dias
         var inicio7Dias = hoje.AddDays(-6);

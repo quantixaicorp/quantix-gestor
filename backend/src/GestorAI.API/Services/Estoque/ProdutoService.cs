@@ -143,5 +143,5 @@ public class ProdutoService(AppDbContext db, TenantContext tenantContext)
         p.Id, p.CategoriaId, p.Categoria?.Nome ?? "",
         p.Nome, p.Descricao, p.PrecoVenda, p.CustoMedio,
         p.EstoqueAtual, p.EstoqueMinimo, p.CodigoBarras,
-        p.Ativo, p.EstoqueAtual <= p.EstoqueMinimo, p.DuracaoMinutos, p.Tipo);
+        p.Ativo, p.Tipo == TipoProduto.Produto && p.EstoqueAtual <= p.EstoqueMinimo, p.DuracaoMinutos, p.Tipo);
 }

@@ -24,7 +24,7 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
         {
             var produto = produtos.FirstOrDefault(p => p.Id == item.ProdutoId)
                 ?? throw new AppException($"Produto {item.ProdutoId} não encontrado.", 404);
-            if (produto.EstoqueAtual < item.Quantidade)
+            if (produto.Tipo == TipoProduto.Produto && produto.EstoqueAtual < item.Quantidade)
                 throw new AppException(
                     $"Estoque insuficiente para '{produto.Nome}'. " +
                     $"Disponível: {produto.EstoqueAtual}, solicitado: {item.Quantidade}.");
@@ -196,7 +196,7 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
         {
             var produto = produtos.FirstOrDefault(p => p.Id == item.ProdutoId)
                 ?? throw new AppException($"Produto não encontrado.", 404);
-            if (produto.EstoqueAtual < item.Quantidade)
+            if (produto.Tipo == TipoProduto.Produto && produto.EstoqueAtual < item.Quantidade)
                 throw new AppException(
                     $"Estoque insuficiente para '{produto.Nome}'. " +
                     $"Disponível: {produto.EstoqueAtual}, solicitado: {item.Quantidade}.");

@@ -129,7 +129,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         if (file.Length > 2 * 1024 * 1024)
             throw new AppException("Arquivo muito grande. Máximo 2MB.", 400);
 
-        var dir = Path.Combine(env.WebRootPath ?? "wwwroot", "uploads", "logos");
+        var dir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads", "logos");
         Directory.CreateDirectory(dir);
 
         var fileName = $"{tenantContext.EmpresaId}{ext}";

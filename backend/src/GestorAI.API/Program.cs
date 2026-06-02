@@ -97,8 +97,16 @@ builder.Services.AddScoped<IValidator<CreateVendaRequest>, CreateVendaValidator>
 
 var app = builder.Build();
 
+// Garante que wwwroot existe e configura static files com PhysicalFileProvider explícito
+var webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRoot);
+
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot),
+    RequestPath = "",
+});
 app.UseCors();
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();

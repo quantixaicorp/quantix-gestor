@@ -80,7 +80,10 @@ export default function AgendamentoPublicoConfig() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       })
-      if (!res.ok) throw new Error('Erro ao enviar logo')
+      if (!res.ok) {
+        const body = await res.json().catch(() => null) as { error?: string } | null
+        throw new Error(body?.error ?? `Erro ao enviar logo (${res.status})`)
+      }
       const data = await res.json() as { logoUrl: string }
       setConfig(c => ({ ...c, logoUrl: data.logoUrl }))
       toast.success('Logo atualizada!')

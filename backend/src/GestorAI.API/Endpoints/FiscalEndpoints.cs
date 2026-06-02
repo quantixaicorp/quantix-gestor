@@ -1,4 +1,5 @@
 using GestorAI.API.DTOs.Fiscal;
+using GestorAI.API.DTOs.PublicBooking;
 using GestorAI.API.Services.Fiscal;
 
 namespace GestorAI.API.Endpoints;
@@ -30,5 +31,13 @@ public static class FiscalEndpoints
         group.MapPut("/configuracao-empresa", async (
             AtualizarConfiguracaoEmpresaRequest req, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
             Results.Ok(await svc.AtualizarAsync(req, ct)));
+
+        group.MapPut("/configuracao-empresa/branding", async (
+            ConfigurarBrandingRequest req, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.SalvarBrandingAsync(req, ct)));
+
+        group.MapPost("/configuracao-empresa/logo", async (
+            IFormFile file, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+            Results.Ok(new { logoUrl = await svc.UploadLogoAsync(file, ct) }));
     }
 }

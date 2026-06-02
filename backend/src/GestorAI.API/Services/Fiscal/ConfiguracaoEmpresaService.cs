@@ -1,12 +1,16 @@
 using GestorAI.API.Domain.Entities;
 using GestorAI.API.DTOs.Fiscal;
+using GestorAI.API.DTOs.PublicBooking;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.Fiscal;
 
-public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantContext)
+public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantContext, IWebHostEnvironment env)
 {
     public async Task<ConfiguracaoEmpresaResponse> ObterAsync(CancellationToken ct)
     {
@@ -88,5 +92,62 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.Ambiente,
         c.SerieNfe,
         c.SerieNfce,
-        c.FocusNfeToken is not null);
+        c.FocusNfeToken is not null,
+        c.Slug,
+        c.LogoUrl,
+        c.CorPrimaria,
+        c.DescricaoPublica);
+
+    public async Task<ConfiguracaoEmpresaResponse> SalvarBrandingAsync(
+        ConfigurarBrandingRequest req, CancellationToken ct)
+    {
+        var slugEmUso = await db.ConfiguracoesEmpresa
+            .IgnoreQueryFilters()
+            .AnyAsync(c => c.Slug == req.Slug && c.EmpresaId != tenantContext.EmpresaId, ct);
+        if (slugEmUso)
+            throw new AppException("Este slug já está em uso.", 400);
+
+        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
+            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+
+        var isNew = config.Id == Guid.Empty;
+        config.Slug = req.Slug;
+        config.CorPrimaria = req.CorPrimaria;
+        config.DescricaoPublica = req.DescricaoPublica;
+
+        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        await db.SaveChangesAsync(ct);
+        return await ObterAsync(ct);
+    }
+
+    public async Task<string> UploadLogoAsync(IFormFile file, CancellationToken ct)
+    {
+        var extensoesPermitidas = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!extensoesPermitidas.Contains(ext))
+            throw new AppException("Formato inválido. Use jpg, png ou webp.", 400);
+        if (file.Length > 2 * 1024 * 1024)
+            throw new AppException("Arquivo muito grande. Máximo 2MB.", 400);
+
+        var dir = Path.Combine(env.WebRootPath ?? "wwwroot", "uploads", "logos");
+        Directory.CreateDirectory(dir);
+
+        var fileName = $"{tenantContext.EmpresaId}{ext}";
+        var fullPath = Path.Combine(dir, fileName);
+
+        await using var stream = File.Create(fullPath);
+        await file.CopyToAsync(stream, ct);
+
+        var logoUrl = $"/uploads/logos/{fileName}";
+
+        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
+            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+
+        var isNew = config.Id == Guid.Empty;
+        config.LogoUrl = logoUrl;
+        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        await db.SaveChangesAsync(ct);
+
+        return logoUrl;
+    }
 }

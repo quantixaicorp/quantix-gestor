@@ -19,7 +19,11 @@ public record ConfiguracaoEmpresaResponse(
     int? Ambiente,
     int? SerieNfe,
     int? SerieNfce,
-    bool TemToken);
+    bool TemToken,
+    string? Slug,
+    string? LogoUrl,
+    string? CorPrimaria,
+    string? DescricaoPublica);
 
 public record AtualizarConfiguracaoEmpresaRequest(
     string? RazaoSocial,

@@ -5,5 +5,6 @@ public enum AgendamentoStatus
     Agendado,
     Confirmado,
     Concluido,
-    Cancelado
+    Cancelado,
+    AguardandoConfirmacao,
 }

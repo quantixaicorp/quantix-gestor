@@ -69,5 +69,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .WithMany()
             .HasForeignKey(c => c.ClienteId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ConfiguracaoEmpresa>()
+            .HasIndex(c => c.Slug)
+            .IsUnique()
+            .HasFilter("\"Slug\" IS NOT NULL");
     }
 }

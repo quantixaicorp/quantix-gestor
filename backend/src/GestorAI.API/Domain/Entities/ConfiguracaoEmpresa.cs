@@ -24,4 +24,10 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public int? SerieNfe { get; set; }
     public int? SerieNfce { get; set; }
     public string? FocusNfeToken { get; set; }
+
+    // Branding público
+    public string? Slug { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? CorPrimaria { get; set; }
+    public string? DescricaoPublica { get; set; }
 }

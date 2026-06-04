@@ -24,7 +24,7 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<FornecedorResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var f = await db.Fornecedores.FindAsync([id], ct)
+        var f = await db.Fornecedores.FirstOrDefaultAsync(f => f.Id == id, ct)
             ?? throw new AppException("Fornecedor não encontrado", 404);
         return ToResponse(f);
     }
@@ -52,7 +52,7 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<FornecedorResponse> UpdateAsync(Guid id, UpdateFornecedorRequest req, CancellationToken ct)
     {
-        var fornecedor = await db.Fornecedores.FindAsync([id], ct)
+        var fornecedor = await db.Fornecedores.FirstOrDefaultAsync(f => f.Id == id, ct)
             ?? throw new AppException("Fornecedor não encontrado", 404);
 
         fornecedor.Nome = req.Nome;
@@ -72,7 +72,7 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var fornecedor = await db.Fornecedores.FindAsync([id], ct)
+        var fornecedor = await db.Fornecedores.FirstOrDefaultAsync(f => f.Id == id, ct)
             ?? throw new AppException("Fornecedor não encontrado", 404);
         db.Fornecedores.Remove(fornecedor);
         await db.SaveChangesAsync(ct);

@@ -3,12 +3,14 @@ using GestorAI.API.DTOs.Agendamentos;
 using GestorAI.API.DTOs.Clientes;
 using GestorAI.API.DTOs.Estoque;
 using GestorAI.API.DTOs.Financeiro;
+using GestorAI.API.DTOs.Fornecedores;
 using GestorAI.API.DTOs.Vendas;
 using GestorAI.API.Endpoints;
 using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Services.Agendamentos;
 using GestorAI.API.Services.Clientes;
 using GestorAI.API.Services.Dashboard;
+using GestorAI.API.Services.Fornecedores;
 using GestorAI.API.Services.Fiscal;
 using GestorAI.API.Services.Estoque;
 using GestorAI.API.Services.Financeiro;
@@ -70,6 +72,8 @@ builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<ProdutoService>();
 // Services — Clientes
 builder.Services.AddScoped<ClienteService>();
+// Services — Fornecedores
+builder.Services.AddScoped<FornecedorService>();
 // Services — Vendas
 builder.Services.AddScoped<VendaService>();
 // Services — Financeiro
@@ -93,6 +97,7 @@ builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamento
 builder.Services.AddScoped<IValidator<CreateProdutoRequest>, CreateProdutoValidator>();
 builder.Services.AddScoped<IValidator<EntradaEstoqueRequest>, EntradaEstoqueValidator>();
 builder.Services.AddScoped<IValidator<CreateClienteRequest>, CreateClienteValidator>();
+builder.Services.AddScoped<IValidator<CreateFornecedorRequest>, CreateFornecedorValidator>();
 builder.Services.AddScoped<IValidator<CreateVendaRequest>, CreateVendaValidator>();
 
 var app = builder.Build();
@@ -114,6 +119,7 @@ app.UseAuthorization();
 
 app.MapEstoque();
 app.MapClientes();
+app.MapFornecedores();
 app.MapVendas();
 app.MapFinanceiro();
 app.MapDashboard();

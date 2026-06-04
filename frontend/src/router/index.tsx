@@ -31,6 +31,7 @@ import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
 import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
 import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
+import Fornecedores from '@/pages/fornecedores/Fornecedores'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth /> },
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
       { path: '/financeiro/pagar', element: <ContasPagar /> },
       { path: '/financeiro/receber', element: <ContasReceber /> },
       { path: '/clientes', element: <Clientes /> },
+      { path: '/fornecedores', element: <Fornecedores /> },
       { path: '/relatorios', element: <Relatorios /> },
       { path: '/fiscal', element: <Fiscal /> },
       { path: '/contratos', element: <Contratos /> },

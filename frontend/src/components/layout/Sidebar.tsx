@@ -25,6 +25,7 @@ import {
   Moon,
   ChevronDown,
   Link as LinkIcon,
+  Truck,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -85,6 +86,12 @@ const menuGroups: MenuGroup[] = [
     items: [
       { icon: Users,    label: 'Clientes',   path: '/clientes' },
       { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
+    ],
+  },
+  {
+    label: 'Compras',
+    items: [
+      { icon: Truck, label: 'Fornecedores', path: '/fornecedores' },
     ],
   },
   {

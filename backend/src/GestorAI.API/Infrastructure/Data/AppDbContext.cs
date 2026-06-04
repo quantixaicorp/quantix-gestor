@@ -26,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<ConfiguracaoEmpresa> ConfiguracoesEmpresa => Set<ConfiguracaoEmpresa>();
     public DbSet<Contrato> Contratos => Set<Contrato>();
     public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
+    public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,5 +75,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .HasIndex(c => c.Slug)
             .IsUnique()
             .HasFilter("\"Slug\" IS NOT NULL");
+
+        modelBuilder.Entity<Fornecedor>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<Fornecedor>()
+            .HasIndex(f => new { f.EmpresaId, f.CnpjCpf })
+            .IsUnique()
+            .HasFilter("\"CnpjCpf\" IS NOT NULL");
     }
 }

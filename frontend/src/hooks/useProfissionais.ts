@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
 import type {
-  ProfissionalResponse, DisponibilidadeItem,
+  ProfissionalResponse,
   DisponibilidadePeriodoResponse, SalvarDisponibilidadeRequest,
   BloqueioResponse,
 } from '@/types/agendamento'

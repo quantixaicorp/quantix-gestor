@@ -45,20 +45,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         opt.Authority = builder.Configuration["Jwt:Authority"];
         opt.Audience = builder.Configuration["Jwt:Audience"];
         opt.RequireHttpsMetadata = false;
+        opt.MapInboundClaims = false;
         opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = false,
             ValidateLifetime = true,
+            RoleClaimType = "roles",
         };
     });
 
 builder.Services.AddAuthorization(opt =>
 {
-    opt.AddPolicy("AdminOnly", p => p.RequireRole("admin"));
-    opt.AddPolicy("FinanceAccess", p => p.RequireRole("admin", "financeiro"));
-    opt.AddPolicy("EstoqueAccess", p => p.RequireRole("admin", "estoque"));
-    opt.AddPolicy("VendasAccess", p => p.RequireRole("admin", "vendas", "estoque"));
+    static bool superAdmin(System.Security.Claims.ClaimsPrincipal u) =>
+        u.HasClaim("is_superadmin", "true");
+
+    opt.AddPolicy("AdminOnly", p => p.RequireAssertion(ctx =>
+        superAdmin(ctx.User) || ctx.User.IsInRole("admin")));
+    opt.AddPolicy("FinanceAccess", p => p.RequireAssertion(ctx =>
+        superAdmin(ctx.User) || ctx.User.IsInRole("admin") || ctx.User.IsInRole("financeiro")));
+    opt.AddPolicy("EstoqueAccess", p => p.RequireAssertion(ctx =>
+        superAdmin(ctx.User) || ctx.User.IsInRole("admin") || ctx.User.IsInRole("estoque")));
+    opt.AddPolicy("VendasAccess", p => p.RequireAssertion(ctx =>
+        superAdmin(ctx.User) || ctx.User.IsInRole("admin") ||
+        ctx.User.IsInRole("vendas") || ctx.User.IsInRole("estoque")));
 });
 
 builder.Services.AddCors(opt =>

@@ -177,7 +177,7 @@ export default function AgendamentoPublicoConfig() {
         <h2 className="font-semibold">Link do agendamento</h2>
         <div className="grid gap-2">
           <Label>Slug (identificador único)</Label>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <span className="text-sm text-muted-foreground whitespace-nowrap">/agendar/</span>
             <Input
               value={config.slug ?? ''}

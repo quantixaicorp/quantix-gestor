@@ -55,7 +55,7 @@ export default function Fornecedores() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Fornecedores</h1>
         <Button onClick={() => setModalAberto(true)}>
           <Plus size={16} className="mr-2" /> Novo Fornecedor
@@ -75,7 +75,7 @@ export default function Fornecedores() {
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">

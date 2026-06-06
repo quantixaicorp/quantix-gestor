@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
+import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import Sidebar from './Sidebar'
+import { cn } from '@/lib/utils'
 
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -11,10 +13,18 @@ export default function AppLayout() {
     catch { return false }
   })
 
+  const [mobileOpen, setMobileOpen] = useState(false)
+
   useEffect(() => {
     try { localStorage.setItem('sidebar-collapsed', String(collapsed)) }
     catch { /* ignore */ }
   }, [collapsed])
+
+  useEffect(() => {
+    const handler = () => { if (window.innerWidth >= 1024) setMobileOpen(false) }
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   if (isLoading) {
     return (
@@ -28,10 +38,40 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+      {/* Mobile top bar */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center gap-3 px-4 bg-sidebar border-b border-sidebar-border">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          aria-label="Abrir menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <span className="font-semibold text-sidebar-foreground text-sm">GestorAI</span>
+      </header>
+
+      {/* Backdrop for mobile drawer */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((v) => !v)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
+
       <main
-        className="min-h-screen transition-[margin-left] duration-300 p-6"
-        style={{ marginLeft: collapsed ? '4rem' : '16rem' }}
+        className={cn(
+          'min-h-screen transition-[margin-left] duration-300',
+          'px-4 md:px-6',
+          'pt-[72px] pb-4 md:pb-6 lg:pt-6',
+          collapsed ? 'lg:ml-16' : 'lg:ml-64',
+        )}
       >
         <Outlet />
       </main>

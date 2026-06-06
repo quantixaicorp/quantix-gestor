@@ -76,8 +76,8 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Financeiro',
     items: [
-      { icon: Wallet,      label: 'Lançamentos',      path: '/financeiro' },
-      { icon: TrendingDown, label: 'Contas a Pagar',  path: '/financeiro/pagar' },
+      { icon: Wallet,       label: 'Lançamentos',      path: '/financeiro' },
+      { icon: TrendingDown, label: 'Contas a Pagar',   path: '/financeiro/pagar' },
       { icon: TrendingUp,   label: 'Contas a Receber', path: '/financeiro/receber' },
     ],
   },
@@ -118,9 +118,11 @@ const menuGroups: MenuGroup[] = [
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  mobileOpen: boolean
+  onMobileClose: () => void
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
@@ -129,7 +131,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('sidebar-groups')
-      if (saved) return JSON.parse(saved)
+      if (saved) return JSON.parse(saved) as Record<string, boolean>
     } catch { /* ignore */ }
     return Object.fromEntries(menuGroups.map((g) => [g.label, true]))
   })
@@ -147,20 +149,32 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     navigate('/auth')
   }
 
+  const handleNavClick = () => {
+    // Close mobile drawer when a link is clicked
+    onMobileClose()
+  }
+
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose
   const ThemeIcon = resolved === 'dark' ? Sun : Moon
+
+  // On mobile: full-width drawer (always expanded); on desktop: collapsed/expanded
+  const isMobileDrawer = mobileOpen
+  const showLabels = isMobileDrawer || !collapsed
 
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border flex flex-col',
-        'transition-[width] duration-300 overflow-hidden',
-        collapsed ? 'w-16' : 'w-64'
+        'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border flex flex-col',
+        'transition-[width,transform] duration-300 overflow-hidden',
+        'w-64',                                         // mobile always full width
+        collapsed ? 'lg:w-16' : 'lg:w-64',             // desktop width by state
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',  // mobile show/hide
+        'lg:translate-x-0',                             // always visible on desktop
       )}
     >
-      {/* Logo header — invert(1) hue-rotate(180deg): white bg→dark, dark text→white, blue≈blue */}
+      {/* Logo header */}
       <div className="flex flex-col items-center justify-center border-b border-sidebar-border px-3 pt-2 pb-2 shrink-0 gap-1">
-        {collapsed ? (
+        {!showLabels ? (
           <div className="rounded-xl overflow-hidden mx-auto" style={{ width: '48px', height: '48px', position: 'relative' }}>
             <img
               src="/logo-gestorai.jpeg"
@@ -192,10 +206,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       </div>
 
-      {/* Controls bar — theme + collapse */}
+      {/* Controls bar — theme + collapse (hidden on mobile drawer) */}
       <div className={cn(
-        'flex border-b border-sidebar-border shrink-0',
-        collapsed ? 'flex-col items-center gap-1 py-2' : 'justify-end gap-1 px-3 py-1'
+        'border-b border-sidebar-border shrink-0',
+        !showLabels ? 'flex flex-col items-center gap-1 py-2' : 'flex justify-end gap-1 px-3 py-1'
       )}>
         <button
           onClick={toggleTheme}
@@ -204,9 +218,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         >
           <ThemeIcon className="h-4 w-4" />
         </button>
+        {/* Hide collapse toggle on mobile drawer */}
         <button
           onClick={onToggle}
-          className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          className="hidden lg:block p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
           title={collapsed ? 'Expandir menu' : 'Retrair menu'}
         >
           <ToggleIcon className="h-4 w-4" />
@@ -216,10 +231,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
         {menuGroups.map((group, gi) => {
-          const isOpen = collapsed || openGroups[group.label] !== false
+          const isOpen = !showLabels || openGroups[group.label] !== false
           return (
             <div key={group.label} className={cn(gi > 0 && 'mt-1')}>
-              {!collapsed && (
+              {showLabels && (
                 <button
                   onClick={() => toggleGroup(group.label)}
                   className="w-full flex items-center justify-between px-2 pt-2 pb-1"
@@ -233,7 +248,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   )} />
                 </button>
               )}
-              {collapsed && gi > 0 && (
+              {!showLabels && gi > 0 && (
                 <div className="my-2 mx-2 border-t border-sidebar-border" />
               )}
 
@@ -247,15 +262,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <Link
                     key={item.path}
                     to={item.path}
-                    title={collapsed ? item.label : undefined}
+                    title={!showLabels ? item.label : undefined}
+                    onClick={handleNavClick}
                     className={cn(
                       'sidebar-link',
                       isActive && 'sidebar-link-active',
-                      collapsed && 'justify-center px-0'
+                      !showLabels && 'justify-center px-0'
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {showLabels && <span>{item.label}</span>}
                   </Link>
                 )
               })}
@@ -268,14 +284,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="shrink-0 border-t border-sidebar-border p-2">
         <button
           onClick={handleLogout}
-          title={collapsed ? 'Sair' : undefined}
+          title={!showLabels ? 'Sair' : undefined}
           className={cn(
             'sidebar-link w-full text-destructive hover:bg-destructive/10 hover:text-destructive',
-            collapsed && 'justify-center px-0'
+            !showLabels && 'justify-center px-0'
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {!collapsed && <span>Sair</span>}
+          {showLabels && <span>Sair</span>}
         </button>
       </div>
     </aside>

@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 const ADMIN_URL = import.meta.env.VITE_ADMIN_URL ?? 'http://localhost:5001'
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID ?? 'gestorai'
 
-interface JwtPayload { role?: string | string[]; name?: string; sub?: string }
+interface JwtPayload { roles?: string | string[]; is_superadmin?: string; name?: string; sub?: string }
 
 function parseJwt(token: string): JwtPayload | null {
   try {
@@ -45,8 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function applyToken(token: string | null) {
     if (!token) { setIsAuthenticated(false); setIsAdmin(false); return }
     const payload = parseJwt(token)
-    const roles = payload?.role
-    const hasAdmin = Array.isArray(roles) ? roles.includes('admin') : roles === 'admin'
+    const roles = payload?.roles
+    const hasAdmin = payload?.is_superadmin === 'true' ||
+      (Array.isArray(roles) ? roles.includes('admin') : roles === 'admin')
     setIsAuthenticated(true)
     setIsAdmin(hasAdmin)
   }

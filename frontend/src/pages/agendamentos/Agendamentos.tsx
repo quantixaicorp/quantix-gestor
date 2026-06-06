@@ -48,7 +48,7 @@ export default function Agendamentos() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Agenda</h1>
         <Button onClick={() => navigate('/agendamentos/novo')}>Novo Agendamento</Button>
       </div>
@@ -119,7 +119,7 @@ export default function Agendamentos() {
           ) : ativos.map(prof => {
             const cards = agendamentos.filter(a => a.profissionalId === prof.id)
             return (
-              <div key={prof.id} className="rounded-md border">
+              <div key={prof.id} className="overflow-x-auto rounded-md border">
                 <div className="border-b bg-muted/50 px-3 py-2 font-semibold text-sm">
                   {prof.nome}
                 </div>

@@ -14,7 +14,7 @@ export default function ContasReceber() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Contas a Receber</h1>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Total a receber</p>
@@ -23,7 +23,7 @@ export default function ContasReceber() {
       </div>
 
       {loading ? <p className="text-muted-foreground">Carregando...</p> : (
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">

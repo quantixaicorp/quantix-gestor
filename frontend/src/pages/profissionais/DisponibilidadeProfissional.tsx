@@ -209,7 +209,7 @@ export default function DisponibilidadeProfissional() {
 
       {/* Editor principal */}
       <div className="flex-1 space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">Disponibilidade</h1>
           <Button variant="ghost" onClick={() => navigate('/profissionais')}>← Voltar</Button>
         </div>

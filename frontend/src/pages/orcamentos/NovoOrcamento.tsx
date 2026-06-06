@@ -121,7 +121,7 @@ export default function NovoOrcamento() {
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold">Itens</h2>
             <div className="flex gap-2">
               <select onChange={e => { adicionarProduto(e.target.value); e.target.value = '' }}
@@ -143,7 +143,7 @@ export default function NovoOrcamento() {
             </p>
           )}
 
-          <div className="rounded-md border">
+          <div className="overflow-x-auto rounded-md border">
             {itens.map((item, i) => (
               <div key={i} className="flex items-center gap-3 border-b px-4 py-3 last:border-0">
                 <span className="w-16 rounded bg-muted px-2 py-0.5 text-center text-xs font-medium">

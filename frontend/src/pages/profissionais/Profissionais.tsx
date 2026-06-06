@@ -65,7 +65,7 @@ export default function Profissionais() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Profissionais</h1>
         <Button onClick={abrirNovo}>Novo Profissional</Button>
       </div>
@@ -102,7 +102,7 @@ export default function Profissionais() {
         </div>
       )}
 
-      <div className="rounded-md border">
+      <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">

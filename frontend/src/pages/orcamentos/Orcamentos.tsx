@@ -36,7 +36,7 @@ export default function Orcamentos() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Orçamentos</h1>
         <Button onClick={() => navigate('/orcamentos/novo')}>
           <Plus size={16} className="mr-2" /> Novo Orçamento
@@ -59,7 +59,7 @@ export default function Orcamentos() {
       </div>
 
       {loading ? <p className="text-muted-foreground">Carregando...</p> : (
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">

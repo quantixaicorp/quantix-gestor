@@ -3,8 +3,18 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 const ADMIN_URL = import.meta.env.VITE_ADMIN_URL ?? 'http://localhost:5001'
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID ?? 'gestorai'
 
+interface JwtPayload { role?: string | string[]; name?: string; sub?: string }
+
+function parseJwt(token: string): JwtPayload | null {
+  try {
+    const payload = token.split('.')[1]
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as JwtPayload
+  } catch { return null }
+}
+
 interface AuthContextValue {
   isAuthenticated: boolean
+  isAdmin: boolean
   isLoading: boolean
   login: () => Promise<void>
   logout: () => void
@@ -29,10 +39,20 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  function applyToken(token: string | null) {
+    if (!token) { setIsAuthenticated(false); setIsAdmin(false); return }
+    const payload = parseJwt(token)
+    const roles = payload?.role
+    const hasAdmin = Array.isArray(roles) ? roles.includes('admin') : roles === 'admin'
+    setIsAuthenticated(true)
+    setIsAdmin(hasAdmin)
+  }
+
   useEffect(() => {
-    setIsAuthenticated(!!localStorage.getItem('ga_token'))
+    applyToken(localStorage.getItem('ga_token'))
     setIsLoading(false)
   }, [])
 
@@ -75,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('ga_token', tokens.access_token)
     localStorage.setItem('ga_refresh_token', tokens.refresh_token)
     localStorage.removeItem('pkce_verifier')
-    setIsAuthenticated(true)
+    applyToken(tokens.access_token)
   }, [])
 
   const logout = useCallback(() => {
@@ -86,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, handleCallback }}>
+    <AuthContext.Provider value={{ isAuthenticated, isAdmin, isLoading, login, logout, handleCallback }}>
       {children}
     </AuthContext.Provider>
   )

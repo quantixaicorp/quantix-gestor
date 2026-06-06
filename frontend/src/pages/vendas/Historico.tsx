@@ -1,25 +1,46 @@
 import { useEffect, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { useVendas } from '@/hooks/useVendas'
+import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useConfirm } from '@/hooks/useConfirm'
+import { toast } from '@/hooks/useToast'
 
 const statusVariant = (s: string): 'secondary' | 'destructive' | 'outline' =>
   s === 'Concluida' ? 'secondary' :
   s === 'Cancelada' ? 'destructive' : 'outline'
 
 export default function Historico() {
-  const { vendas, loading, list, cancelar } = useVendas()
+  const { vendas, loading, list, cancelar, remove } = useVendas()
+  const { isAdmin } = useAuth()
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
   const [status, setStatus] = useState('')
   const [cancelando, setCancelando] = useState<string | null>(null)
+  const [excluindo, setExcluindo] = useState<string | null>(null)
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { list() }, [list])
 
   function buscar() { list({ de: de || undefined, ate: ate || undefined, status: status || undefined }) }
+
+  async function handleExcluir(id: string) {
+    const ok = await confirm({
+      title: 'Excluir venda do histórico?',
+      description: 'O estoque será estornado e o lançamento financeiro removido. Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    setExcluindo(id)
+    try {
+      await remove(id)
+      toast.success('Venda excluída')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
+    } finally { setExcluindo(null) }
+  }
 
   async function handleCancelar(id: string) {
     const ok = await confirm({
@@ -82,14 +103,25 @@ export default function Historico() {
                     <Badge variant={statusVariant(v.status)}>{v.status}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    {v.status === 'Concluida' && (
-                      <Button size="sm" variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        disabled={cancelando === v.id}
-                        onClick={() => handleCancelar(v.id)}>
-                        {cancelando === v.id ? '...' : 'Cancelar'}
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {v.status === 'Concluida' && (
+                        <Button size="sm" variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          disabled={cancelando === v.id}
+                          onClick={() => handleCancelar(v.id)}>
+                          {cancelando === v.id ? '...' : 'Cancelar'}
+                        </Button>
+                      )}
+                      {isAdmin && (
+                        <Button size="sm" variant="ghost"
+                          disabled={excluindo === v.id}
+                          onClick={() => handleExcluir(v.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="Excluir venda">
+                          {excluindo === v.id ? '...' : <Trash2 size={14} />}
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

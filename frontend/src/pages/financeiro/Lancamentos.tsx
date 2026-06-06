@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import LancamentoForm from '@/components/financeiro/LancamentoForm'
 import { useConfirm } from '@/hooks/useConfirm'
+import { toast } from '@/hooks/useToast'
 import type { CreateLancamentoRequest, LancamentoResponse } from '@/types/financeiro'
 
 const tipoVariant = (tipo: string) => tipo === 'Receita' ? 'secondary' : 'destructive'
@@ -18,9 +20,11 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 
 export default function Lancamentos() {
-  const { lancamentos, loading, list, create, pagar } = useFinanceiro()
+  const { lancamentos, loading, list, create, pagar, remove } = useFinanceiro()
+  const { isAdmin } = useAuth()
   const [modalAberto, setModalAberto] = useState(false)
   const [pagando, setPagando] = useState<string | null>(null)
+  const [excluindo, setExcluindo] = useState<string | null>(null)
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { void list() }, [list])
@@ -28,6 +32,21 @@ export default function Lancamentos() {
   async function handleCreate(data: CreateLancamentoRequest) {
     await create(data)
     setModalAberto(false)
+  }
+
+  async function handleExcluir(l: LancamentoResponse) {
+    const ok = await confirm({
+      title: 'Excluir lançamento?',
+      description: `Esta ação não pode ser desfeita. ${l.descricao} — ${fmt(l.valor)}`,
+    })
+    if (!ok) return
+    setExcluindo(l.id)
+    try {
+      await remove(l.id)
+      toast.success('Lançamento excluído')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
+    } finally { setExcluindo(null) }
   }
 
   async function handlePagar(l: LancamentoResponse) {
@@ -81,13 +100,23 @@ export default function Lancamentos() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    {l.status === 'Pendente' && (
-                      <Button size="sm" variant="outline"
-                        disabled={pagando === l.id}
-                        onClick={() => handlePagar(l)}>
-                        {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {l.status === 'Pendente' && (
+                        <Button size="sm" variant="outline"
+                          disabled={pagando === l.id}
+                          onClick={() => handlePagar(l)}>
+                          {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                        </Button>
+                      )}
+                      {isAdmin && !l.vendaId && (
+                        <Button size="sm" variant="ghost"
+                          disabled={excluindo === l.id}
+                          onClick={() => handleExcluir(l)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

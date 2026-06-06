@@ -47,6 +47,11 @@ export function useFinanceiro() {
     return result
   }, [])
 
+  const remove = useCallback(async (id: string) => {
+    await api.delete(`/api/lancamentos/${id}`)
+    setLancamentos(prev => prev.filter(l => l.id !== id))
+  }, [])
+
   const getFluxoCaixa = useCallback(async (de: string, ate: string) => {
     const data = await api.get<FluxoCaixaResponse>(
       `/api/financeiro/fluxo-caixa?de=${de}&ate=${ate}`)
@@ -54,5 +59,5 @@ export function useFinanceiro() {
     return data
   }, [])
 
-  return { lancamentos, fluxo, loading, error, list, create, pagar, cancelar, getFluxoCaixa }
+  return { lancamentos, fluxo, loading, error, list, create, pagar, cancelar, remove, getFluxoCaixa }
 }

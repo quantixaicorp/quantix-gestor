@@ -34,6 +34,13 @@ public static class FinanceiroEndpoints
             Guid id, LancamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.CancelarAsync(id, ct)));
 
+        group.MapDelete("/lancamentos/{id:guid}", async (
+            Guid id, LancamentoService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        }).RequireAuthorization("AdminOnly");
+
         group.MapGet("/financeiro/fluxo-caixa", async (
             DateTime de, DateTime ate, LancamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetFluxoCaixaAsync(de, ate, ct)));

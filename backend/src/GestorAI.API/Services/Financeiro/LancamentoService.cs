@@ -106,6 +106,18 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
         return ToResponse(lancamento, DateTime.UtcNow.Date);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var lancamento = await db.Lancamentos.FindAsync([id], ct)
+            ?? throw new AppException("Lançamento não encontrado.", 404);
+
+        if (lancamento.VendaId.HasValue)
+            throw new AppException("Lançamentos gerados por vendas não podem ser excluídos diretamente.", 400);
+
+        db.Lancamentos.Remove(lancamento);
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task<FluxoCaixaResponse> GetFluxoCaixaAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {

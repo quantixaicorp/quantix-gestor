@@ -279,6 +279,29 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
             .ToListAsync(ct);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var venda = await db.Vendas
+            .Include(v => v.Lancamento)
+            .Include(v => v.Itens)
+            .FirstOrDefaultAsync(v => v.Id == id, ct)
+            ?? throw new AppException("Venda não encontrada.", 404);
+
+        foreach (var item in venda.Itens)
+        {
+            var produto = await db.Produtos.FindAsync([item.ProdutoId], ct);
+            if (produto is not null)
+                produto.EstoqueAtual += item.Quantidade;
+        }
+
+        if (venda.Lancamento is not null)
+            db.Lancamentos.Remove(venda.Lancamento);
+
+        db.ItensVenda.RemoveRange(venda.Itens);
+        db.Vendas.Remove(venda);
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task<VendaResponse> GetAsync(Guid id, CancellationToken ct)
     {
         var venda = await db.Vendas

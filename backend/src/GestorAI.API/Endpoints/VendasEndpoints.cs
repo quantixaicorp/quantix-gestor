@@ -32,5 +32,12 @@ public static class VendasEndpoints
         group.MapPost("/{id:guid}/fechar", async (
             Guid id, FecharVendaRequest req, VendaService svc, CancellationToken ct) =>
             Results.Ok(await svc.FecharAsync(id, req, ct)));
+
+        group.MapDelete("/{id:guid}", async (
+            Guid id, VendaService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        }).RequireAuthorization("AdminOnly");
     }
 }

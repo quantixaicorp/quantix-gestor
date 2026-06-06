@@ -52,5 +52,10 @@ export function useVendas() {
     return result
   }, [])
 
-  return { vendas, loading, error, list, get, create, cancelar, fechar }
+  const remove = useCallback(async (id: string) => {
+    await api.delete(`/api/vendas/${id}`)
+    setVendas(prev => prev.filter(v => v.id !== id))
+  }, [])
+
+  return { vendas, loading, error, list, get, create, cancelar, fechar, remove }
 }

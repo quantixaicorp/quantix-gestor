@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
-import type { ProfissionalResponse, DisponibilidadeItem, BloqueioResponse } from '@/types/agendamento'
+import type {
+  ProfissionalResponse, DisponibilidadeItem,
+  DisponibilidadePeriodoResponse, SalvarDisponibilidadeRequest,
+  BloqueioResponse,
+} from '@/types/agendamento'
 
 interface CriarProfissionalRequest { nome: string; telefone?: string }
 interface AtualizarProfissionalRequest { nome: string; telefone?: string; ativo: boolean }
-interface SalvarDisponibilidadeRequest { faixas: DisponibilidadeItem[] }
 interface CriarBloqueioRequest {
   profissionalId?: string
   dataInicio: string
@@ -46,13 +49,21 @@ export function useProfissionais() {
     setProfissionais(prev => prev.filter(p => p.id !== id))
   }, [])
 
-  const getDisponibilidade = useCallback(async (id: string) => {
-    return api.get<DisponibilidadeItem[]>(`/api/profissionais/${id}/disponibilidade`)
+  const listPeriodos = useCallback(async (id: string) => {
+    return api.get<DisponibilidadePeriodoResponse[]>(`/api/profissionais/${id}/disponibilidade`)
   }, [])
 
-  const saveDisponibilidade = useCallback(async (id: string, faixas: DisponibilidadeItem[]) => {
-    const req: SalvarDisponibilidadeRequest = { faixas }
+  const getDisponibilidade = useCallback(async (id: string, dataInicio: string, dataFim: string) => {
+    return api.get<DisponibilidadePeriodoResponse>(
+      `/api/profissionais/${id}/disponibilidade/periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`)
+  }, [])
+
+  const saveDisponibilidade = useCallback(async (id: string, req: SalvarDisponibilidadeRequest) => {
     await api.put(`/api/profissionais/${id}/disponibilidade`, req)
+  }, [])
+
+  const deletePeriodo = useCallback(async (id: string, dataInicio: string, dataFim: string) => {
+    await api.delete(`/api/profissionais/${id}/disponibilidade/periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`)
   }, [])
 
   const listBloqueios = useCallback(async (de: string, ate: string) => {
@@ -75,8 +86,10 @@ export function useProfissionais() {
     create,
     update,
     remove,
+    listPeriodos,
     getDisponibilidade,
     saveDisponibilidade,
+    deletePeriodo,
     listBloqueios,
     criarBloqueio,
     deleteBloqueio,

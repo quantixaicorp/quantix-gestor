@@ -85,9 +85,11 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
         var horaInicio = req.DataHoraInicio.TimeOfDay;
         var horaFim = dataHoraFim.TimeOfDay;
 
+        var dataAgendamento = DateOnly.FromDateTime(req.DataHoraInicio);
         var dentroDoHorario = await db.DisponibilidadeSemanais
             .AnyAsync(d => d.ProfissionalId == req.ProfissionalId
                 && d.DiaSemana == diaSemana
+                && d.DataInicio <= dataAgendamento && d.DataFim >= dataAgendamento
                 && d.HoraInicio <= horaInicio
                 && d.HoraFim >= horaFim, ct);
 
@@ -244,7 +246,9 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
         var diaSemana = (int)data.DayOfWeek;
 
         var faixas = await db.DisponibilidadeSemanais
-            .Where(d => d.ProfissionalId == profissionalId && d.DiaSemana == diaSemana)
+            .Where(d => d.ProfissionalId == profissionalId
+                && d.DiaSemana == diaSemana
+                && d.DataInicio <= data && d.DataFim >= data)
             .ToListAsync(ct);
 
         if (faixas.Count == 0) return [];

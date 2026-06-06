@@ -31,14 +31,29 @@ public static class ProfissionaisEndpoints
             return Results.NoContent();
         }).RequireAuthorization();
 
+        // Lista todos os períodos cadastrados
         group.MapGet("/{id:guid}/disponibilidade", async (
             Guid id, ProfissionalService svc, CancellationToken ct) =>
-            Results.Ok(await svc.GetDisponibilidadeAsync(id, ct)));
+            Results.Ok(await svc.ListPeriodosAsync(id, ct)));
 
+        // Retorna faixas de um período específico
+        group.MapGet("/{id:guid}/disponibilidade/periodo", async (
+            Guid id, DateOnly dataInicio, DateOnly dataFim, ProfissionalService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetDisponibilidadeAsync(id, dataInicio, dataFim, ct)));
+
+        // Salva/sobrescreve as faixas de um período específico
         group.MapPut("/{id:guid}/disponibilidade", async (
             Guid id, SalvarDisponibilidadeRequest req, ProfissionalService svc, CancellationToken ct) =>
         {
             await svc.SalvarDisponibilidadeAsync(id, req, ct);
+            return Results.NoContent();
+        }).RequireAuthorization();
+
+        // Exclui todas as faixas de um período específico
+        group.MapDelete("/{id:guid}/disponibilidade/periodo", async (
+            Guid id, DateOnly dataInicio, DateOnly dataFim, ProfissionalService svc, CancellationToken ct) =>
+        {
+            await svc.ExcluirPeriodoAsync(id, dataInicio, dataFim, ct);
             return Results.NoContent();
         }).RequireAuthorization();
 

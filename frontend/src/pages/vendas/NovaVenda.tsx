@@ -4,7 +4,6 @@ import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import { useVendas } from '@/hooks/useVendas'
 import { useClientes } from '@/hooks/useClientes'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import SeletorProduto from '@/components/vendas/SeletorProduto'
 import ResumoPedido from '@/components/vendas/ResumoPedido'
@@ -39,6 +38,8 @@ export default function NovaVenda() {
   const [salvando, setSalvando] = useState(false)
   const [vendaFinalizada, setVendaFinalizada] = useState<{ id: string; total: number } | null>(null)
   const [carregando, setCarregando] = useState(false)
+  const hoje = new Date().toISOString().slice(0, 10)
+  const [dataVenda, setDataVenda] = useState(hoje)
 
   useEffect(() => {
     listClientes()
@@ -92,6 +93,7 @@ export default function NovaVenda() {
           desconto,
           formaPagamento,
           parcelas: formaPagamento === 'Cartao' ? parcelas : undefined,
+          dataHora: dataVenda !== hoje ? new Date(dataVenda + 'T12:00:00').toISOString() : undefined,
         }
         const result = await create(req)
         setVendaFinalizada({ id: result.id, total: result.total })
@@ -201,6 +203,19 @@ export default function NovaVenda() {
                 <option value="">Balcão (sem cliente)</option>
                 {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
               </select>
+            </div>
+          )}
+
+          {!vendaIdParam && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Data da venda</Label>
+              <input
+                type="date"
+                value={dataVenda}
+                max={hoje}
+                onChange={e => setDataVenda(e.target.value)}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm"
+              />
             </div>
           )}
 

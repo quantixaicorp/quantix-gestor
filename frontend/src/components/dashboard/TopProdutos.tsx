@@ -7,7 +7,7 @@ import type { TopProdutoResponse } from '@/types/dashboard'
 interface Props { dados: TopProdutoResponse[] }
 
 export default function TopProdutos({ dados }: Props) {
-  const data = dados.map(d => ({
+  const data = (dados ?? []).map(d => ({
     nome: d.nome.length > 15 ? d.nome.slice(0, 15) + '…' : d.nome,
     qtd: d.quantidadeVendida,
     total: d.totalFaturado,

@@ -7,7 +7,9 @@ public record KpiResponse(
     decimal ContasPagarVencidas,
     decimal ContasPagarProximas7Dias,
     decimal ContasReceberPendentes,
-    int ProdutosEstoqueBaixo);
+    int ProdutosEstoqueBaixo,
+    decimal TotalReceitasMes,
+    decimal TotalDespesasMes);
 
 public record VendasDiaResponse(DateTime Data, decimal Total, int Quantidade);
 

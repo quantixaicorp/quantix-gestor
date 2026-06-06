@@ -6,6 +6,8 @@ export interface KpiResponse {
   contasPagarProximas7Dias: number
   contasReceberPendentes: number
   produtosEstoqueBaixo: number
+  totalReceitasMes: number
+  totalDespesasMes: number
 }
 
 export interface VendasDiaResponse { data: string; total: number; quantidade: number }

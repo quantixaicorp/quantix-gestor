@@ -66,8 +66,17 @@ async function request<T>(path: string, options: RequestInit = {}, retried = fal
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(error.error ?? res.statusText)
+    const body = await res.json().catch(() => null)
+    if (body) {
+      // ValidationProblem: { errors: { campo: ['msg', ...] } }
+      if (body.errors && typeof body.errors === 'object') {
+        const msgs = (Object.values(body.errors) as string[][]).flat().join('; ')
+        throw new Error(msgs || body.title || 'Erro de validação')
+      }
+      if (body.error) throw new Error(body.error)
+      if (body.title) throw new Error(body.title)
+    }
+    throw new Error(res.statusText || `Erro ${res.status}`)
   }
 
   if (res.status === 204) return undefined as T

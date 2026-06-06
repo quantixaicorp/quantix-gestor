@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
+import ErrorPage from '@/components/ErrorPage'
 import Auth from '@/pages/Auth'
 import AuthCallback from '@/pages/AuthCallback'
 import Dashboard from '@/pages/Dashboard'
@@ -34,11 +35,12 @@ import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoCo
 import Fornecedores from '@/pages/fornecedores/Fornecedores'
 
 export const router = createBrowserRouter([
-  { path: '/auth', element: <Auth /> },
-  { path: '/auth/callback', element: <AuthCallback /> },
-  { path: '/agendar/:slug', element: <AgendamentoPublico /> },
+  { path: '/auth', element: <Auth />, errorElement: <ErrorPage /> },
+  { path: '/auth/callback', element: <AuthCallback />, errorElement: <ErrorPage /> },
+  { path: '/agendar/:slug', element: <AgendamentoPublico />, errorElement: <ErrorPage /> },
   {
     element: <AppLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <Dashboard /> },
       { path: '/vendas', element: <Historico /> },

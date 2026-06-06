@@ -19,6 +19,7 @@ public class DashboardService(AppDbContext db)
             + await db.Lancamentos
             .Where(l => l.Tipo == TipoLancamento.Receita
                 && l.Status == StatusLancamento.Pago
+                && l.VendaId == null
                 && l.DataPagamento.HasValue && l.DataPagamento!.Value.Date == hoje)
             .SumAsync(l => l.Valor, ct);
 
@@ -28,6 +29,7 @@ public class DashboardService(AppDbContext db)
             + await db.Lancamentos
             .Where(l => l.Tipo == TipoLancamento.Receita
                 && l.Status == StatusLancamento.Pago
+                && l.VendaId == null
                 && l.DataPagamento.HasValue && l.DataPagamento!.Value.Date >= inicioMes)
             .SumAsync(l => l.Valor, ct);
 
@@ -55,6 +57,18 @@ public class DashboardService(AppDbContext db)
 
         var estoqueBaixo = await db.Produtos
             .CountAsync(p => p.Ativo && p.Tipo == TipoProduto.Produto && p.EstoqueAtual <= p.EstoqueMinimo, ct);
+
+        var totalReceitasMes = await db.Lancamentos
+            .Where(l => l.Tipo == TipoLancamento.Receita
+                && l.Status == StatusLancamento.Pago
+                && l.DataPagamento.HasValue && l.DataPagamento!.Value.Date >= inicioMes)
+            .SumAsync(l => l.Valor, ct);
+
+        var totalDespesasMes = await db.Lancamentos
+            .Where(l => l.Tipo == TipoLancamento.Despesa
+                && l.Status == StatusLancamento.Pago
+                && l.DataPagamento.HasValue && l.DataPagamento!.Value.Date >= inicioMes)
+            .SumAsync(l => l.Valor, ct);
 
         // Vendas últimos 7 dias
         var inicio7Dias = hoje.AddDays(-6);
@@ -104,7 +118,8 @@ public class DashboardService(AppDbContext db)
 
         return new DashboardResponse(
             new KpiResponse(vendasHoje, vendasMes, lucroEstimado,
-                contasPagarVencidas, contasPagarProximas, contasReceberPendentes, estoqueBaixo),
+                contasPagarVencidas, contasPagarProximas, contasReceberPendentes, estoqueBaixo,
+                totalReceitasMes, totalDespesasMes),
             vendas7Dias,
             fluxoSerie,
             topProdutos);

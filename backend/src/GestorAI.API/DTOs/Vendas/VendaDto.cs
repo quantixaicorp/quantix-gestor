@@ -8,7 +8,8 @@ public record CreateVendaRequest(
     decimal Desconto,
     string FormaPagamento,
     int? Parcelas,
-    string? Observacao);
+    string? Observacao,
+    DateTime? DataHora = null);
 
 public record ItemVendaResponse(
     Guid ProdutoId,

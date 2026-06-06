@@ -14,15 +14,16 @@ const HOURS = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => HOUR_S
 const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 const STATUS_STYLES: Record<AgendamentoStatus, string> = {
-  Agendado:   'border-l-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200',
-  Confirmado: 'border-l-green-500 bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-200',
-  Concluido:  'border-l-gray-400 bg-gray-100 dark:bg-gray-800 text-gray-500',
-  Cancelado:  'border-l-red-300 bg-red-50/50 dark:bg-red-950/20 text-red-400 opacity-50',
+  Agendado:               'border-l-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200',
+  AguardandoConfirmacao:  'border-l-yellow-400 bg-yellow-50 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-200',
+  Confirmado:             'border-l-green-500 bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-200',
+  Concluido:              'border-l-gray-400 bg-gray-100 dark:bg-gray-800 text-gray-500',
+  Cancelado:              'border-l-red-300 bg-red-50/50 dark:bg-red-950/20 text-red-400 opacity-50',
 }
 
 const STATUS_LABEL: Record<AgendamentoStatus, string> = {
-  Agendado: 'Agendado', Confirmado: 'Confirmado',
-  Concluido: 'Concluído', Cancelado: 'Cancelado',
+  Agendado: 'Agendado', AguardandoConfirmacao: 'Aguardando',
+  Confirmado: 'Confirmado', Concluido: 'Concluído', Cancelado: 'Cancelado',
 }
 
 function getMonday(date: Date): Date {

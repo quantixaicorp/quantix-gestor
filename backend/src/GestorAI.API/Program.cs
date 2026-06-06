@@ -130,6 +130,7 @@ app.MapFiscal();
 app.MapContratos();
 app.MapCobrancas();
 app.MapPublicBooking();
+app.MapAdmin();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
    .AllowAnonymous();

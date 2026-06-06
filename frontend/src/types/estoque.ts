@@ -29,6 +29,7 @@ export interface CreateProdutoRequest {
   estoqueMinimo: number
   codigoBarras?: string
   tipo: TipoProduto
+  duracaoMinutos?: number | null
 }
 
 export interface UpdateProdutoRequest {

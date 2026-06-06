@@ -51,18 +51,45 @@ public class ProfissionalService(AppDbContext db, TenantContext tenantContext)
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task<List<DisponibilidadeItem>> GetDisponibilidadeAsync(Guid id, CancellationToken ct)
+    public async Task<DisponibilidadePeriodoResponse?> GetDisponibilidadeAsync(
+        Guid id, DateOnly dataInicio, DateOnly dataFim, CancellationToken ct)
     {
         _ = await db.Profissionais.FindAsync([id], ct)
             ?? throw new AppException("Profissional não encontrado.", 404);
-        return await db.DisponibilidadeSemanais
-            .Where(d => d.ProfissionalId == id)
+
+        var faixas = await db.DisponibilidadeSemanais
+            .Where(d => d.ProfissionalId == id && d.DataInicio == dataInicio && d.DataFim == dataFim)
             .OrderBy(d => d.DiaSemana).ThenBy(d => d.HoraInicio)
             .Select(d => new DisponibilidadeItem(
                 d.DiaSemana,
                 $"{d.HoraInicio.Hours:D2}:{d.HoraInicio.Minutes:D2}",
                 $"{d.HoraFim.Hours:D2}:{d.HoraFim.Minutes:D2}"))
             .ToListAsync(ct);
+
+        return new DisponibilidadePeriodoResponse(dataInicio, dataFim, faixas);
+    }
+
+    public async Task<List<DisponibilidadePeriodoResponse>> ListPeriodosAsync(Guid id, CancellationToken ct)
+    {
+        _ = await db.Profissionais.FindAsync([id], ct)
+            ?? throw new AppException("Profissional não encontrado.", 404);
+
+        var all = await db.DisponibilidadeSemanais
+            .Where(d => d.ProfissionalId == id && d.DataInicio > DateOnly.MinValue)
+            .OrderBy(d => d.DataInicio).ThenBy(d => d.DiaSemana).ThenBy(d => d.HoraInicio)
+            .ToListAsync(ct);
+
+        return all
+            .GroupBy(d => (d.DataInicio, d.DataFim))
+            .Select(g => new DisponibilidadePeriodoResponse(
+                g.Key.DataInicio,
+                g.Key.DataFim,
+                g.Select(d => new DisponibilidadeItem(
+                    d.DiaSemana,
+                    $"{d.HoraInicio.Hours:D2}:{d.HoraInicio.Minutes:D2}",
+                    $"{d.HoraFim.Hours:D2}:{d.HoraFim.Minutes:D2}"))
+                 .ToList()))
+            .ToList();
     }
 
     public async Task SalvarDisponibilidadeAsync(Guid id, SalvarDisponibilidadeRequest req, CancellationToken ct)
@@ -70,8 +97,12 @@ public class ProfissionalService(AppDbContext db, TenantContext tenantContext)
         _ = await db.Profissionais.FindAsync([id], ct)
             ?? throw new AppException("Profissional não encontrado.", 404);
 
+        if (req.DataFim < req.DataInicio)
+            throw new AppException("DataFim deve ser igual ou posterior a DataInicio.");
+
+        // Remove apenas as faixas do período exato sendo salvo
         var existentes = await db.DisponibilidadeSemanais
-            .Where(d => d.ProfissionalId == id)
+            .Where(d => d.ProfissionalId == id && d.DataInicio == req.DataInicio && d.DataFim == req.DataFim)
             .ToListAsync(ct);
         db.DisponibilidadeSemanais.RemoveRange(existentes);
 
@@ -90,9 +121,20 @@ public class ProfissionalService(AppDbContext db, TenantContext tenantContext)
                 DiaSemana = faixa.DiaSemana,
                 HoraInicio = inicio,
                 HoraFim = fim,
+                DataInicio = req.DataInicio,
+                DataFim = req.DataFim,
             });
         }
 
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task ExcluirPeriodoAsync(Guid id, DateOnly dataInicio, DateOnly dataFim, CancellationToken ct)
+    {
+        var existentes = await db.DisponibilidadeSemanais
+            .Where(d => d.ProfissionalId == id && d.DataInicio == dataInicio && d.DataFim == dataFim)
+            .ToListAsync(ct);
+        db.DisponibilidadeSemanais.RemoveRange(existentes);
         await db.SaveChangesAsync(ct);
     }
 

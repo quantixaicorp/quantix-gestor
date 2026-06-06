@@ -11,6 +11,7 @@ export interface CreateVendaRequest {
   formaPagamento: 'Dinheiro' | 'Pix' | 'Cartao' | 'Outro'
   parcelas?: number
   observacao?: string
+  dataHora?: string
 }
 
 export interface ItemVendaResponse {

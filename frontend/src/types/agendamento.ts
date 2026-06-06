@@ -48,10 +48,24 @@ export interface ProfissionalResponse {
   ativo: boolean
 }
 
+export type TipoPeriodo = 'semana' | 'mes' | 'trimestre' | 'semestre' | 'ano'
+
 export interface DisponibilidadeItem {
   diaSemana: number
   horaInicio: string
   horaFim: string
+}
+
+export interface DisponibilidadePeriodoResponse {
+  dataInicio: string   // YYYY-MM-DD
+  dataFim: string      // YYYY-MM-DD
+  faixas: DisponibilidadeItem[]
+}
+
+export interface SalvarDisponibilidadeRequest {
+  dataInicio: string
+  dataFim: string
+  faixas: DisponibilidadeItem[]
 }
 
 export interface BloqueioResponse {

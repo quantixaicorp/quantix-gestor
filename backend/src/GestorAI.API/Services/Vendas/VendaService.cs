@@ -55,10 +55,15 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 
             var total = subtotal - req.Desconto;
 
+            var dataHora = req.DataHora.HasValue
+                ? DateTime.SpecifyKind(req.DataHora.Value, DateTimeKind.Utc)
+                : DateTime.UtcNow;
+
             var venda = new Venda
             {
                 EmpresaId = tenantContext.EmpresaId,
                 ClienteId = req.ClienteId,
+                DataHora = dataHora,
                 Status = StatusVenda.Concluida,
                 Subtotal = subtotal,
                 Desconto = req.Desconto,

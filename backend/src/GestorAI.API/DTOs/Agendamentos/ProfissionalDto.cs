@@ -8,7 +8,15 @@ public record AtualizarProfissionalRequest(string Nome, string? Telefone, bool A
 
 public record DisponibilidadeItem(int DiaSemana, string HoraInicio, string HoraFim);
 
-public record SalvarDisponibilidadeRequest(List<DisponibilidadeItem> Faixas);
+public record DisponibilidadePeriodoResponse(
+    DateOnly DataInicio,
+    DateOnly DataFim,
+    List<DisponibilidadeItem> Faixas);
+
+public record SalvarDisponibilidadeRequest(
+    DateOnly DataInicio,
+    DateOnly DataFim,
+    List<DisponibilidadeItem> Faixas);
 
 public record CriarBloqueioRequest(Guid? ProfissionalId, DateTime DataInicio, DateTime DataFim, string? Motivo);
 

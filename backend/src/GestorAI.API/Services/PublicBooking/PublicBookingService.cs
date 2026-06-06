@@ -54,9 +54,12 @@ public class PublicBookingService(AppDbContext db)
             .FirstOrDefaultAsync(p => p.Id == profissionalId && p.EmpresaId == empresaId, ct)
             ?? throw new AppException("Profissional não encontrado.", 404);
 
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
         return await db.DisponibilidadeSemanais
             .IgnoreQueryFilters()
-            .Where(d => d.ProfissionalId == profissionalId)
+            .Where(d => d.ProfissionalId == profissionalId
+                && d.DataInicio > DateOnly.MinValue
+                && d.DataFim >= hoje)
             .Select(d => d.DiaSemana)
             .Distinct()
             .ToListAsync(ct);
@@ -69,7 +72,9 @@ public class PublicBookingService(AppDbContext db)
 
         var faixas = await db.DisponibilidadeSemanais
             .IgnoreQueryFilters()
-            .Where(d => d.ProfissionalId == profissionalId && d.DiaSemana == diaSemana)
+            .Where(d => d.ProfissionalId == profissionalId
+                && d.DiaSemana == diaSemana
+                && d.DataInicio <= data && d.DataFim >= data)
             .ToListAsync(ct);
 
         if (faixas.Count == 0) return [];

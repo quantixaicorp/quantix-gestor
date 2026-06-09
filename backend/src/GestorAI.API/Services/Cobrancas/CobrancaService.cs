@@ -87,6 +87,10 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         c.DataPagamento = req.DataPagamento;
         c.FormaPagamento = forma;
         await db.SaveChangesAsync(ct);
+
+        if (c.ContratoId.HasValue)
+            await VerificarEncerramentoContratoAsync(c.ContratoId.Value, ct);
+
         return await GetAsync(id, ct);
     }
 
@@ -222,6 +226,29 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
             _ => FormaPagamento.Outro,
         };
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task VerificarEncerramentoContratoAsync(Guid contratoId, CancellationToken ct)
+    {
+        var contrato = await db.Contratos
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == contratoId, ct);
+
+        if (contrato is null
+            || contrato.Status != ContratoStatus.Ativo
+            || contrato.TipoCobranca != TipoCobranca.ParceladoPrazoFixo)
+            return;
+
+        var todasPagas = await db.Cobrancas
+            .IgnoreQueryFilters()
+            .Where(c => c.ContratoId == contratoId)
+            .AllAsync(c => c.Status == CobrancaStatus.Pago, ct);
+
+        if (todasPagas)
+        {
+            contrato.Status = ContratoStatus.Encerrado;
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>

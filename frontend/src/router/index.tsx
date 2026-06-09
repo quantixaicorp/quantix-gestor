@@ -27,6 +27,7 @@ import Fiscal from '@/pages/fiscal/Fiscal'
 import Contratos from '@/pages/contratos/Contratos'
 import NovoContrato from '@/pages/contratos/NovoContrato'
 import DetalheContrato from '@/pages/contratos/DetalheContrato'
+import ContratoTemplatesPage from '@/pages/contratos/ContratoTemplates'
 import Cobrancas from '@/pages/cobrancas/Cobrancas'
 import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
       { path: '/fiscal', element: <Fiscal /> },
       { path: '/contratos', element: <Contratos /> },
       { path: '/contratos/novo', element: <NovoContrato /> },
+      { path: '/contratos/templates', element: <ContratoTemplatesPage /> },
       { path: '/contratos/:id', element: <DetalheContrato /> },
       { path: '/cobrancas', element: <Cobrancas /> },
       { path: '/cobrancas/nova', element: <NovaCobranca /> },

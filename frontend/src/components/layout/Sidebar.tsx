@@ -105,6 +105,7 @@ const menuGroups: MenuGroup[] = [
     label: 'Contratos',
     items: [
       { icon: FileText,    label: 'Contratos', path: '/contratos' },
+      { icon: FileText,    label: 'Templates', path: '/contratos/templates' },
       { icon: DollarSign, label: 'Cobranças',  path: '/cobrancas' },
     ],
   },

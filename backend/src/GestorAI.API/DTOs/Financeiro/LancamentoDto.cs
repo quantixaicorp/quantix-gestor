@@ -30,3 +30,17 @@ public record FluxoCaixaResponse(
     decimal TotalDespesas,
     decimal SaldoFinal,
     List<FluxoCaixaItemResponse> Itens);
+
+public record LancamentoResumo(
+    decimal TotalReceitasMes,
+    decimal TotalDespesasMes,
+    decimal SaldoMes,
+    decimal TotalPendente);
+
+public record UpdateLancamentoRequest(
+    string Tipo,
+    string Descricao,
+    decimal Valor,
+    DateTime DataVencimento,
+    string Categoria,
+    string? Observacao);

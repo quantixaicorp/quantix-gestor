@@ -15,9 +15,17 @@ public static class FinanceiroEndpoints
             LancamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.ListAsync(tipo, status, vencimentoAte, ct)));
 
+        group.MapGet("/lancamentos/resumo", async (
+            LancamentoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetResumoAsync(ct)));
+
         group.MapGet("/lancamentos/{id:guid}", async (
             Guid id, LancamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetAsync(id, ct)));
+
+        group.MapPut("/lancamentos/{id:guid}", async (
+            Guid id, UpdateLancamentoRequest req, LancamentoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.UpdateAsync(id, req, ct)));
 
         group.MapPost("/lancamentos", async (
             CreateLancamentoRequest req, LancamentoService svc, CancellationToken ct) =>

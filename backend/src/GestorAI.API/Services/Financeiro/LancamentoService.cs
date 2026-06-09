@@ -145,6 +145,58 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
         return new FluxoCaixaResponse(totalR, totalD, totalR - totalD, agrupados);
     }
 
+    public async Task<LancamentoResumo> GetResumoAsync(CancellationToken ct)
+    {
+        var hoje = DateTime.UtcNow.Date;
+        var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var totalReceitas = await db.Lancamentos
+            .Where(l => l.Status == StatusLancamento.Pago
+                     && l.Tipo == TipoLancamento.Receita
+                     && l.DataPagamento.HasValue
+                     && l.DataPagamento.Value >= inicioMes)
+            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+
+        var totalDespesas = await db.Lancamentos
+            .Where(l => l.Status == StatusLancamento.Pago
+                     && l.Tipo == TipoLancamento.Despesa
+                     && l.DataPagamento.HasValue
+                     && l.DataPagamento.Value >= inicioMes)
+            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+
+        var totalPendente = await db.Lancamentos
+            .Where(l => l.Status == StatusLancamento.Pendente
+                     && l.DataVencimento.Date >= hoje)
+            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+
+        return new LancamentoResumo(totalReceitas, totalDespesas, totalReceitas - totalDespesas, totalPendente);
+    }
+
+    public async Task<LancamentoResponse> UpdateAsync(Guid id, UpdateLancamentoRequest req, CancellationToken ct)
+    {
+        var l = await db.Lancamentos.FindAsync([id], ct)
+            ?? throw new AppException("Lançamento não encontrado.", 404);
+
+        if (l.Status != StatusLancamento.Pendente)
+            throw new AppException("Apenas lançamentos pendentes podem ser editados.", 400);
+
+        if (l.VendaId.HasValue)
+            throw new AppException("Lançamentos gerados por vendas não podem ser editados.", 400);
+
+        if (!Enum.TryParse<TipoLancamento>(req.Tipo, out var tipo))
+            throw new AppException($"Tipo inválido: {req.Tipo}.", 400);
+
+        l.Tipo = tipo;
+        l.Descricao = req.Descricao;
+        l.Valor = req.Valor;
+        l.DataVencimento = req.DataVencimento;
+        l.Categoria = req.Categoria;
+        l.Observacao = req.Observacao;
+        await db.SaveChangesAsync(ct);
+
+        return await GetAsync(id, ct);
+    }
+
     private static LancamentoResponse ToResponse(Lancamento l, DateTime hoje) => new(
         l.Id, l.Tipo.ToString(), l.Descricao, l.Valor,
         l.DataVencimento, l.DataPagamento, l.Status.ToString(),

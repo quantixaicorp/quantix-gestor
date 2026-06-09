@@ -7,6 +7,15 @@ import type {
 } from '@/types/contrato'
 import type { CobrancaListItem } from '@/types/cobranca'
 
+interface ContratoVencendoItem {
+  id: string
+  numero: number
+  clienteNome: string
+  titulo: string
+  dataFim: string
+  valor: number
+}
+
 export function useContratos() {
   const [contratos, setContratos] = useState<ContratoListItem[]>([])
   const [contrato, setContrato] = useState<ContratoResponse | null>(null)
@@ -69,5 +78,14 @@ export function useContratos() {
     if (!win) toast('Permite popups para abrir o PDF.')
   }, [])
 
-  return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf }
+  const renovar = useCallback(async (id: string) => {
+    const result = await api.post<ContratoResponse>(`/api/contratos/${id}/renovar`, {})
+    return result
+  }, [])
+
+  const fetchVencendo = useCallback(async (dias = 30): Promise<ContratoVencendoItem[]> => {
+    return api.get<ContratoVencendoItem[]>(`/api/contratos/vencendo?dias=${dias}`)
+  }, [])
+
+  return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, fetchVencendo }
 }

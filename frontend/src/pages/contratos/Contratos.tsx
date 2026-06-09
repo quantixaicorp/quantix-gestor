@@ -20,10 +20,15 @@ const TIPO_LABEL: Record<string, string> = {
 
 export default function Contratos() {
   const navigate = useNavigate()
-  const { contratos, loading, error, list } = useContratos()
+  const { contratos, loading, error, list, fetchVencendo } = useContratos()
   const [filtroStatus, setFiltroStatus] = useState('')
+  const [vencendo, setVencendo] = useState<{ id: string; numero: number; clienteNome: string; titulo: string; dataFim: string; valor: number }[]>([])
 
   useEffect(() => { void list(filtroStatus || undefined) }, [list, filtroStatus])
+
+  useEffect(() => {
+    void fetchVencendo(30).then(setVencendo).catch(() => {})
+  }, [fetchVencendo])
 
   const fmtVal = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('pt-BR')
@@ -53,6 +58,25 @@ export default function Contratos() {
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {vencendo.length > 0 && (
+        <div className="rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 px-4 py-3 text-sm text-yellow-800 dark:text-yellow-300">
+          <strong>{vencendo.length} contrato(s)</strong> vence(m) nos próximos 30 dias:{' '}
+          {vencendo.map(v => (
+            <span key={v.id} className="inline-flex items-center gap-1 mr-3">
+              <button
+                className="underline font-medium hover:opacity-80"
+                onClick={() => navigate(`/contratos/${v.id}`)}
+              >
+                {String(v.numero).padStart(3, '0')} — {v.titulo}
+              </button>
+              <span className="text-yellow-600 dark:text-yellow-400">
+                ({new Date(v.dataFim + 'T00:00:00').toLocaleDateString('pt-BR')})
+              </span>
+            </span>
+          ))}
         </div>
       )}
 

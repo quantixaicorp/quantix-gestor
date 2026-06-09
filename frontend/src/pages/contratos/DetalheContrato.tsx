@@ -15,13 +15,14 @@ const STATUS_STYLES: Record<string, string> = {
 export default function DetalheContrato() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { contrato, loading, error, get, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf } = useContratos()
+  const { contrato, loading, error, get, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar } = useContratos()
 
   const [modalGerar, setModalGerar] = useState(false)
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
   const [gerandoMsg, setGerandoMsg] = useState('')
   const [actionError, setActionError] = useState('')
+  const [renovando, setRenovando] = useState(false)
 
   useEffect(() => { if (id) void get(id) }, [id, get])
 
@@ -51,6 +52,20 @@ export default function DetalheContrato() {
   if (!contrato) return null
 
   const c = contrato
+
+  async function handleRenovar() {
+    if (!id) return
+    setRenovando(true)
+    setActionError('')
+    try {
+      const novo = await renovar(c.id)
+      navigate(`/contratos/${novo.id}`)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Erro ao renovar')
+    } finally {
+      setRenovando(false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
@@ -140,6 +155,11 @@ export default function DetalheContrato() {
           <>
             <Button variant="outline" onClick={() => handleAcao(() => encerrar(c.id))}>Encerrar</Button>
             <Button variant="outline" className="text-destructive" onClick={() => handleAcao(() => cancelar(c.id))}>Cancelar</Button>
+            {c.dataFim && (
+              <Button variant="outline" onClick={handleRenovar} disabled={renovando}>
+                {renovando ? 'Renovando...' : 'Renovar Contrato'}
+              </Button>
+            )}
           </>
         )}
       </div>

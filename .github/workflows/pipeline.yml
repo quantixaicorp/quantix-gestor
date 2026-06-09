@@ -102,12 +102,16 @@ jobs:
           rsync -az --delete -e ssh \
             ./publish/backend/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}/
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chown -R www-data:www-data ${{ secrets.VPS_DEPLOY_PATH }}"
 
       - name: Sync frontend
         run: |
           rsync -az --delete -e ssh \
             ./publish/frontend/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_FRONTEND_PATH }}/
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chown -R www-data:www-data ${{ secrets.VPS_FRONTEND_PATH }}"
 
       - name: Run migrations
         run: |

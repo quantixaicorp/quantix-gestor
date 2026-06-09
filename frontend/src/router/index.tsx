@@ -31,6 +31,7 @@ import Cobrancas from '@/pages/cobrancas/Cobrancas'
 import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
 import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
+import OrcamentoPublicoPage from '@/pages/orcamentos-publicos/OrcamentoPublico'
 import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
 import Fornecedores from '@/pages/fornecedores/Fornecedores'
 
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
   { path: '/auth', element: <Auth />, errorElement: <ErrorPage /> },
   { path: '/auth/callback', element: <AuthCallback />, errorElement: <ErrorPage /> },
   { path: '/agendar/:slug', element: <AgendamentoPublico />, errorElement: <ErrorPage /> },
+  { path: '/orcamento/:token', element: <OrcamentoPublicoPage />, errorElement: <ErrorPage /> },
   {
     element: <AppLayout />,
     errorElement: <ErrorPage />,

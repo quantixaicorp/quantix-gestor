@@ -160,6 +160,25 @@ export default function DetalheOrcamento() {
         </Button>
       </div>
 
+      {o.tokenPublico && o.status !== 'Rascunho' && (
+        <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
+          <p className="text-sm flex-1 truncate font-mono text-muted-foreground">
+            {window.location.origin}/orcamento/{o.tokenPublico}
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              void navigator.clipboard.writeText(
+                `${window.location.origin}/orcamento/${o.tokenPublico}`
+              )
+            }}
+          >
+            Copiar link
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-1 text-sm text-muted-foreground">
         <p>Válido até: <strong className="text-foreground">{fmtDate(o.dataValidade)}</strong></p>
         {o.observacao && <p>Obs: {o.observacao}</p>}

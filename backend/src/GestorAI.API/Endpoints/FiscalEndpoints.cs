@@ -43,5 +43,12 @@ public static class FiscalEndpoints
             if (file is null) return Results.BadRequest(new { error = "Arquivo não encontrado" });
             return Results.Ok(new { logoUrl = await svc.UploadLogoAsync(file, ct) });
         });
+
+        group.MapPut("/configuracao-empresa/integracoes", async (
+            SalvarIntegracoesRequest req, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+        {
+            await svc.SalvarIntegracoesAsync(req, ct);
+            return Results.Ok();
+        });
     }
 }

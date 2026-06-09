@@ -23,7 +23,11 @@ public record ConfiguracaoEmpresaResponse(
     string? Slug,
     string? LogoUrl,
     string? CorPrimaria,
-    string? DescricaoPublica);
+    string? DescricaoPublica,
+    string? AsaasApiKey,
+    bool AsaasSandbox);
+
+public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox);
 
 public record AtualizarConfiguracaoEmpresaRequest(
     string? RazaoSocial,

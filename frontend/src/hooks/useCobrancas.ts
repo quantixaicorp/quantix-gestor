@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
 import type {
-  AgingData, CobrancaListItem, CobrancaResponse,
+  AgingData, CobrancaAsaasResponse, CobrancaListItem, CobrancaResponse,
   CreateCobrancaRequest, PagarCobrancaRequest,
 } from '@/types/cobranca'
 
@@ -64,5 +64,9 @@ export function useCobrancas() {
     return api.get<AgingData>('/api/cobrancas/aging')
   }, [])
 
-  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging }
+  const enviarAsaas = useCallback(async (id: string, billingType: 'PIX' | 'BOLETO') => {
+    return api.post<CobrancaAsaasResponse>(`/api/cobrancas/${id}/enviar-asaas`, { billingType })
+  }, [])
+
+  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging, enviarAsaas }
 }

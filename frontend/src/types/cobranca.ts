@@ -14,6 +14,10 @@ export interface CobrancaResponse {
   formaPagamento: string | null
   observacao: string | null
   criadoEm: string
+  asaasId: string | null
+  asaasPaymentLink: string | null
+  asaasPixQrCode: string | null
+  asaasBoletoUrl: string | null
 }
 
 export interface CobrancaListItem {
@@ -38,6 +42,13 @@ export interface CreateCobrancaRequest {
 export interface PagarCobrancaRequest {
   dataPagamento: string
   formaPagamento: string
+}
+
+export interface CobrancaAsaasResponse {
+  asaasId: string
+  paymentLink: string | null
+  pixQrCode: string | null
+  boletoUrl: string | null
 }
 
 export interface AgingData {

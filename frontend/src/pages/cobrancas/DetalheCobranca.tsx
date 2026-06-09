@@ -17,13 +17,14 @@ const FORMAS_PAGAMENTO = ['Dinheiro', 'Pix', 'Cartao', 'Outro']
 export default function DetalheCobranca() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { cobranca, loading, error, get, pagar, cancelar, abrirWhatsapp } = useCobrancas()
+  const { cobranca, loading, error, get, pagar, cancelar, abrirWhatsapp, enviarAsaas } = useCobrancas()
 
   const [modalPagar, setModalPagar] = useState(false)
   const [dataPagamento, setDataPagamento] = useState('')
   const [formaPagamento, setFormaPagamento] = useState('Pix')
   const [actionError, setActionError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [enviando, setEnviando] = useState<'PIX' | 'BOLETO' | null>(null)
 
   useEffect(() => { if (id) void get(id) }, [id, get])
 
@@ -50,6 +51,20 @@ export default function DetalheCobranca() {
   const handleWhatsapp = async () => {
     if (!id) return
     try { await abrirWhatsapp(id) } catch (e) { setActionError(e instanceof Error ? e.message : 'Erro') }
+  }
+
+  const handleEnviarAsaas = async (tipo: 'PIX' | 'BOLETO') => {
+    if (!id) return
+    setEnviando(tipo)
+    setActionError('')
+    try {
+      await enviarAsaas(id, tipo)
+      await get(id)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Erro ao gerar cobrança Asaas')
+    } finally {
+      setEnviando(null)
+    }
   }
 
   if (loading && !cobranca) return <div className="text-muted-foreground p-8">Carregando...</div>
@@ -105,6 +120,37 @@ export default function DetalheCobranca() {
           </Button>
           <Button variant="outline" className="text-destructive" onClick={handleCancelar}>Cancelar</Button>
         </div>
+      )}
+
+      {(c.status === 'Pendente' || c.status === 'Vencido') && !c.asaasId && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void handleEnviarAsaas('PIX')}
+            disabled={enviando !== null}
+          >
+            {enviando === 'PIX' ? 'Gerando...' : 'Gerar PIX (Asaas)'}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void handleEnviarAsaas('BOLETO')}
+            disabled={enviando !== null}
+          >
+            {enviando === 'BOLETO' ? 'Gerando...' : 'Gerar Boleto (Asaas)'}
+          </Button>
+        </div>
+      )}
+      {c.asaasPaymentLink && (
+        <a
+          href={c.asaasPaymentLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline inline-block"
+        >
+          Ver cobrança no Asaas →
+        </a>
       )}
 
       {modalPagar && (

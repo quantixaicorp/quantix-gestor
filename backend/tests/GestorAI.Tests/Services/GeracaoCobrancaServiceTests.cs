@@ -58,6 +58,8 @@ public class GeracaoCobrancaServiceTests
         Assert.Equal(new DateOnly(2026, 7, 10), cobranca.DataVencimento);
         Assert.Equal("Mensalidade 07/2026", cobranca.Referencia);
         Assert.Equal(300m, cobranca.Valor);
+        Assert.Equal(_empresaId, cobranca.EmpresaId);
+        Assert.Equal(CobrancaStatus.Pendente, cobranca.Status);
     }
 
     [Fact]

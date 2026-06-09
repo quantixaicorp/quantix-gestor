@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
 import type {
-  CobrancaListItem, CobrancaResponse,
+  AgingData, CobrancaListItem, CobrancaResponse,
   CreateCobrancaRequest, PagarCobrancaRequest,
 } from '@/types/cobranca'
 
@@ -60,5 +60,9 @@ export function useCobrancas() {
     window.open(url, '_blank')
   }, [])
 
-  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp }
+  const fetchAging = useCallback(async (): Promise<AgingData> => {
+    return api.get<AgingData>('/api/cobrancas/aging')
+  }, [])
+
+  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging }
 }

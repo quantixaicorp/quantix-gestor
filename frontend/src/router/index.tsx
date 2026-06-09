@@ -35,6 +35,7 @@ import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
 import OrcamentoPublicoPage from '@/pages/orcamentos-publicos/OrcamentoPublico'
 import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
 import Integracoes from '@/pages/configuracoes/Integracoes'
+import Automacao from '@/pages/configuracoes/Automacao'
 import Fornecedores from '@/pages/fornecedores/Fornecedores'
 
 export const router = createBrowserRouter([
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
       { path: '/cobrancas/:id', element: <DetalheCobranca /> },
       { path: '/configuracoes/agendamento-publico', element: <AgendamentoPublicoConfig /> },
       { path: '/configuracoes/integracoes', element: <Integracoes /> },
+      { path: '/configuracoes/automacao', element: <Automacao /> },
     ],
   },
 ])

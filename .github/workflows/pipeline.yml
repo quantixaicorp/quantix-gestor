@@ -54,7 +54,7 @@ jobs:
         working-directory: backend
         run: |
           dotnet tool restore
-          dotnet restore -r linux-x64
+          dotnet restore src/GestorAI.API/GestorAI.API.csproj -r linux-x64
           dotnet ef migrations bundle \
             --project src/GestorAI.API/GestorAI.API.csproj \
             --output ../publish/migrate \

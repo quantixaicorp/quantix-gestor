@@ -304,6 +304,7 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
             Periodicidade = original.Periodicidade,
             DiaVencimento = original.DiaVencimento,
             Observacao = original.Observacao,
+            Status = ContratoStatus.Rascunho,
         };
 
         foreach (var item in original.Itens)

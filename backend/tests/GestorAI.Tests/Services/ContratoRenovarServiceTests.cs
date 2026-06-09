@@ -85,4 +85,18 @@ public class ContratoRenovarServiceTests
         Assert.Single(vencendo);
         Assert.Equal(hoje.AddDays(15), vencendo[0].DataFim);
     }
+
+    [Fact]
+    public async Task ListVencendoAsync_ExcluiContratosForaDoPrazo()
+    {
+        var (db, svc) = Setup();
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await CriarContratoAsync(db, ContratoStatus.Ativo, hoje.AddDays(60));  // fora do prazo de 30 dias
+        await CriarContratoAsync(db, ContratoStatus.Ativo, null);              // sem DataFim — deve ser excluído
+
+        var vencendo = await svc.ListVencendoAsync(30, default);
+
+        Assert.Empty(vencendo);
+    }
 }

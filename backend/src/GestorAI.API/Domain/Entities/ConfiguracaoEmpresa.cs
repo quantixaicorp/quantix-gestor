@@ -33,16 +33,16 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public string? AsaasApiKey { get; set; }
     public bool AsaasSandbox { get; set; } = true;
 
-    // Evolution API
+    // Evolution API (WhatsApp)
     public string? EvolutionApiUrl { get; set; }
     public string? EvolutionApiKey { get; set; }
     public string? EvolutionInstance { get; set; }
 
-    // Toggles de lembrete
-    public bool Lembrete3dAntes { get; set; } = true;
-    public bool Lembrete1dAntes { get; set; } = true;
-    public bool LembreteNoDia { get; set; } = true;
-    public bool Lembrete1dDepois { get; set; } = true;
-    public bool Lembrete3dDepois { get; set; } = false;
-    public bool Lembrete7dDepois { get; set; } = false;
+    // Lembretes de cobrança
+    public bool Lembrete3dAntes  { get; set; }
+    public bool Lembrete1dAntes  { get; set; }
+    public bool LembreteNoDia    { get; set; }
+    public bool Lembrete1dDepois { get; set; }
+    public bool Lembrete3dDepois { get; set; }
+    public bool Lembrete7dDepois { get; set; }
 }

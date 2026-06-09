@@ -143,6 +143,7 @@ app.MapAgendamentos();
 app.MapFiscal();
 app.MapContratos();
 app.MapCobrancas();
+app.MapWebhooks();
 app.MapPublicBooking();
 app.MapAdmin();
 

@@ -21,6 +21,7 @@ public record ItemVendaResponse(
 
 public record VendaResponse(
     Guid Id,
+    Guid? ClienteId,
     string? ClienteNome,
     DateTime DataHora,
     string Status,
@@ -34,6 +35,7 @@ public record VendaResponse(
 
 public record VendaListItem(
     Guid Id,
+    Guid? ClienteId,
     string? ClienteNome,
     DateTime DataHora,
     string Status,
@@ -41,3 +43,8 @@ public record VendaListItem(
     string FormaPagamento);
 
 public record FecharVendaRequest(string FormaPagamento, int? Parcelas, string? Observacao);
+
+public record UpdateVendaRequest(
+    Guid? ClienteId,
+    string FormaPagamento,
+    DateTime DataHora);

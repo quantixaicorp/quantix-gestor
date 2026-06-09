@@ -26,6 +26,9 @@ internal class FakeEvolutionApiService : IEvolutionApiService
         EnviadosPara.Add(whatsapp);
         return Task.FromResult(!ShouldFail);
     }
+
+    public Task<bool> TestarConexaoAsync(string apiUrl, string apiKey, CancellationToken ct)
+        => Task.FromResult(true);
 }
 
 // ---------------------------------------------------------------------------

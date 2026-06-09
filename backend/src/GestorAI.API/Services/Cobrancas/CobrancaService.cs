@@ -121,16 +121,17 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        var pendentes = await db.Cobrancas
-            .Where(c => c.Status == CobrancaStatus.Pendente)
-            .ToListAsync(ct);
+        var aReceber = await db.Cobrancas
+            .Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento >= hoje)
+            .SumAsync(c => (decimal?)c.Valor, ct) ?? 0m;
+
+        var vencido = await db.Cobrancas
+            .Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje)
+            .SumAsync(c => (decimal?)c.Valor, ct) ?? 0m;
 
         var recebido = await db.Cobrancas
             .Where(c => c.Status == CobrancaStatus.Pago && c.DataPagamento >= inicioMes)
             .SumAsync(c => (decimal?)c.Valor, ct) ?? 0m;
-
-        var aReceber = pendentes.Where(c => c.DataVencimento >= hoje).Sum(c => c.Valor);
-        var vencido   = pendentes.Where(c => c.DataVencimento < hoje).Sum(c => c.Valor);
 
         return new CobrancaResumo(aReceber, vencido, recebido);
     }

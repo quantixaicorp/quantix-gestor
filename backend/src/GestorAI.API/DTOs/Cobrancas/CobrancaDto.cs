@@ -62,4 +62,4 @@ public record CobrancaAsaasResponse(
 public record CobrancaResumo(
     decimal TotalAReceber,
     decimal TotalVencido,
-    decimal TotalRecebido);
+    decimal TotalRecebidoNoMes);

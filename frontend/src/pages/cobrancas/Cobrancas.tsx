@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { DollarSign, Plus } from 'lucide-react'
 import { useCobrancas } from '@/hooks/useCobrancas'
 import { AgingPanel } from '@/components/cobrancas/AgingPanel'
+import { ResumoCards } from '@/components/cobrancas/ResumoCards'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -15,7 +16,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function Cobrancas() {
   const navigate = useNavigate()
-  const { cobrancas, loading, error, list, fetchAging } = useCobrancas()
+  const { cobrancas, loading, error, list, fetchAging, fetchResumo } = useCobrancas()
   const [filtroStatus, setFiltroStatus] = useState('')
   const [filtroMes, setFiltroMes] = useState('')
 
@@ -47,6 +48,8 @@ export default function Cobrancas() {
           </Button>
         </div>
       </div>
+
+      <ResumoCards fetchResumo={fetchResumo} />
 
       <AgingPanel fetchAging={fetchAging} />
 

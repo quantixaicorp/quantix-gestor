@@ -5,6 +5,12 @@ import type {
   CreateCobrancaRequest, PagarCobrancaRequest,
 } from '@/types/cobranca'
 
+interface CobrancaResumo {
+  totalAReceber: number
+  totalVencido: number
+  totalRecebidoNoMes: number
+}
+
 export function useCobrancas() {
   const [cobrancas, setCobrancas] = useState<CobrancaListItem[]>([])
   const [cobranca, setCobranca] = useState<CobrancaResponse | null>(null)
@@ -64,9 +70,13 @@ export function useCobrancas() {
     return api.get<AgingData>('/api/cobrancas/aging')
   }, [])
 
+  const fetchResumo = useCallback(async (): Promise<CobrancaResumo> => {
+    return api.get<CobrancaResumo>('/api/cobrancas/resumo')
+  }, [])
+
   const enviarAsaas = useCallback(async (id: string, billingType: 'PIX' | 'BOLETO') => {
     return api.post<CobrancaAsaasResponse>(`/api/cobrancas/${id}/enviar-asaas`, { billingType })
   }, [])
 
-  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging, enviarAsaas }
+  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging, fetchResumo, enviarAsaas }
 }

@@ -1,6 +1,7 @@
 // backend/src/GestorAI.API/Services/Orcamentos/OrcamentoService.cs
 using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
+using GestorAI.API.DTOs.Cobrancas;
 using GestorAI.API.DTOs.Orcamentos;
 using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Shared.Exceptions;
@@ -265,6 +266,46 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         o.Status = OrcamentoStatus.Rejeitado;
         await db.SaveChangesAsync(ct);
         return ToPublicoResponse(o);
+    }
+
+    public async Task<CobrancaResponse> GerarCobrancaAsync(
+        Guid id, DateOnly dataVencimento, CancellationToken ct)
+    {
+        var orc = await db.Orcamentos
+            .Include(o => o.Itens)
+            .Include(o => o.Cliente)
+            .FirstOrDefaultAsync(o => o.Id == id, ct)
+            ?? throw new AppException("Orçamento não encontrado.", 404);
+
+        if (orc.Status != OrcamentoStatus.Aprovado && orc.Status != OrcamentoStatus.Enviado)
+            throw new AppException("Apenas orçamentos Aprovados ou Enviados podem gerar cobrança.", 400);
+
+        if (orc.ClienteId is null)
+            throw new AppException("Orçamento sem cliente vinculado.", 400);
+
+        var total = orc.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
+        var referencia = $"Orçamento ORC-{orc.Numero:D3} — {orc.Titulo}";
+
+        var cobranca = new Cobranca
+        {
+            EmpresaId = tenantContext.EmpresaId,
+            ClienteId = orc.ClienteId.Value,
+            Referencia = referencia,
+            Valor = total,
+            DataVencimento = dataVencimento,
+        };
+        db.Cobrancas.Add(cobranca);
+        await db.SaveChangesAsync(ct);
+
+        var created = await db.Cobrancas
+            .Include(c => c.Cliente)
+            .FirstAsync(c => c.Id == cobranca.Id, ct);
+
+        return new CobrancaResponse(
+            created.Id, created.Cliente!.Nome, created.Cliente.Whatsapp ?? "",
+            null, null,
+            created.Referencia, created.Valor, created.DataVencimento,
+            null, created.Status.ToString(), null, null, created.CriadoEm);
     }
 
     private async Task<Orcamento> FindAsync(Guid id, CancellationToken ct)

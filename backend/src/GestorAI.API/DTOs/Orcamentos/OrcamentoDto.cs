@@ -62,3 +62,5 @@ public record OrcamentoItemPublicoResponse(
     decimal Quantidade,
     decimal ValorUnitario,
     decimal Total);
+
+public record GerarCobrancaOrcamentoRequest(DateOnly DataVencimento);

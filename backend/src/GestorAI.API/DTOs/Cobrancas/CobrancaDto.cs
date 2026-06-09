@@ -58,3 +58,8 @@ public record CobrancaAsaasResponse(
     string? PaymentLink,
     string? PixQrCode,
     string? BoletoUrl);
+
+public record CobrancaResumo(
+    decimal TotalAReceber,
+    decimal TotalVencido,
+    decimal TotalRecebido);

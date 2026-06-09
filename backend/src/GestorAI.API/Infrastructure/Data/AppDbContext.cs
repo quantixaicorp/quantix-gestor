@@ -27,6 +27,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<Contrato> Contratos => Set<Contrato>();
     public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
     public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
+    public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
+    public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -81,5 +83,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .HasIndex(f => new { f.EmpresaId, f.CnpjCpf })
             .IsUnique()
             .HasFilter("\"CnpjCpf\" IS NOT NULL");
+
+        modelBuilder.Entity<ContratoTemplate>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<ContratoTemplateItem>().ToTable("ContratoTemplateItens");
     }
 }

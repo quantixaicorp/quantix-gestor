@@ -8,4 +8,5 @@ public enum AutomacaoTipoEvento
     Lembrete1dDepois = 4,
     Lembrete3dDepois = 5,
     Lembrete7dDepois = 6,
+    CobrancaGerada   = 7,
 }

@@ -25,5 +25,11 @@ public static class ClientesEndpoints
         group.MapPut("/{id:guid}", async (
             Guid id, UpdateClienteRequest req, ClienteService svc, CancellationToken ct) =>
             Results.Ok(await svc.UpdateAsync(id, req, ct)));
+
+        group.MapDelete("/{id:guid}", async (Guid id, ClienteService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        });
     }
 }

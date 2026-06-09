@@ -27,6 +27,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<Contrato> Contratos => Set<Contrato>();
     public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
     public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
+    public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -77,6 +78,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .HasFilter("\"Slug\" IS NOT NULL");
 
         modelBuilder.Entity<Fornecedor>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Fornecedor>()
             .HasIndex(f => new { f.EmpresaId, f.CnpjCpf })
             .IsUnique()

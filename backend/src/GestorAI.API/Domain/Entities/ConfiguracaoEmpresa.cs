@@ -30,4 +30,17 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public string? LogoUrl { get; set; }
     public string? CorPrimaria { get; set; }
     public string? DescricaoPublica { get; set; }
+
+    // Evolution API (WhatsApp)
+    public string? EvolutionApiUrl { get; set; }
+    public string? EvolutionApiKey { get; set; }
+    public string? EvolutionInstance { get; set; }
+
+    // Lembretes de cobrança
+    public bool Lembrete3dAntes  { get; set; }
+    public bool Lembrete1dAntes  { get; set; }
+    public bool LembreteNoDia    { get; set; }
+    public bool Lembrete1dDepois { get; set; }
+    public bool Lembrete3dDepois { get; set; }
+    public bool Lembrete7dDepois { get; set; }
 }

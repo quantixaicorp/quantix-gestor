@@ -50,5 +50,12 @@ public static class FiscalEndpoints
             await svc.SalvarIntegracoesAsync(req, ct);
             return Results.Ok();
         });
+
+        group.MapPut("/configuracao-empresa/automacao", async (
+            SalvarAutomacaoConfigRequest req, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+        {
+            await svc.SalvarAutomacaoConfigAsync(req, ct);
+            return Results.Ok();
+        });
     }
 }

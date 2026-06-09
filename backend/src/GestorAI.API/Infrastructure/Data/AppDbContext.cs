@@ -29,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
     public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
     public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
+    public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -86,5 +87,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
 
         modelBuilder.Entity<ContratoTemplate>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<ContratoTemplateItem>().ToTable("ContratoTemplateItens");
+        modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<AutomacaoLog>()
+            .HasIndex(l => new { l.CobrancaId, l.TipoEvento });
     }
 }

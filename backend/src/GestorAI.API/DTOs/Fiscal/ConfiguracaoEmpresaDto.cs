@@ -25,9 +25,29 @@ public record ConfiguracaoEmpresaResponse(
     string? CorPrimaria,
     string? DescricaoPublica,
     string? AsaasApiKey,
-    bool AsaasSandbox);
+    bool AsaasSandbox,
+    string? EvolutionApiUrl,
+    bool TemEvolutionKey,
+    string? EvolutionInstance,
+    bool Lembrete3dAntes,
+    bool Lembrete1dAntes,
+    bool LembreteNoDia,
+    bool Lembrete1dDepois,
+    bool Lembrete3dDepois,
+    bool Lembrete7dDepois);
 
 public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox);
+
+public record SalvarAutomacaoConfigRequest(
+    string? EvolutionApiUrl,
+    string? EvolutionApiKey,
+    string? EvolutionInstance,
+    bool Lembrete3dAntes,
+    bool Lembrete1dAntes,
+    bool LembreteNoDia,
+    bool Lembrete1dDepois,
+    bool Lembrete3dDepois,
+    bool Lembrete7dDepois);
 
 public record AtualizarConfiguracaoEmpresaRequest(
     string? RazaoSocial,

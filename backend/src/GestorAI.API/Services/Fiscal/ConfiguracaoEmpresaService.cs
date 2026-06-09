@@ -98,7 +98,16 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.CorPrimaria,
         c.DescricaoPublica,
         c.AsaasApiKey,
-        c.AsaasSandbox);
+        c.AsaasSandbox,
+        c.EvolutionApiUrl,
+        c.EvolutionApiKey is not null,
+        c.EvolutionInstance,
+        c.Lembrete3dAntes,
+        c.Lembrete1dAntes,
+        c.LembreteNoDia,
+        c.Lembrete1dDepois,
+        c.Lembrete3dDepois,
+        c.Lembrete7dDepois);
 
     public async Task<ConfiguracaoEmpresaResponse> SalvarBrandingAsync(
         ConfigurarBrandingRequest req, CancellationToken ct)
@@ -130,6 +139,24 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         var isNew = config.Id == Guid.Empty;
         config.AsaasApiKey = req.AsaasApiKey;
         config.AsaasSandbox = req.AsaasSandbox;
+        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task SalvarAutomacaoConfigAsync(SalvarAutomacaoConfigRequest req, CancellationToken ct)
+    {
+        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
+            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var isNew = config.Id == Guid.Empty;
+        config.EvolutionApiUrl = req.EvolutionApiUrl;
+        if (req.EvolutionApiKey is not null) config.EvolutionApiKey = req.EvolutionApiKey;
+        config.EvolutionInstance = req.EvolutionInstance;
+        config.Lembrete3dAntes = req.Lembrete3dAntes;
+        config.Lembrete1dAntes = req.Lembrete1dAntes;
+        config.LembreteNoDia = req.LembreteNoDia;
+        config.Lembrete1dDepois = req.Lembrete1dDepois;
+        config.Lembrete3dDepois = req.Lembrete3dDepois;
+        config.Lembrete7dDepois = req.Lembrete7dDepois;
         if (isNew) db.ConfiguracoesEmpresa.Add(config);
         await db.SaveChangesAsync(ct);
     }

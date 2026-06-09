@@ -166,7 +166,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
 
         var totalPendente = await db.Lancamentos
             .Where(l => l.Status == StatusLancamento.Pendente
-                     && l.DataVencimento.Date >= hoje)
+                     && l.DataVencimento >= hoje)
             .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
 
         return new LancamentoResumo(totalReceitas, totalDespesas, totalReceitas - totalDespesas, totalPendente);

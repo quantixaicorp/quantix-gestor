@@ -127,4 +127,74 @@ public class CobrancaAutoEncerramentoTests
         var contratoAtualizado = await db.Contratos.IgnoreQueryFilters().FirstAsync(c => c.Id == contrato.Id);
         Assert.Equal(ContratoStatus.Ativo, contratoAtualizado.Status);
     }
+
+    [Fact]
+    public async Task PagarAsync_EncerraContrato_QuandoUmaParcelaEstaoCancelada()
+    {
+        var (db, svc) = Setup();
+        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Beatriz", Whatsapp = "11944440000" };
+        db.Clientes.Add(cliente);
+        var contrato = new Contrato
+        {
+            EmpresaId = _empresaId,
+            ClienteId = cliente.Id,
+            Numero = 3,
+            Titulo = "Projeto Y",
+            Objeto = "Design",
+            TipoCobranca = TipoCobranca.ParceladoPrazoFixo,
+            Valor = 300m,
+            DataInicio = new DateOnly(2026, 1, 1),
+            DataFim = new DateOnly(2026, 3, 31),
+            Periodicidade = Periodicidade.Mensal,
+            DiaVencimento = 1,
+            Status = ContratoStatus.Ativo,
+        };
+        db.Contratos.Add(contrato);
+        await db.SaveChangesAsync();
+
+        var c1 = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela 1/3", Valor = 100m, DataVencimento = new DateOnly(2026, 1, 1), Status = CobrancaStatus.Pago, DataPagamento = DateTime.UtcNow, FormaPagamento = FormaPagamento.Dinheiro };
+        var c2 = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela 2/3", Valor = 100m, DataVencimento = new DateOnly(2026, 2, 1), Status = CobrancaStatus.Cancelado };
+        var c3 = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela 3/3", Valor = 100m, DataVencimento = new DateOnly(2026, 3, 1), Status = CobrancaStatus.Pendente };
+        db.Cobrancas.AddRange(c1, c2, c3);
+        await db.SaveChangesAsync();
+
+        await svc.PagarAsync(c3.Id, new GestorAI.API.DTOs.Cobrancas.PagarCobrancaRequest(DateTime.UtcNow, "Dinheiro"), default);
+
+        var contratoAtualizado = await db.Contratos.IgnoreQueryFilters().FirstAsync(c => c.Id == contrato.Id);
+        Assert.Equal(ContratoStatus.Encerrado, contratoAtualizado.Status);
+    }
+
+    [Fact]
+    public async Task PagarAsync_NaoReprocessa_ContratoJaEncerrado()
+    {
+        var (db, svc) = Setup();
+        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Ricardo", Whatsapp = "11933330000" };
+        db.Clientes.Add(cliente);
+        var contrato = new Contrato
+        {
+            EmpresaId = _empresaId,
+            ClienteId = cliente.Id,
+            Numero = 4,
+            Titulo = "Projeto Encerrado",
+            Objeto = "Consultoria",
+            TipoCobranca = TipoCobranca.ParceladoPrazoFixo,
+            Valor = 100m,
+            DataInicio = new DateOnly(2026, 1, 1),
+            DataFim = new DateOnly(2026, 1, 31),
+            Periodicidade = Periodicidade.Mensal,
+            DiaVencimento = 1,
+            Status = ContratoStatus.Encerrado,
+        };
+        db.Contratos.Add(contrato);
+        await db.SaveChangesAsync();
+
+        var cobranca = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela única", Valor = 100m, DataVencimento = new DateOnly(2026, 1, 1), Status = CobrancaStatus.Pendente };
+        db.Cobrancas.Add(cobranca);
+        await db.SaveChangesAsync();
+
+        await svc.PagarAsync(cobranca.Id, new GestorAI.API.DTOs.Cobrancas.PagarCobrancaRequest(DateTime.UtcNow, "Dinheiro"), default);
+
+        var contratoAtualizado = await db.Contratos.IgnoreQueryFilters().FirstAsync(c => c.Id == contrato.Id);
+        Assert.Equal(ContratoStatus.Encerrado, contratoAtualizado.Status);
+    }
 }

@@ -8,9 +8,8 @@ public class EvolutionApiService(IHttpClientFactory httpClientFactory) : IEvolut
         string apiUrl, string apiKey, string instance,
         string phone, string text, CancellationToken ct)
     {
-        var client = httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("apikey", apiKey);
-        var body = new { number = $"55{phone}", text };
+        var client = CreateClient(apiKey);
+        var body = new { number = NormalizePhone(phone), text };
         var res = await client.PostAsJsonAsync($"{apiUrl.TrimEnd('/')}/message/sendText/{instance}", body, ct);
         return res.IsSuccessStatusCode;
     }
@@ -18,9 +17,23 @@ public class EvolutionApiService(IHttpClientFactory httpClientFactory) : IEvolut
     public async Task<bool> TestarConexaoAsync(
         string apiUrl, string apiKey, CancellationToken ct)
     {
-        var client = httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("apikey", apiKey);
+        var client = CreateClient(apiKey);
         var res = await client.GetAsync($"{apiUrl.TrimEnd('/')}/instance/fetchInstances", ct);
         return res.IsSuccessStatusCode;
+    }
+
+    private HttpClient CreateClient(string apiKey)
+    {
+        var client = httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("apikey", apiKey);
+        return client;
+    }
+
+    private static string NormalizePhone(string phone)
+    {
+        var digits = phone.TrimStart('+');
+        if (digits.StartsWith("55") && digits.Length > 11)
+            return digits;
+        return $"55{digits}";
     }
 }

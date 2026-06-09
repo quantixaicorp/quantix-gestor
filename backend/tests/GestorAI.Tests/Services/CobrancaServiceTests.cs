@@ -2,6 +2,7 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Cobrancas;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Asaas;
 using GestorAI.API.Services.Cobrancas;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
@@ -20,7 +21,7 @@ public class CobrancaServiceTests
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
             tenant);
-        return (db, new CobrancaService(db, tenant));
+        return (db, new CobrancaService(db, tenant, null!));
     }
 
     private Cliente CriarCliente(AppDbContext db)

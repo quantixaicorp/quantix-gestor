@@ -15,6 +15,10 @@ public class Cobranca : ITenantEntity
     public CobrancaStatus Status { get; set; } = CobrancaStatus.Pendente;
     public FormaPagamento? FormaPagamento { get; set; }
     public string? Observacao { get; set; }
+    public string? AsaasId { get; set; }
+    public string? AsaasPaymentLink { get; set; }
+    public string? AsaasPixQrCode { get; set; }
+    public string? AsaasBoletoUrl { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public Cliente? Cliente { get; set; }
     public Contrato? Contrato { get; set; }

@@ -30,4 +30,6 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public string? LogoUrl { get; set; }
     public string? CorPrimaria { get; set; }
     public string? DescricaoPublica { get; set; }
+    public string? AsaasApiKey { get; set; }
+    public bool AsaasSandbox { get; set; } = true;
 }

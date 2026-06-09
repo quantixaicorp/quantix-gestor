@@ -50,3 +50,11 @@ public record AgingResponse(
     int QtdDe31A60Dias,
     int QtdDe61A90Dias,
     int QtdAcima90Dias);
+
+public record EnviarAsaasRequest(string BillingType);
+
+public record CobrancaAsaasResponse(
+    string AsaasId,
+    string? PaymentLink,
+    string? PixQrCode,
+    string? BoletoUrl);

@@ -36,5 +36,9 @@ public static class CobrancasEndpoints
 
         group.MapGet("/{id:guid}/whatsapp", async (Guid id, CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetWhatsappUrlAsync(id, ct)));
+
+        group.MapPost("/{id:guid}/enviar-asaas", async (
+            Guid id, EnviarAsaasRequest req, CobrancaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.EnviarAsaasAsync(id, req, ct)));
     }
 }

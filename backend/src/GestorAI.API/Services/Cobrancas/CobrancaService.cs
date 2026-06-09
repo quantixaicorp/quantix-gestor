@@ -2,13 +2,14 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Cobrancas;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Asaas;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.Cobrancas;
 
-public class CobrancaService(AppDbContext db, TenantContext tenantContext)
+public class CobrancaService(AppDbContext db, TenantContext tenantContext, AsaasService asaasService)
 {
     public async Task<List<CobrancaListItem>> ListAsync(
         string? status, Guid? clienteId, string? mes, CancellationToken ct)
@@ -139,6 +140,48 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext)
             atual, ate30, de31a60, de61a90, acima90,
             atual + ate30 + de31a60 + de61a90 + acima90,
             qAtual, qAte30, qDe31a60, qDe61a90, qAcima90);
+    }
+
+    public async Task<CobrancaAsaasResponse> EnviarAsaasAsync(
+        Guid id, EnviarAsaasRequest req, CancellationToken ct)
+    {
+        var cobranca = await db.Cobrancas
+            .Include(c => c.Cliente)
+            .FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Cobrança não encontrada.", 404);
+
+        if (cobranca.Status != CobrancaStatus.Pendente)
+            throw new AppException("Apenas cobranças pendentes podem ser enviadas ao Asaas.", 400);
+
+        var config = await db.ConfiguracoesEmpresa
+            .FirstOrDefaultAsync(ct)
+            ?? throw new AppException("Configuração da empresa não encontrada.", 404);
+
+        if (string.IsNullOrWhiteSpace(config.AsaasApiKey))
+            throw new AppException("Chave de API do Asaas não configurada. Acesse Configurações > Integrações.", 400);
+
+        var customerId = await asaasService.GetOrCreateCustomerAsync(
+            config.AsaasApiKey, config.AsaasSandbox,
+            cobranca.Cliente!.Nome,
+            null, ct);
+
+        var result = await asaasService.CreatePaymentAsync(
+            config.AsaasApiKey, config.AsaasSandbox,
+            customerId, cobranca.Valor,
+            cobranca.DataVencimento, cobranca.Referencia,
+            req.BillingType, ct);
+
+        cobranca.AsaasId = result.Id;
+        cobranca.AsaasPaymentLink = result.InvoiceUrl;
+        cobranca.AsaasPixQrCode = result.PixQrCode?.Payload;
+        cobranca.AsaasBoletoUrl = result.BankSlipUrl;
+        await db.SaveChangesAsync(ct);
+
+        return new CobrancaAsaasResponse(
+            result.Id,
+            result.InvoiceUrl,
+            result.PixQrCode?.Payload,
+            result.BankSlipUrl);
     }
 
     private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>

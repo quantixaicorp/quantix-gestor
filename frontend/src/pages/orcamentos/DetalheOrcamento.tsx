@@ -253,15 +253,15 @@ export default function DetalheOrcamento() {
 
       <Button variant="ghost" onClick={() => navigate('/orcamentos')}>← Voltar</Button>
       {modalCobranca && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-background rounded-xl border p-6 w-full max-w-sm flex flex-col gap-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => { setModalCobranca(false); setDataVencCobranca(new Date().toISOString().slice(0, 10)) }}>
+          <div className="bg-background rounded-xl border p-6 w-full max-w-sm flex flex-col gap-4" onClick={e => e.stopPropagation()}>
             <h2 className="font-bold">Gerar Cobrança</h2>
             <p className="text-sm text-muted-foreground">
               Será criada uma cobrança de {fmt(o.total)} vinculada a este orçamento.
             </p>
             <div>
               <label className="block text-sm mb-1">Vencimento</label>
-              <input type="date" value={dataVencCobranca}
+              <input type="date" value={dataVencCobranca} required
                 onChange={e => setDataVencCobranca(e.target.value)}
                 className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm" />
             </div>
@@ -269,7 +269,7 @@ export default function DetalheOrcamento() {
               <Button onClick={handleGerarCobranca} disabled={gerandoCob}>
                 {gerandoCob ? 'Gerando...' : 'Gerar'}
               </Button>
-              <Button variant="outline" onClick={() => setModalCobranca(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => { setModalCobranca(false); setDataVencCobranca(new Date().toISOString().slice(0, 10)) }}>Cancelar</Button>
             </div>
           </div>
         </div>

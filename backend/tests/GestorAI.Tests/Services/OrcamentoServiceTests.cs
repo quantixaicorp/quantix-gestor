@@ -228,4 +228,59 @@ public class OrcamentoServiceTests
 
         Assert.Equal("Rejeitado", result.Status);
     }
+
+    [Fact]
+    public async Task AprovarPublicoAsync_Lanca400_QuandoExpirado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(-1),
+            Status = OrcamentoStatus.Enviado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        var ex = await Assert.ThrowsAsync<AppException>(
+            () => service.AprovarPublicoAsync(token, default));
+        Assert.Equal(400, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task AprovarPublicoAsync_Lanca400_QuandoStatusNaoEhEnviado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Aprovado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<AppException>(
+            () => service.AprovarPublicoAsync(token, default));
+    }
+
+    [Fact]
+    public async Task RejeitarPublicoAsync_Lanca400_QuandoStatusNaoEhEnviado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Rejeitado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<AppException>(
+            () => service.RejeitarPublicoAsync(token, default));
+    }
 }

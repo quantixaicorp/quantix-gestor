@@ -233,6 +233,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
             .Include(o => o.Itens)
             .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
+        await ExpireIfNeededAsync([o], ct);
         return ToPublicoResponse(o);
     }
 

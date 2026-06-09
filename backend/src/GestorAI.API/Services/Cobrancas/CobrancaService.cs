@@ -184,6 +184,26 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
             result.BankSlipUrl);
     }
 
+    public async Task ConfirmarPagamentoAsaasAsync(string asaasId, string? billingType, CancellationToken ct)
+    {
+        var cobranca = await db.Cobrancas
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.AsaasId == asaasId, ct);
+
+        if (cobranca is null || cobranca.Status != CobrancaStatus.Pendente)
+            return;
+
+        cobranca.Status = CobrancaStatus.Pago;
+        cobranca.DataPagamento = DateTime.UtcNow;
+        cobranca.FormaPagamento = billingType switch
+        {
+            "PIX" => FormaPagamento.Pix,
+            "CREDIT_CARD" => FormaPagamento.Cartao,
+            _ => FormaPagamento.Outro,
+        };
+        await db.SaveChangesAsync(ct);
+    }
+
     private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>
         await db.Cobrancas.FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Cobrança não encontrada.", 404);

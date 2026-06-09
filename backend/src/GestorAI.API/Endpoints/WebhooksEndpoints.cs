@@ -1,6 +1,4 @@
-using GestorAI.API.Domain.Enums;
-using GestorAI.API.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using GestorAI.API.Services.Cobrancas;
 
 namespace GestorAI.API.Endpoints;
 
@@ -10,7 +8,7 @@ public static class WebhooksEndpoints
     {
         app.MapPost("/api/webhooks/asaas", async (
             AsaasWebhookPayload payload,
-            AppDbContext db,
+            CobrancaService cobrancaService,
             CancellationToken ct) =>
         {
             if (payload.Event is not ("PAYMENT_RECEIVED" or "PAYMENT_CONFIRMED"))
@@ -20,32 +18,11 @@ public static class WebhooksEndpoints
             if (string.IsNullOrEmpty(asaasId))
                 return Results.Ok();
 
-            var cobranca = await db.Cobrancas
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(c => c.AsaasId == asaasId, ct);
-
-            if (cobranca is null)
-                return Results.Ok();
-
-            if (cobranca.Status == CobrancaStatus.Pendente)
-            {
-                cobranca.Status = CobrancaStatus.Pago;
-                cobranca.DataPagamento = DateTime.UtcNow;
-                cobranca.FormaPagamento = payload.Payment?.BillingType switch
-                {
-                    "PIX" => FormaPagamento.Pix,
-                    "BOLETO" => FormaPagamento.Outro,
-                    "CREDIT_CARD" => FormaPagamento.Cartao,
-                    _ => FormaPagamento.Outro,
-                };
-                await db.SaveChangesAsync(ct);
-            }
-
+            await cobrancaService.ConfirmarPagamentoAsaasAsync(asaasId, payload.Payment?.BillingType, ct);
             return Results.Ok();
         }).AllowAnonymous();
     }
 }
 
 public record AsaasWebhookPayload(string Event, AsaasWebhookPaymentData? Payment);
-
 public record AsaasWebhookPaymentData(string Id, string? BillingType, string? Status);

@@ -34,21 +34,21 @@ namespace GestorAI.API.Migrations
                 table: "ConfiguracoesEmpresa",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "Lembrete1dDepois",
                 table: "ConfiguracoesEmpresa",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "Lembrete3dAntes",
                 table: "ConfiguracoesEmpresa",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "Lembrete3dDepois",
@@ -69,7 +69,7 @@ namespace GestorAI.API.Migrations
                 table: "ConfiguracoesEmpresa",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.CreateTable(
                 name: "AutomacaoLogs",

@@ -149,7 +149,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
             ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
         var isNew = config.Id == Guid.Empty;
         config.EvolutionApiUrl = req.EvolutionApiUrl;
-        if (req.EvolutionApiKey is not null) config.EvolutionApiKey = req.EvolutionApiKey;
+        if (!string.IsNullOrWhiteSpace(req.EvolutionApiKey)) config.EvolutionApiKey = req.EvolutionApiKey;
         config.EvolutionInstance = req.EvolutionInstance;
         config.Lembrete3dAntes = req.Lembrete3dAntes;
         config.Lembrete1dAntes = req.Lembrete1dAntes;

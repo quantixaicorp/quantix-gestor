@@ -115,6 +115,32 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext)
         return new WhatsappUrlResponse(url);
     }
 
+    public async Task<AgingResponse> GetAgingAsync(CancellationToken ct)
+    {
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var pendentes = await db.Cobrancas
+            .Where(c => c.Status == CobrancaStatus.Pendente)
+            .ToListAsync(ct);
+
+        decimal atual = 0, ate30 = 0, de31a60 = 0, de61a90 = 0, acima90 = 0;
+        int qAtual = 0, qAte30 = 0, qDe31a60 = 0, qDe61a90 = 0, qAcima90 = 0;
+
+        foreach (var c in pendentes)
+        {
+            var diasAtraso = (hoje.ToDateTime(TimeOnly.MinValue) - c.DataVencimento.ToDateTime(TimeOnly.MinValue)).Days;
+            if (diasAtraso <= 0)       { atual   += c.Valor; qAtual++;    }
+            else if (diasAtraso <= 30) { ate30   += c.Valor; qAte30++;    }
+            else if (diasAtraso <= 60) { de31a60 += c.Valor; qDe31a60++;  }
+            else if (diasAtraso <= 90) { de61a90 += c.Valor; qDe61a90++;  }
+            else                       { acima90 += c.Valor; qAcima90++;  }
+        }
+
+        return new AgingResponse(
+            atual, ate30, de31a60, de61a90, acima90,
+            atual + ate30 + de31a60 + de61a90 + acima90,
+            qAtual, qAte30, qDe31a60, qDe61a90, qAcima90);
+    }
+
     private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>
         await db.Cobrancas.FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Cobrança não encontrada.", 404);

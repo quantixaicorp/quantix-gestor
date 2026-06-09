@@ -107,4 +107,43 @@ public class CobrancaServiceTests
         Assert.StartsWith("https://wa.me/5511988880000", result.Url);
         Assert.Contains("Mensalidade+Jun%2F2026", result.Url);
     }
+
+    [Fact]
+    public async Task GetAgingAsync_RetornaBucketsCorretos()
+    {
+        var (db, service) = Setup();
+        var clienteId = CriarCliente(db).Id;
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        db.Cobrancas.AddRange(
+            // Atual (vence hoje)
+            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
+                Referencia = "R1", Valor = 100m, DataVencimento = hoje,
+                Status = CobrancaStatus.Pendente },
+            // 1–30 dias
+            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
+                Referencia = "R2", Valor = 200m, DataVencimento = hoje.AddDays(-15),
+                Status = CobrancaStatus.Pendente },
+            // 31–60 dias
+            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
+                Referencia = "R3", Valor = 300m, DataVencimento = hoje.AddDays(-45),
+                Status = CobrancaStatus.Pendente },
+            // Paga — não deve aparecer
+            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
+                Referencia = "R4", Valor = 400m, DataVencimento = hoje.AddDays(-10),
+                Status = CobrancaStatus.Pago }
+        );
+        await db.SaveChangesAsync();
+
+        var result = await service.GetAgingAsync(default);
+
+        Assert.Equal(100m, result.Atual);
+        Assert.Equal(200m, result.Ate30Dias);
+        Assert.Equal(300m, result.De31A60Dias);
+        Assert.Equal(0m, result.De61A90Dias);
+        Assert.Equal(0m, result.Acima90Dias);
+        Assert.Equal(600m, result.Total);
+        Assert.Equal(1, result.QtdAtual);
+        Assert.Equal(1, result.QtdAte30Dias);
+    }
 }

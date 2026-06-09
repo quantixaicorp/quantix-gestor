@@ -37,3 +37,16 @@ public record CobrancaListItem(
     string Status);
 
 public record WhatsappUrlResponse(string Url);
+
+public record AgingResponse(
+    decimal Atual,
+    decimal Ate30Dias,
+    decimal De31A60Dias,
+    decimal De61A90Dias,
+    decimal Acima90Dias,
+    decimal Total,
+    int QtdAtual,
+    int QtdAte30Dias,
+    int QtdDe31A60Dias,
+    int QtdDe61A90Dias,
+    int QtdAcima90Dias);

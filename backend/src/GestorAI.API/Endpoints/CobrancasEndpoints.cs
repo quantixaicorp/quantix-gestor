@@ -14,6 +14,10 @@ public static class CobrancasEndpoints
             CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.ListAsync(status, clienteId, mes, ct)));
 
+        group.MapGet("/aging", async (
+            CobrancaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetAgingAsync(ct)));
+
         group.MapGet("/{id:guid}", async (Guid id, CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetAsync(id, ct)));
 

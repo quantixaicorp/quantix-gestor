@@ -9,4 +9,9 @@ public interface IEvolutionApiService
         string whatsapp,
         string mensagem,
         CancellationToken ct = default);
+
+    Task<bool> TestarConexaoAsync(
+        string apiUrl,
+        string apiKey,
+        CancellationToken ct = default);
 }

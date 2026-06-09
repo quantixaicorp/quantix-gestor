@@ -13,6 +13,7 @@ public class Orcamento : ITenantEntity
     public OrcamentoStatus Status { get; set; } = OrcamentoStatus.Rascunho;
     public string? Observacao { get; set; }
     public Guid? VendaId { get; set; }
+    public Guid? TokenPublico { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public Cliente? Cliente { get; set; }
     public ICollection<OrcamentoItem> Itens { get; set; } = [];

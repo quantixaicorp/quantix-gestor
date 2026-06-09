@@ -84,6 +84,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         if (o.Status != OrcamentoStatus.Rascunho)
             throw new AppException("Apenas rascunhos podem ser enviados.");
         o.Status = OrcamentoStatus.Enviado;
+        o.TokenPublico = Guid.NewGuid();
         await db.SaveChangesAsync(ct);
         return ToResponse(o);
     }
@@ -224,6 +225,47 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
             """;
     }
 
+    public async Task<OrcamentoPublicoResponse> GetPublicoAsync(Guid token, CancellationToken ct)
+    {
+        var o = await db.Orcamentos
+            .IgnoreQueryFilters()
+            .Include(o => o.Cliente)
+            .Include(o => o.Itens)
+            .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
+            ?? throw new AppException("Orçamento não encontrado.", 404);
+        return ToPublicoResponse(o);
+    }
+
+    public async Task<OrcamentoPublicoResponse> AprovarPublicoAsync(Guid token, CancellationToken ct)
+    {
+        var o = await db.Orcamentos
+            .IgnoreQueryFilters()
+            .Include(o => o.Itens)
+            .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
+            ?? throw new AppException("Orçamento não encontrado.", 404);
+        if (o.DataValidade.Date < DateTime.UtcNow.Date)
+            throw new AppException("Orçamento expirado.", 400);
+        if (o.Status != OrcamentoStatus.Enviado)
+            throw new AppException("Orçamento não está disponível para aprovação.", 400);
+        o.Status = OrcamentoStatus.Aprovado;
+        await db.SaveChangesAsync(ct);
+        return ToPublicoResponse(o);
+    }
+
+    public async Task<OrcamentoPublicoResponse> RejeitarPublicoAsync(Guid token, CancellationToken ct)
+    {
+        var o = await db.Orcamentos
+            .IgnoreQueryFilters()
+            .Include(o => o.Itens)
+            .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
+            ?? throw new AppException("Orçamento não encontrado.", 404);
+        if (o.Status != OrcamentoStatus.Enviado)
+            throw new AppException("Orçamento não está disponível para rejeição.", 400);
+        o.Status = OrcamentoStatus.Rejeitado;
+        await db.SaveChangesAsync(ct);
+        return ToPublicoResponse(o);
+    }
+
     private async Task<Orcamento> FindAsync(Guid id, CancellationToken ct)
     {
         var o = await db.Orcamentos
@@ -251,11 +293,22 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         o.DataValidade, o.Status.ToString(),
         o.Itens.Sum(i => i.Quantidade * i.ValorUnitario));
 
+    private static OrcamentoPublicoResponse ToPublicoResponse(Orcamento o) => new(
+        o.Titulo,
+        o.Cliente?.Nome,
+        o.DataValidade,
+        o.Status.ToString(),
+        o.Observacao,
+        o.Itens.Select(i => new OrcamentoItemPublicoResponse(
+            i.Descricao, i.Quantidade, i.ValorUnitario,
+            i.Quantidade * i.ValorUnitario)).ToList(),
+        o.Itens.Sum(i => i.Quantidade * i.ValorUnitario));
+
     private static OrcamentoResponse ToResponse(Orcamento o) => new(
         o.Id, o.Numero, o.Titulo, o.ClienteId,
         o.Cliente?.Nome, o.Cliente?.Whatsapp,
         o.DataValidade, o.Status.ToString(),
-        o.Observacao, o.VendaId, o.CriadoEm,
+        o.Observacao, o.VendaId, o.TokenPublico, o.CriadoEm,
         o.Itens.Select(i => new OrcamentoItemResponse(
             i.Id, i.Tipo.ToString(), i.ProdutoId,
             i.Descricao, i.Quantidade, i.ValorUnitario)).ToList(),

@@ -70,8 +70,15 @@ export function useOrcamentos() {
     return result
   }, [])
 
+  const gerarCobranca = useCallback(async (id: string, dataVencimento: string) => {
+    return api.post<{ id: string; valor: number; referencia: string }>(
+      `/api/orcamentos/${id}/gerar-cobranca`,
+      { dataVencimento }
+    )
+  }, [])
+
   return {
     orcamentos, orcamento, loading, error,
-    list, get, create, enviar, aprovar, rejeitar, cancelar, converter,
+    list, get, create, enviar, aprovar, rejeitar, cancelar, converter, gerarCobranca,
   }
 }

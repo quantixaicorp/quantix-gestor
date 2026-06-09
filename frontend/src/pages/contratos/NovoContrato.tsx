@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, Plus, Trash2 } from 'lucide-react'
 import { useContratos } from '@/hooks/useContratos'
 import { useClientes } from '@/hooks/useClientes'
@@ -8,13 +8,14 @@ import type { ContratoItemRequest, TipoCobranca, Periodicidade } from '@/types/c
 
 export default function NovoContrato() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { create } = useContratos()
   const { clientes, list: listClientes } = useClientes()
 
   useEffect(() => { void listClientes() }, [listClientes])
 
-  const [clienteId, setClienteId] = useState('')
-  const [titulo, setTitulo] = useState('')
+  const [clienteId, setClienteId] = useState(searchParams.get('clienteId') ?? '')
+  const [titulo, setTitulo] = useState(searchParams.get('titulo') ?? '')
   const [objeto, setObjeto] = useState('')
   const [tipoCobranca, setTipoCobranca] = useState<TipoCobranca>('Recorrente')
   const [valor, setValor] = useState('')

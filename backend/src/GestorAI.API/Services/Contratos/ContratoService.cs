@@ -278,6 +278,63 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         return $"{periodo} — {contrato.Titulo}";
     }
 
+    public async Task<ContratoResponse> RenovarAsync(Guid id, CancellationToken ct)
+    {
+        var original = await FindAsync(id, ct);
+        if (original.Status != ContratoStatus.Ativo)
+            throw new AppException("Apenas contratos ativos podem ser renovados.", 400);
+
+        var novaDataInicio = original.DataFim.HasValue
+            ? original.DataFim.Value.AddDays(1)
+            : DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var numero = (await db.Contratos.MaxAsync(c => (int?)c.Numero, ct) ?? 0) + 1;
+
+        var novo = new Contrato
+        {
+            EmpresaId = tenantContext.EmpresaId,
+            Numero = numero,
+            ClienteId = original.ClienteId,
+            Titulo = original.Titulo,
+            Objeto = original.Objeto,
+            TipoCobranca = original.TipoCobranca,
+            Valor = original.Valor,
+            DataInicio = novaDataInicio,
+            DataFim = null,
+            Periodicidade = original.Periodicidade,
+            DiaVencimento = original.DiaVencimento,
+            Observacao = original.Observacao,
+        };
+
+        foreach (var item in original.Itens)
+            novo.Itens.Add(new ContratoItem
+            {
+                Descricao = item.Descricao,
+                Quantidade = item.Quantidade,
+                ValorUnitario = item.ValorUnitario,
+            });
+
+        db.Contratos.Add(novo);
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(novo.Id, ct);
+    }
+
+    public async Task<List<ContratoVencendoItem>> ListVencendoAsync(int dias, CancellationToken ct)
+    {
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var limite = hoje.AddDays(dias);
+
+        return await db.Contratos
+            .Include(c => c.Cliente)
+            .Where(c => c.Status == ContratoStatus.Ativo
+                     && c.DataFim.HasValue
+                     && c.DataFim.Value >= hoje
+                     && c.DataFim.Value <= limite)
+            .Select(c => new ContratoVencendoItem(
+                c.Id, c.Numero, c.Cliente!.Nome, c.Titulo, c.DataFim!.Value, c.Valor))
+            .ToListAsync(ct);
+    }
+
     private async Task<Contrato> FindAsync(Guid id, CancellationToken ct)
     {
         return await db.Contratos

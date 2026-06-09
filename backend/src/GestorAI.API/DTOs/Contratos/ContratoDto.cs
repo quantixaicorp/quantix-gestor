@@ -61,3 +61,11 @@ public record ContratoListItem(
     string Status,
     DateOnly DataInicio,
     DateOnly? DataFim);
+
+public record ContratoVencendoItem(
+    Guid Id,
+    int Numero,
+    string ClienteNome,
+    string Titulo,
+    DateOnly DataFim,
+    decimal Valor);

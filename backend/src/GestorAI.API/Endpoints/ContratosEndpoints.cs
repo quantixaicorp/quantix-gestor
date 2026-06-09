@@ -12,6 +12,10 @@ public static class ContratosEndpoints
         group.MapGet("/", async (string? status, ContratoService svc, CancellationToken ct) =>
             Results.Ok(await svc.ListAsync(status, ct)));
 
+        group.MapGet("/vencendo", async (
+            int? dias, ContratoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.ListVencendoAsync(dias ?? 30, ct)));
+
         group.MapGet("/{id:guid}", async (Guid id, ContratoService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetAsync(id, ct)));
 
@@ -29,6 +33,9 @@ public static class ContratosEndpoints
 
         group.MapPost("/{id:guid}/cancelar", async (Guid id, ContratoService svc, CancellationToken ct) =>
             Results.Ok(await svc.CancelarAsync(id, ct)));
+
+        group.MapPost("/{id:guid}/renovar", async (Guid id, ContratoService svc, CancellationToken ct) =>
+            Results.Ok(await svc.RenovarAsync(id, ct)));
 
         group.MapGet("/{id:guid}/pdf", async (Guid id, ContratoService svc, CancellationToken ct) =>
         {

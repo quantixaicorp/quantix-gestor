@@ -134,6 +134,7 @@ app.MapVendas();
 app.MapFinanceiro();
 app.MapDashboard();
 app.MapOrcamentos();
+app.MapOrcamentosPublicos();
 app.MapProfissionais();
 app.MapAgendamentos();
 app.MapFiscal();

@@ -5,6 +5,8 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useDashboard } from '@/hooks/useDashboard'
+import { useAuth } from '@/contexts/AuthContext'
+import { useConfiguracaoEmpresa } from '@/hooks/useConfiguracaoEmpresa'
 import KpiCard from '@/components/dashboard/KpiCard'
 import GraficoVendas from '@/components/dashboard/GraficoVendas'
 import GraficoFluxo from '@/components/dashboard/GraficoFluxo'
@@ -14,8 +16,11 @@ const fmt = (v: number | null | undefined) => (v ?? 0).toLocaleString('pt-BR', {
 
 export default function Dashboard() {
   const { data, loading, error, load } = useDashboard()
+  const { userName } = useAuth()
+  const { config, obter } = useConfiguracaoEmpresa()
 
   useEffect(() => { void load() }, [load])
+  useEffect(() => { void obter() }, [obter])
 
   if (loading) {
     return (
@@ -40,9 +45,16 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {config?.nomeFantasia ?? config?.razaoSocial ?? 'Dashboard'}
+          </h1>
+          {userName && (
+            <p className="text-sm text-muted-foreground mt-0.5">Olá, {userName}</p>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground pt-1">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>

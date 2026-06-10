@@ -16,6 +16,7 @@ interface AuthContextValue {
   isAuthenticated: boolean
   isAdmin: boolean
   isLoading: boolean
+  userName: string | null
   login: () => Promise<void>
   logout: () => void
   handleCallback: (code: string) => Promise<void>
@@ -41,15 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [userName, setUserName] = useState<string | null>(null)
 
   function applyToken(token: string | null) {
-    if (!token) { setIsAuthenticated(false); setIsAdmin(false); return }
+    if (!token) { setIsAuthenticated(false); setIsAdmin(false); setUserName(null); return }
     const payload = parseJwt(token)
     const roles = payload?.roles
     const hasAdmin = payload?.is_superadmin === 'true' ||
       (Array.isArray(roles) ? roles.includes('admin') : roles === 'admin')
     setIsAuthenticated(true)
     setIsAdmin(hasAdmin)
+    setUserName(payload?.name ?? null)
   }
 
   useEffect(() => {
@@ -107,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isAdmin, isLoading, login, logout, handleCallback }}>
+    <AuthContext.Provider value={{ isAuthenticated, isAdmin, isLoading, userName, login, logout, handleCallback }}>
       {children}
     </AuthContext.Provider>
   )

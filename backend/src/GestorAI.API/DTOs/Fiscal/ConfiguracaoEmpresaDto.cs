@@ -36,9 +36,17 @@ public record ConfiguracaoEmpresaResponse(
     bool LembreteNoDia,
     bool Lembrete1dDepois,
     bool Lembrete3dDepois,
-    bool Lembrete7dDepois);
+    bool Lembrete7dDepois,
+    string? DominioCustomizado);
 
 public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox, string? ClickSignApiKey, bool ClickSignSandbox);
+
+public record SalvarWhiteLabelRequest(
+    string? Slug,
+    string? LogoUrl,
+    string? CorPrimaria,
+    string? DescricaoPublica,
+    string? DominioCustomizado);
 
 public record SalvarAutomacaoConfigRequest(
     string? EvolutionApiUrl,

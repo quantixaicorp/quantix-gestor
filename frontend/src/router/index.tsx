@@ -38,6 +38,7 @@ import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoCo
 import Integracoes from '@/pages/configuracoes/Integracoes'
 import Automacao from '@/pages/configuracoes/Automacao'
 import PlanoAssinatura from '@/pages/configuracoes/PlanoAssinatura'
+import WhiteLabel from '@/pages/configuracoes/WhiteLabel'
 import Fornecedores from '@/pages/fornecedores/Fornecedores'
 import LogAutomacao from '@/pages/automacao/LogAutomacao'
 
@@ -84,6 +85,7 @@ export const router = createBrowserRouter([
       { path: '/configuracoes/integracoes', element: <Integracoes /> },
       { path: '/configuracoes/automacao', element: <Automacao /> },
       { path: '/configuracoes/plano', element: <PlanoAssinatura /> },
+      { path: '/configuracoes/white-label', element: <WhiteLabel /> },
       { path: '/automacao/log', element: <LogAutomacao /> },
     ],
   },

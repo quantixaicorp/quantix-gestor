@@ -115,6 +115,8 @@ builder.Services.AddHostedService<AutomacaoHostedService>();
 builder.Services.AddScoped<CobrancaService>();
 builder.Services.AddScoped<FeatureService>();
 builder.Services.AddScoped<PlanoService>();
+builder.Services.AddScoped<BillingService>();
+builder.Services.AddScoped<TenantResolutionService>();
 builder.Services.AddScoped<PublicBookingService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
 builder.Services.AddScoped<IValidator<UpdateLancamentoRequest>, UpdateLancamentoValidator>();
@@ -141,6 +143,20 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseCors();
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
+// Resolve tenant by custom domain for public routes (when JWT has no company_id)
+app.Use(async (ctx, next) =>
+{
+    var tenant = ctx.RequestServices.GetRequiredService<GestorAI.API.Shared.MultiTenancy.TenantContext>();
+    if (tenant.EmpresaId == Guid.Empty)
+    {
+        var host = ctx.Request.Host.Host;
+        var resolver = ctx.RequestServices.GetRequiredService<TenantResolutionService>();
+        var empresaId = await resolver.ResolveByDomainAsync(host, ctx.RequestAborted);
+        if (empresaId.HasValue)
+            tenant.EmpresaId = empresaId.Value;
+    }
+    await next();
+});
 app.UseAuthorization();
 
 app.MapEstoque();
@@ -163,6 +179,7 @@ app.MapWebhooks();
 app.MapPublicBooking();
 app.MapAdmin();
 app.MapPlanos();
+app.MapBilling();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
    .AllowAnonymous();

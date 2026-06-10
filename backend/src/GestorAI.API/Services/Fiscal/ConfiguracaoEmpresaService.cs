@@ -109,7 +109,8 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.LembreteNoDia,
         c.Lembrete1dDepois,
         c.Lembrete3dDepois,
-        c.Lembrete7dDepois);
+        c.Lembrete7dDepois,
+        c.DominioCustomizado);
 
     public async Task<ConfiguracaoEmpresaResponse> SalvarBrandingAsync(
         ConfigurarBrandingRequest req, CancellationToken ct)
@@ -143,6 +144,20 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         config.AsaasSandbox = req.AsaasSandbox;
         config.ClickSignApiKey = req.ClickSignApiKey;
         config.ClickSignSandbox = req.ClickSignSandbox;
+        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task SalvarWhiteLabelAsync(SalvarWhiteLabelRequest req, CancellationToken ct)
+    {
+        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
+            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var isNew = config.Id == Guid.Empty;
+        if (req.Slug is not null) config.Slug = req.Slug;
+        if (req.LogoUrl is not null) config.LogoUrl = req.LogoUrl;
+        if (req.CorPrimaria is not null) config.CorPrimaria = req.CorPrimaria;
+        if (req.DescricaoPublica is not null) config.DescricaoPublica = req.DescricaoPublica;
+        config.DominioCustomizado = req.DominioCustomizado;
         if (isNew) db.ConfiguracoesEmpresa.Add(config);
         await db.SaveChangesAsync(ct);
     }

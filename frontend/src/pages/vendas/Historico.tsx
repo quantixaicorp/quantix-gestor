@@ -34,7 +34,7 @@ export default function Historico() {
   const [salvandoEdit, setSalvandoEdit] = useState(false)
   const { confirm, ConfirmDialogNode } = useConfirm()
 
-  useEffect(() => { list() }, [list])
+  useEffect(() => { void list() }, [list])
   useEffect(() => { void listClientes() }, [listClientes])
 
   function buscar() { list({ de: de || undefined, ate: ate || undefined, status: status || undefined }) }
@@ -75,7 +75,12 @@ export default function Historico() {
     })
     if (!ok) return
     setCancelando(id)
-    try { await cancelar(id) } finally { setCancelando(null) }
+    try {
+      await cancelar(id)
+      toast.success('Venda cancelada')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao cancelar')
+    } finally { setCancelando(null) }
   }
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -176,7 +181,7 @@ export default function Historico() {
               <div className="space-y-1.5">
                 <Label>Cliente</Label>
                 <select
-                  defaultValue={editandoVenda.clienteId ?? ''}
+                  value={editandoVenda.clienteId ?? ''}
                   onChange={e => setEditandoVenda(prev => prev ? { ...prev, clienteId: e.target.value || null } : prev)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
                   <option value="">Balcão (sem cliente)</option>
@@ -186,16 +191,16 @@ export default function Historico() {
               <div className="space-y-1.5">
                 <Label>Forma de pagamento</Label>
                 <select
-                  defaultValue={editandoVenda.formaPagamento}
+                  value={editandoVenda.formaPagamento}
                   onChange={e => setEditandoVenda(prev => prev ? { ...prev, formaPagamento: e.target.value } : prev)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
-                  {['Pix', 'Dinheiro', 'Cartao', 'Outro'].map(f => <option key={f} value={f}>{f}</option>)}
+                  {[{ v: 'Pix', l: 'Pix' }, { v: 'Dinheiro', l: 'Dinheiro' }, { v: 'Cartao', l: 'Cartão' }, { v: 'Outro', l: 'Outro' }].map(f => <option key={f.v} value={f.v}>{f.l}</option>)}
                 </select>
               </div>
               <div className="space-y-1.5">
                 <Label>Data da venda</Label>
                 <Input type="date"
-                  defaultValue={editandoVenda.dataHora.slice(0, 10)}
+                  value={editandoVenda.dataHora.slice(0, 10)}
                   onChange={e => setEditandoVenda(prev => prev ? { ...prev, dataHora: e.target.value + 'T12:00:00Z' } : prev)}
                   className="h-9" />
               </div>

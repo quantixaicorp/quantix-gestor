@@ -25,8 +25,13 @@ export default function Clientes() {
 
   async function handleEdit(data: UpdateClienteRequest) {
     if (!editando) return
-    await update(editando.id, data)
-    setEditando(null)
+    try {
+      await update(editando.id, data)
+      setEditando(null)
+      toast.success('Cliente atualizado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar cliente')
+    }
   }
 
   async function handleRemove(c: ClienteResponse) {

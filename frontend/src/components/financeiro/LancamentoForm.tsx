@@ -23,15 +23,16 @@ const categoriasReceita = ['Venda', 'Serviço', 'Outros']
 
 interface Props {
   defaultTipo?: 'Receita' | 'Despesa'
+  defaultValues?: Partial<FormValues>
   onSubmit: (data: CreateLancamentoRequest) => Promise<void>
   onCancel: () => void
 }
 
-export default function LancamentoForm({ defaultTipo = 'Despesa', onSubmit, onCancel }: Props) {
+export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues, onSubmit, onCancel }: Props) {
   const { register, watch, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { tipo: defaultTipo },
+      defaultValues: { tipo: defaultTipo ?? 'Despesa', ...defaultValues },
     })
 
   const tipo = watch('tipo')

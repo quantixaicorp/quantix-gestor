@@ -2,12 +2,13 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.PublicBooking;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Asaas;
 using GestorAI.API.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.PublicBooking;
 
-public class PublicBookingService(AppDbContext db)
+public class PublicBookingService(AppDbContext db, AsaasService asaasService)
 {
     public async Task<Guid> ResolveEmpresaAsync(string slug, CancellationToken ct)
     {
@@ -152,6 +153,14 @@ public class PublicBookingService(AppDbContext db)
         if (conflito)
             throw new AppException("Horário não está mais disponível.", 409);
 
+        var config = await db.ConfiguracoesEmpresa
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.EmpresaId == empresaId, ct);
+
+        var statusInicial = (config?.AprovarAutomaticamente ?? true)
+            ? AgendamentoStatus.Agendado
+            : AgendamentoStatus.AguardandoConfirmacao;
+
         var agendamento = new Agendamento
         {
             EmpresaId = empresaId,
@@ -161,18 +170,54 @@ public class PublicBookingService(AppDbContext db)
             ServicoId = req.ServicoId,
             DataHoraInicio = req.DataHoraInicio,
             DataHoraFim = dataHoraFim,
-            Status = AgendamentoStatus.AguardandoConfirmacao,
+            Status = statusInicial,
         };
 
         db.Agendamentos.Add(agendamento);
         await db.SaveChangesAsync(ct);
 
+        // Criar cobrança de sinal PIX se configurado — falha silenciosa para não bloquear o agendamento
+        string? sinalPixQrCode = null;
+        decimal? sinalValor = null;
+        if (config?.ValorSinal > 0 && !string.IsNullOrWhiteSpace(config.AsaasApiKey))
+        {
+            try
+            {
+                var customerId = await asaasService.GetOrCreateCustomerAsync(
+                    config.AsaasApiKey, config.AsaasSandbox,
+                    req.ClienteNome, null, ct);
+
+                var vencimento = DateOnly.FromDateTime(req.DataHoraInicio);
+                var result = await asaasService.CreatePaymentAsync(
+                    config.AsaasApiKey, config.AsaasSandbox,
+                    customerId, config.ValorSinal.Value,
+                    vencimento,
+                    $"Sinal para agendamento em {req.DataHoraInicio:dd/MM/yyyy HH:mm}",
+                    "PIX", ct);
+
+                agendamento.SinalAsaasId = result.Id;
+                agendamento.SinalPixQrCode = result.PixQrCode?.Payload;
+                await db.SaveChangesAsync(ct);
+
+                sinalPixQrCode = agendamento.SinalPixQrCode;
+                sinalValor = config.ValorSinal;
+            }
+            catch
+            {
+                // Sinal é opcional — não bloquear o agendamento se Asaas falhar
+            }
+        }
+
+        var profissionalNome = (await db.Profissionais.IgnoreQueryFilters()
+            .FirstAsync(p => p.Id == req.ProfissionalId, ct)).Nome;
+
         return new PublicAgendamentoConfirmado(
             agendamento.Id,
             servico.Nome,
-            (await db.Profissionais.IgnoreQueryFilters()
-                .FirstAsync(p => p.Id == req.ProfissionalId, ct)).Nome,
+            profissionalNome,
             agendamento.DataHoraInicio,
-            agendamento.DataHoraFim);
+            agendamento.DataHoraFim,
+            sinalPixQrCode,
+            sinalValor);
     }
 }

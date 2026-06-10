@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
   TrendingUp, ShoppingCart, PackageX,
-  AlertTriangle, Clock, DollarSign, ArrowDownCircle, ArrowUpCircle, Wallet,
+  AlertTriangle, ArrowUpCircle, Wallet,
 } from 'lucide-react'
 import { useDashboard } from '@/hooks/useDashboard'
 import KpiCard from '@/components/dashboard/KpiCard'
@@ -46,32 +46,23 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* KPIs de vendas */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <KpiCard titulo="Vendido hoje" valor={fmt(kpis.totalVendidoHoje)} icon={ShoppingCart} cor="green" />
-        <KpiCard titulo="Vendido no mês" valor={fmt(kpis.totalVendidoMes)} icon={TrendingUp} />
-        <KpiCard titulo="Lucro estimado (mês)" valor={fmt(kpis.lucroEstimadoMes)} icon={DollarSign}
-          cor={kpis.lucroEstimadoMes >= 0 ? 'green' : 'red'} />
-      </div>
-
-      {/* KPIs de fluxo de caixa */}
-      <div>
-        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Fluxo de Caixa — mês atual</p>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <KpiCard titulo="Entradas" valor={fmt(kpis.totalReceitasMes)} icon={ArrowUpCircle} cor="green" />
-          <KpiCard titulo="Saídas" valor={fmt(kpis.totalDespesasMes)} icon={ArrowDownCircle} cor="red" />
-          <KpiCard titulo="Saldo" valor={fmt(saldoMes)} icon={Wallet}
-            cor={saldoMes >= 0 ? 'green' : 'red'} />
-          <KpiCard titulo="A receber (pendente)" valor={fmt(kpis.contasReceberPendentes)} icon={TrendingUp} cor="green" />
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vendas</p>
+        <div className="grid grid-cols-2 gap-4">
+          <KpiCard titulo="Vendido hoje" valor={fmt(kpis.totalVendidoHoje)} icon={ShoppingCart} cor="green" />
+          <KpiCard titulo="Vendido no mês" valor={fmt(kpis.totalVendidoMes)} icon={TrendingUp} />
         </div>
       </div>
 
-      {/* KPIs de contas */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
-        <KpiCard titulo="Contas a pagar vencidas" valor={fmt(kpis.contasPagarVencidas)} icon={AlertTriangle}
-          cor={kpis.contasPagarVencidas > 0 ? 'red' : 'default'} />
-        <KpiCard titulo="A pagar próx. 7 dias" valor={fmt(kpis.contasPagarProximas7Dias)} icon={Clock}
-          cor={kpis.contasPagarProximas7Dias > 0 ? 'yellow' : 'default'} />
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Financeiro — mês atual</p>
+        <div className="grid grid-cols-3 gap-4">
+          <KpiCard titulo="Saldo do mês" valor={fmt(saldoMes)} icon={Wallet}
+            cor={saldoMes >= 0 ? 'green' : 'red'} />
+          <KpiCard titulo="A receber (pendente)" valor={fmt(kpis.contasReceberPendentes)} icon={ArrowUpCircle} cor="green" />
+          <KpiCard titulo="Contas vencidas" valor={fmt(kpis.contasPagarVencidas)} icon={AlertTriangle}
+            cor={kpis.contasPagarVencidas > 0 ? 'red' : 'default'} />
+        </div>
       </div>
 
       {kpis.produtosEstoqueBaixo > 0 && (

@@ -32,6 +32,9 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public string? DescricaoPublica { get; set; }
     public string? AsaasApiKey { get; set; }
     public bool AsaasSandbox { get; set; } = true;
+    // ClickSign (Assinatura Digital)
+    public string? ClickSignApiKey { get; set; }
+    public bool ClickSignSandbox { get; set; } = true;
 
     // Evolution API (WhatsApp)
     public string? EvolutionApiUrl { get; set; }

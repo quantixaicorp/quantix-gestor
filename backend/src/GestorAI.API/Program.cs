@@ -143,6 +143,7 @@ app.MapClientes();
 app.MapFornecedores();
 app.MapVendas();
 app.MapFinanceiro();
+app.MapCategoriasLancamento();
 app.MapDashboard();
 app.MapOrcamentos();
 app.MapOrcamentosPublicos();

@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<ItemVenda> ItensVenda => Set<ItemVenda>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Lancamento> Lancamentos => Set<Lancamento>();
+    public DbSet<CategoriaLancamento> CategoriasLancamento => Set<CategoriaLancamento>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
     public DbSet<OrcamentoItem> OrcamentoItens => Set<OrcamentoItem>();
     public DbSet<Profissional> Profissionais => Set<Profissional>();
@@ -50,6 +51,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<Venda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Cliente>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Lancamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<CategoriaLancamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<CategoriaLancamento>()
+            .HasIndex(c => new { c.EmpresaId, c.Tipo, c.Nome })
+            .IsUnique();
         modelBuilder.Entity<Orcamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Profissional>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<BloqueioAgenda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);

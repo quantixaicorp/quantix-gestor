@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CheckCircle2, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, ArrowLeft, Plus } from 'lucide-react'
 import { useVendas } from '@/hooks/useVendas'
 import { useClientes } from '@/hooks/useClientes'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import ClienteForm from '@/components/clientes/ClienteForm'
 import SeletorProduto from '@/components/vendas/SeletorProduto'
 import ResumoPedido from '@/components/vendas/ResumoPedido'
 import { toast } from '@/hooks/useToast'
 import type { ItemCarrinho, CreateVendaRequest, FecharVendaRequest } from '@/types/vendas'
+import type { CreateClienteRequest } from '@/types/clientes'
 
 const FORMAS = [
   { value: 'Pix',      label: 'Pix',     emoji: '⚡' },
@@ -28,7 +31,7 @@ export default function NovaVenda() {
   const origemParam = searchParams.get('origem')
 
   const { create, fechar, get } = useVendas()
-  const { clientes, list: listClientes } = useClientes()
+  const { clientes, list: listClientes, create: createCliente } = useClientes()
 
   const [itens, setItens] = useState<ItemCarrinho[]>([])
   const [desconto, setDesconto] = useState(0)
@@ -38,6 +41,7 @@ export default function NovaVenda() {
   const [salvando, setSalvando] = useState(false)
   const [vendaFinalizada, setVendaFinalizada] = useState<{ id: string; total: number } | null>(null)
   const [carregando, setCarregando] = useState(false)
+  const [modalNovoCliente, setModalNovoCliente] = useState(false)
   const hoje = new Date().toISOString().slice(0, 10)
   const [dataVenda, setDataVenda] = useState(hoje)
 
@@ -73,6 +77,13 @@ export default function NovaVenda() {
     setItens(prev => prev.map(i => i.produtoId === produtoId
       ? { ...i, quantidade, total: i.precoUnitario * quantidade }
       : i))
+  }
+
+  async function handleCriarCliente(data: CreateClienteRequest) {
+    const novoCliente = await createCliente(data)
+    await listClientes()
+    setClienteId(novoCliente.id)
+    setModalNovoCliente(false)
   }
 
   async function confirmarVenda() {
@@ -198,11 +209,18 @@ export default function NovaVenda() {
           {!vendaIdParam && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Cliente (opcional)</Label>
-              <select value={clienteId} onChange={e => setClienteId(e.target.value)}
-                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
-                <option value="">Balcão (sem cliente)</option>
-                {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select value={clienteId} onChange={e => setClienteId(e.target.value)}
+                  className="flex h-9 flex-1 rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
+                  <option value="">Balcão (sem cliente)</option>
+                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+                <Button type="button" variant="outline" size="icon"
+                  title="Criar novo cliente"
+                  onClick={() => setModalNovoCliente(true)}>
+                  <Plus size={16} />
+                </Button>
+              </div>
             </div>
           )}
 
@@ -269,6 +287,16 @@ export default function NovaVenda() {
           )}
         </div>
       </div>
+
+      <Dialog open={modalNovoCliente} onOpenChange={setModalNovoCliente}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Novo Cliente</DialogTitle></DialogHeader>
+          <ClienteForm
+            onSubmit={handleCriarCliente}
+            onCancel={() => setModalNovoCliente(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

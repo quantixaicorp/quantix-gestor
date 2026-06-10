@@ -20,7 +20,7 @@ public class PublicBookingServiceTests
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
             tenantContext);
-        return (db, new PublicBookingService(db));
+        return (db, new PublicBookingService(db, null!));
     }
 
     [Fact]

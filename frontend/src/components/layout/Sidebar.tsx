@@ -29,6 +29,7 @@ import {
   Truck,
   Plug,
   Bot,
+  CreditCard,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -117,6 +118,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { icon: LinkIcon, label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
       { icon: Plug, label: 'Integrações', path: '/configuracoes/integracoes' },
+      { icon: CreditCard, label: 'Plano', path: '/configuracoes/plano' },
     ],
   },
   {

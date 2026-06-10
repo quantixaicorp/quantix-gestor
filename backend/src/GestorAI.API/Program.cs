@@ -17,6 +17,7 @@ using GestorAI.API.Services.Financeiro;
 using GestorAI.API.Services.Contratos;
 using GestorAI.API.Services.Asaas;
 using GestorAI.API.Services.Automacao;
+using GestorAI.API.Services;
 using GestorAI.API.Services.Cobrancas;
 using GestorAI.API.Services.Orcamentos;
 using GestorAI.API.Services.PublicBooking;
@@ -112,6 +113,8 @@ builder.Services.AddScoped<LembreteCobrancaService>();
 builder.Services.AddScoped<GeracaoCobrancaService>();
 builder.Services.AddHostedService<AutomacaoHostedService>();
 builder.Services.AddScoped<CobrancaService>();
+builder.Services.AddScoped<FeatureService>();
+builder.Services.AddScoped<PlanoService>();
 builder.Services.AddScoped<PublicBookingService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
 builder.Services.AddScoped<IValidator<UpdateLancamentoRequest>, UpdateLancamentoValidator>();
@@ -159,6 +162,7 @@ app.MapAutomacao();
 app.MapWebhooks();
 app.MapPublicBooking();
 app.MapAdmin();
+app.MapPlanos();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
    .AllowAnonymous();

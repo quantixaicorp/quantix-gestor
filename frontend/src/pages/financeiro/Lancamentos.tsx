@@ -35,8 +35,13 @@ export default function Lancamentos() {
   }, [list, fetchResumo])
 
   async function handleCreate(data: CreateLancamentoRequest) {
-    await create(data)
-    setModalAberto(false)
+    try {
+      await create(data)
+      setModalAberto(false)
+      toast.success('Lançamento criado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao criar lançamento')
+    }
   }
 
   async function handleEditLanc(data: CreateLancamentoRequest) {
@@ -74,6 +79,9 @@ export default function Lancamentos() {
     setPagando(l.id)
     try {
       await pagar(l.id, { dataPagamento: new Date().toISOString() })
+      toast.success('Pagamento registrado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao registrar pagamento')
     } finally { setPagando(null) }
   }
 
@@ -89,7 +97,7 @@ export default function Lancamentos() {
       {resumo && (
         <div className="rounded-xl border bg-card p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Resumo do mês</p>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { label: 'Receitas pagas', value: resumo.totalReceitasMes, color: 'text-green-600 dark:text-green-400' },
               { label: 'Despesas pagas', value: resumo.totalDespesasMes, color: 'text-red-600 dark:text-red-400' },
@@ -99,7 +107,7 @@ export default function Lancamentos() {
               <div key={k.label} className="rounded-lg border bg-background p-3">
                 <p className="text-xs text-muted-foreground">{k.label}</p>
                 <p className={`text-xl font-bold mt-1 ${k.color}`}>
-                  {k.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {fmt(k.value)}
                 </p>
               </div>
             ))}
@@ -141,7 +149,7 @@ export default function Lancamentos() {
                       {l.status === 'Pendente' && (
                         <Button size="sm" variant="outline"
                           disabled={pagando === l.id}
-                          onClick={() => handlePagar(l)}>
+                          onClick={() => void handlePagar(l)}>
                           {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
                         </Button>
                       )}
@@ -153,7 +161,7 @@ export default function Lancamentos() {
                       {isAdmin && !l.vendaId && (
                         <Button size="sm" variant="ghost"
                           disabled={excluindo === l.id}
-                          onClick={() => handleExcluir(l)}
+                          onClick={() => void handleExcluir(l)}
                           className="text-destructive hover:text-destructive hover:bg-destructive/10">
                           <Trash2 size={14} />
                         </Button>

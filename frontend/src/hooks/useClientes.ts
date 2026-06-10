@@ -32,5 +32,10 @@ export function useClientes() {
     return result
   }, [])
 
-  return { clientes, loading, error, list, create, update }
+  const remove = useCallback(async (id: string) => {
+    await api.delete(`/api/clientes/${id}`)
+    setClientes(prev => prev.filter(c => c.id !== id))
+  }, [])
+
+  return { clientes, loading, error, list, create, update, remove }
 }

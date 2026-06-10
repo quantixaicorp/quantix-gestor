@@ -86,7 +86,7 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
             ?? throw new AppException("Serviço não encontrado.", 404);
 
         var duracao = TimeSpan.FromMinutes(servico.DuracaoMinutos!.Value);
-        var inicioDia = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var inicioDia = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
         var fimDia = inicioDia.AddDays(1);
 
         var bloqueios = await db.BloqueiosAgenda
@@ -109,8 +109,8 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
 
         foreach (var faixa in faixas)
         {
-            var cursor = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraInicio), DateTimeKind.Utc);
-            var limite = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraFim), DateTimeKind.Utc) - duracao;
+            var cursor = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraInicio), DateTimeKind.Unspecified);
+            var limite = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraFim), DateTimeKind.Unspecified) - duracao;
 
             while (cursor <= limite)
             {

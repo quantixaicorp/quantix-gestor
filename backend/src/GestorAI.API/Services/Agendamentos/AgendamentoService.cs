@@ -12,7 +12,7 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<AgendamentoListItem>> ListAsync(DateOnly data, CancellationToken ct)
     {
-        var inicio = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var inicio = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
         var fim = inicio.AddDays(1);
 
         return await db.Agendamentos
@@ -35,8 +35,8 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
     public async Task<List<AgendamentoListItem>> ListSemanaAsync(
         DateOnly de, DateOnly ate, Guid? profissionalId, CancellationToken ct)
     {
-        var inicio = de.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var fim = ate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).AddDays(1);
+        var inicio = de.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
+        var fim = ate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified).AddDays(1);
 
         var query = db.Agendamentos
             .Include(a => a.Profissional)
@@ -283,7 +283,7 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
             ?? throw new AppException("Serviço não encontrado.", 404);
 
         var duracao = TimeSpan.FromMinutes(servico.DuracaoMinutos!.Value);
-        var inicioDia = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var inicioDia = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
         var fimDia = inicioDia.AddDays(1);
 
         var bloqueios = await db.BloqueiosAgenda
@@ -302,8 +302,8 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
 
         foreach (var faixa in faixas)
         {
-            var cursor = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraInicio), DateTimeKind.Utc);
-            var limite = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraFim), DateTimeKind.Utc) - duracao;
+            var cursor = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraInicio), DateTimeKind.Unspecified);
+            var limite = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraFim), DateTimeKind.Unspecified) - duracao;
 
             while (cursor <= limite)
             {

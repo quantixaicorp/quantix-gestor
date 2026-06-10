@@ -56,7 +56,7 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
             var total = subtotal - req.Desconto;
 
             var dataHora = req.DataHora.HasValue
-                ? DateTime.SpecifyKind(req.DataHora.Value, DateTimeKind.Utc)
+                ? DateTime.SpecifyKind(req.DataHora.Value, DateTimeKind.Unspecified)
                 : DateTime.UtcNow;
 
             var venda = new Venda

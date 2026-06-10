@@ -148,7 +148,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
     public async Task<LancamentoResumo> GetResumoAsync(CancellationToken ct)
     {
         var hoje = DateTime.UtcNow.Date;
-        var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
         var totalReceitas = await db.Lancamentos
             .Where(l => l.Status == StatusLancamento.Pago

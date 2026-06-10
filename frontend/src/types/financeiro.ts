@@ -54,3 +54,18 @@ export interface UpdateLancamentoRequest {
   categoria: string
   observacao?: string
 }
+
+export interface CategoriaLancamentoResponse {
+  id: string
+  nome: string
+  tipo: 'Receita' | 'Despesa'
+}
+
+export interface CreateCategoriaLancamentoRequest {
+  nome: string
+  tipo: 'Receita' | 'Despesa'
+}
+
+export interface UpdateCategoriaLancamentoRequest {
+  nome: string
+}

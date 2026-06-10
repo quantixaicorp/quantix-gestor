@@ -146,4 +146,141 @@ public class OrcamentoServiceTests
 
         await Assert.ThrowsAsync<AppException>(() => service.AprovarAsync(o.Id, default));
     }
+
+    [Fact]
+    public async Task EnviarAsync_GeraTokenPublico()
+    {
+        var (_, service) = Setup();
+        var req = new CreateOrcamentoRequest(
+            null, "Orçamento Teste", DateTime.Today.AddDays(7), null,
+            [new OrcamentoItemRequest("Livre", null, "Corte", 1, 50m)]);
+        var created = await service.CreateAsync(req, default);
+
+        var result = await service.EnviarAsync(created.Id, default);
+
+        Assert.NotNull(result.TokenPublico);
+        Assert.NotEqual(Guid.Empty, result.TokenPublico);
+    }
+
+    [Fact]
+    public async Task GetPublicoAsync_RetornaOrcamentoPorToken()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "Teste Público",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Enviado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await service.GetPublicoAsync(token, default);
+
+        Assert.Equal("Teste Público", result.Titulo);
+        Assert.Equal("Enviado", result.Status);
+    }
+
+    [Fact]
+    public async Task GetPublicoAsync_Lanca404_QuandoTokenInvalido()
+    {
+        var (_, service) = Setup();
+
+        await Assert.ThrowsAsync<AppException>(
+            () => service.GetPublicoAsync(Guid.NewGuid(), default));
+    }
+
+    [Fact]
+    public async Task AprovarPublicoAsync_AlteraStatusParaAprovado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Enviado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await service.AprovarPublicoAsync(token, default);
+
+        Assert.Equal("Aprovado", result.Status);
+    }
+
+    [Fact]
+    public async Task RejeitarPublicoAsync_AlteraStatusParaRejeitado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Enviado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await service.RejeitarPublicoAsync(token, default);
+
+        Assert.Equal("Rejeitado", result.Status);
+    }
+
+    [Fact]
+    public async Task AprovarPublicoAsync_Lanca400_QuandoExpirado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(-1),
+            Status = OrcamentoStatus.Enviado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        var ex = await Assert.ThrowsAsync<AppException>(
+            () => service.AprovarPublicoAsync(token, default));
+        Assert.Equal(400, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task AprovarPublicoAsync_Lanca400_QuandoStatusNaoEhEnviado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Aprovado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<AppException>(
+            () => service.AprovarPublicoAsync(token, default));
+    }
+
+    [Fact]
+    public async Task RejeitarPublicoAsync_Lanca400_QuandoStatusNaoEhEnviado()
+    {
+        var (db, service) = Setup();
+        var token = Guid.NewGuid();
+        db.Orcamentos.Add(new Orcamento
+        {
+            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
+            DataValidade = DateTime.UtcNow.AddDays(7),
+            Status = OrcamentoStatus.Rejeitado,
+            TokenPublico = token,
+        });
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<AppException>(
+            () => service.RejeitarPublicoAsync(token, default));
+    }
 }

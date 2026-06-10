@@ -273,7 +273,7 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
         return await query
             .OrderByDescending(v => v.DataHora)
             .Select(v => new VendaListItem(
-                v.Id, v.Cliente != null ? v.Cliente.Nome : null,
+                v.Id, v.ClienteId, v.Cliente != null ? v.Cliente.Nome : null,
                 v.DataHora, v.Status.ToString(),
                 v.Total, v.FormaPagamento.ToString()))
             .ToListAsync(ct);
@@ -302,6 +302,38 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
         await db.SaveChangesAsync(ct);
     }
 
+    public async Task<VendaResponse> UpdateAsync(Guid id, UpdateVendaRequest req, CancellationToken ct)
+    {
+        var venda = await db.Vendas
+            .FirstOrDefaultAsync(v => v.Id == id, ct)
+            ?? throw new AppException("Venda não encontrada.", 404);
+
+        if (venda.Status != StatusVenda.Concluida)
+            throw new AppException("Apenas vendas concluídas podem ser editadas.", 400);
+
+        if (!Enum.TryParse<FormaPagamento>(req.FormaPagamento, out var forma))
+            throw new AppException($"FormaPagamento inválida: {req.FormaPagamento}.", 400);
+
+        venda.ClienteId = req.ClienteId;
+        venda.FormaPagamento = forma;
+        venda.DataHora = req.DataHora;
+
+        var lancamento = await db.Lancamentos
+            .FirstOrDefaultAsync(l => l.VendaId == id, ct);
+        if (lancamento is not null)
+        {
+            var nomeCliente = req.ClienteId.HasValue
+                ? (await db.Clientes.FindAsync([req.ClienteId.Value], ct))?.Nome ?? "Cliente"
+                : "Venda balcão";
+            lancamento.Descricao = $"Venda — {nomeCliente}";
+            lancamento.DataVencimento = req.DataHora;
+            lancamento.DataPagamento = req.DataHora;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
     public async Task<VendaResponse> GetAsync(Guid id, CancellationToken ct)
     {
         var venda = await db.Vendas
@@ -312,6 +344,7 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 
         return new VendaResponse(
             venda.Id,
+            venda.ClienteId,
             venda.Cliente?.Nome,
             venda.DataHora,
             venda.Status.ToString(),

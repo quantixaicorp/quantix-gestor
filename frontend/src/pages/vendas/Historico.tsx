@@ -1,28 +1,41 @@
 import { useEffect, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Pencil } from 'lucide-react'
 import { useVendas } from '@/hooks/useVendas'
+import { useClientes } from '@/hooks/useClientes'
 import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
+import type { UpdateVendaRequest } from '@/types/vendas'
 
 const statusVariant = (s: string): 'secondary' | 'destructive' | 'outline' =>
   s === 'Concluida' ? 'secondary' :
   s === 'Cancelada' ? 'destructive' : 'outline'
 
 export default function Historico() {
-  const { vendas, loading, list, cancelar, remove } = useVendas()
+  const { vendas, loading, list, cancelar, remove, update } = useVendas()
+  const { clientes, list: listClientes } = useClientes()
   const { isAdmin } = useAuth()
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
   const [status, setStatus] = useState('')
   const [cancelando, setCancelando] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState<string | null>(null)
+  const [editandoVenda, setEditandoVenda] = useState<{
+    id: string
+    clienteId: string | null
+    formaPagamento: string
+    dataHora: string
+  } | null>(null)
+  const [salvandoEdit, setSalvandoEdit] = useState(false)
   const { confirm, ConfirmDialogNode } = useConfirm()
 
-  useEffect(() => { list() }, [list])
+  useEffect(() => { void list() }, [list])
+  useEffect(() => { void listClientes() }, [listClientes])
 
   function buscar() { list({ de: de || undefined, ate: ate || undefined, status: status || undefined }) }
 
@@ -42,6 +55,18 @@ export default function Historico() {
     } finally { setExcluindo(null) }
   }
 
+  async function handleSalvarEdit(req: UpdateVendaRequest) {
+    if (!editandoVenda) return
+    setSalvandoEdit(true)
+    try {
+      await update(editandoVenda.id, req)
+      setEditandoVenda(null)
+      toast.success('Venda atualizada')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar')
+    } finally { setSalvandoEdit(false) }
+  }
+
   async function handleCancelar(id: string) {
     const ok = await confirm({
       title: 'Cancelar esta venda?',
@@ -50,7 +75,12 @@ export default function Historico() {
     })
     if (!ok) return
     setCancelando(id)
-    try { await cancelar(id) } finally { setCancelando(null) }
+    try {
+      await cancelar(id)
+      toast.success('Venda cancelada')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao cancelar')
+    } finally { setCancelando(null) }
   }
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -106,6 +136,12 @@ export default function Historico() {
                     <div className="flex items-center gap-2">
                       {v.status === 'Concluida' && (
                         <Button size="sm" variant="ghost"
+                          onClick={() => setEditandoVenda({ id: v.id, clienteId: v.clienteId, formaPagamento: v.formaPagamento, dataHora: v.dataHora })}>
+                          <Pencil size={14} />
+                        </Button>
+                      )}
+                      {v.status === 'Concluida' && (
+                        <Button size="sm" variant="ghost"
                           className="text-destructive hover:text-destructive"
                           disabled={cancelando === v.id}
                           onClick={() => handleCancelar(v.id)}>
@@ -137,6 +173,48 @@ export default function Historico() {
         </div>
       )}
       {ConfirmDialogNode}
+      {editandoVenda && (
+        <Dialog open onOpenChange={open => { if (!open) setEditandoVenda(null) }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>Editar Venda</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label>Cliente</Label>
+                <select
+                  value={editandoVenda.clienteId ?? ''}
+                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, clienteId: e.target.value || null } : prev)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
+                  <option value="">Balcão (sem cliente)</option>
+                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Forma de pagamento</Label>
+                <select
+                  value={editandoVenda.formaPagamento}
+                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, formaPagamento: e.target.value } : prev)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
+                  {[{ v: 'Pix', l: 'Pix' }, { v: 'Dinheiro', l: 'Dinheiro' }, { v: 'Cartao', l: 'Cartão' }, { v: 'Outro', l: 'Outro' }].map(f => <option key={f.v} value={f.v}>{f.l}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Data da venda</Label>
+                <Input type="date"
+                  value={editandoVenda.dataHora.slice(0, 10)}
+                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, dataHora: e.target.value + 'T12:00:00Z' } : prev)}
+                  className="h-9" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button disabled={salvandoEdit}
+                  onClick={() => void handleSalvarEdit({ clienteId: editandoVenda.clienteId, formaPagamento: editandoVenda.formaPagamento, dataHora: editandoVenda.dataHora })}>
+                  {salvandoEdit ? 'Salvando...' : 'Salvar'}
+                </Button>
+                <Button variant="outline" onClick={() => setEditandoVenda(null)}>Cancelar</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

@@ -15,6 +15,8 @@ using GestorAI.API.Services.Fiscal;
 using GestorAI.API.Services.Estoque;
 using GestorAI.API.Services.Financeiro;
 using GestorAI.API.Services.Contratos;
+using GestorAI.API.Services.Asaas;
+using GestorAI.API.Services.Automacao;
 using GestorAI.API.Services.Cobrancas;
 using GestorAI.API.Services.Orcamentos;
 using GestorAI.API.Services.PublicBooking;
@@ -35,7 +37,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt =>
     opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
+       .UseSnakeCaseNamingConvention());
 
 builder.Services.AddScoped<TenantContext>();
 
@@ -88,6 +91,7 @@ builder.Services.AddScoped<FornecedorService>();
 builder.Services.AddScoped<VendaService>();
 // Services — Financeiro
 builder.Services.AddScoped<LancamentoService>();
+builder.Services.AddScoped<CategoriaLancamentoService>();
 // Services — Dashboard
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<RelatorioService>();
@@ -99,9 +103,17 @@ builder.Services.AddScoped<AgendamentoService>();
 builder.Services.AddScoped<NotaFiscalService>();
 builder.Services.AddScoped<ConfiguracaoEmpresaService>();
 builder.Services.AddScoped<ContratoService>();
+builder.Services.AddScoped<ContratoTemplateService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<AsaasService>();
+builder.Services.AddScoped<IEvolutionApiService, EvolutionApiService>();
+builder.Services.AddScoped<LembreteCobrancaService>();
+builder.Services.AddScoped<GeracaoCobrancaService>();
+builder.Services.AddHostedService<AutomacaoHostedService>();
 builder.Services.AddScoped<CobrancaService>();
 builder.Services.AddScoped<PublicBookingService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
+builder.Services.AddScoped<IValidator<UpdateLancamentoRequest>, UpdateLancamentoValidator>();
 builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamentoValidator>();
 // Validators
 builder.Services.AddScoped<IValidator<CreateProdutoRequest>, CreateProdutoValidator>();
@@ -132,13 +144,18 @@ app.MapClientes();
 app.MapFornecedores();
 app.MapVendas();
 app.MapFinanceiro();
+app.MapCategoriasLancamento();
 app.MapDashboard();
 app.MapOrcamentos();
+app.MapOrcamentosPublicos();
 app.MapProfissionais();
 app.MapAgendamentos();
 app.MapFiscal();
 app.MapContratos();
+app.MapContratoTemplates();
 app.MapCobrancas();
+app.MapAutomacao();
+app.MapWebhooks();
 app.MapPublicBooking();
 app.MapAdmin();
 

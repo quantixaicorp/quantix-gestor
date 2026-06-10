@@ -23,8 +23,15 @@ export interface ItemVendaResponse {
   total: number
 }
 
+export interface UpdateVendaRequest {
+  clienteId?: string | null
+  formaPagamento: string
+  dataHora: string
+}
+
 export interface VendaResponse {
   id: string
+  clienteId: string | null
   clienteNome: string | null
   dataHora: string
   status: string
@@ -39,6 +46,7 @@ export interface VendaResponse {
 
 export interface VendaListItem {
   id: string
+  clienteId: string | null
   clienteNome: string | null
   dataHora: string
   status: string

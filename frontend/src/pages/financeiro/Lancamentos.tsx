@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import LancamentoForm from '@/components/financeiro/LancamentoForm'
 import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
-import type { CreateLancamentoRequest, LancamentoResponse } from '@/types/financeiro'
+import type { CreateLancamentoRequest, LancamentoResponse, LancamentoResumo, UpdateLancamentoRequest } from '@/types/financeiro'
 
 const tipoVariant = (tipo: string) => tipo === 'Receita' ? 'secondary' : 'destructive'
 const statusVariant = (s: string, vencido: boolean) =>
@@ -20,18 +20,39 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 
 export default function Lancamentos() {
-  const { lancamentos, loading, list, create, pagar, remove } = useFinanceiro()
+  const { lancamentos, loading, list, create, pagar, remove, update, fetchResumo } = useFinanceiro()
   const { isAdmin } = useAuth()
   const [modalAberto, setModalAberto] = useState(false)
   const [pagando, setPagando] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState<string | null>(null)
+  const [resumo, setResumo] = useState<LancamentoResumo | null>(null)
+  const [editandoLanc, setEditandoLanc] = useState<LancamentoResponse | null>(null)
   const { confirm, ConfirmDialogNode } = useConfirm()
 
-  useEffect(() => { void list() }, [list])
+  useEffect(() => {
+    void list()
+    void fetchResumo().then(setResumo).catch(() => {})
+  }, [list, fetchResumo])
 
   async function handleCreate(data: CreateLancamentoRequest) {
-    await create(data)
-    setModalAberto(false)
+    try {
+      await create(data)
+      setModalAberto(false)
+      toast.success('Lançamento criado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao criar lançamento')
+    }
+  }
+
+  async function handleEditLanc(data: CreateLancamentoRequest) {
+    if (!editandoLanc) return
+    try {
+      await update(editandoLanc.id, data as UpdateLancamentoRequest)
+      setEditandoLanc(null)
+      toast.success('Lançamento atualizado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar')
+    }
   }
 
   async function handleExcluir(l: LancamentoResponse) {
@@ -58,6 +79,9 @@ export default function Lancamentos() {
     setPagando(l.id)
     try {
       await pagar(l.id, { dataPagamento: new Date().toISOString() })
+      toast.success('Pagamento registrado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao registrar pagamento')
     } finally { setPagando(null) }
   }
 
@@ -69,6 +93,27 @@ export default function Lancamentos() {
           <Plus size={16} className="mr-2" /> Novo Lançamento
         </Button>
       </div>
+
+      {resumo && (
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Resumo do mês</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Receitas pagas', value: resumo.totalReceitasMes, color: 'text-green-600 dark:text-green-400' },
+              { label: 'Despesas pagas', value: resumo.totalDespesasMes, color: 'text-red-600 dark:text-red-400' },
+              { label: 'Saldo', value: resumo.saldoMes, color: resumo.saldoMes >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' },
+              { label: 'Pendentes', value: resumo.totalPendente, color: 'text-yellow-600 dark:text-yellow-400' },
+            ].map(k => (
+              <div key={k.label} className="rounded-lg border bg-background p-3">
+                <p className="text-xs text-muted-foreground">{k.label}</p>
+                <p className={`text-xl font-bold mt-1 ${k.color}`}>
+                  {fmt(k.value)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? <p className="text-muted-foreground">Carregando...</p> : (
         <div className="overflow-x-auto rounded-md border">
@@ -104,14 +149,19 @@ export default function Lancamentos() {
                       {l.status === 'Pendente' && (
                         <Button size="sm" variant="outline"
                           disabled={pagando === l.id}
-                          onClick={() => handlePagar(l)}>
+                          onClick={() => void handlePagar(l)}>
                           {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                        </Button>
+                      )}
+                      {l.status === 'Pendente' && !l.vendaId && (
+                        <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
+                          <Pencil size={14} />
                         </Button>
                       )}
                       {isAdmin && !l.vendaId && (
                         <Button size="sm" variant="ghost"
                           disabled={excluindo === l.id}
-                          onClick={() => handleExcluir(l)}
+                          onClick={() => void handleExcluir(l)}
                           className="text-destructive hover:text-destructive hover:bg-destructive/10">
                           <Trash2 size={14} />
                         </Button>
@@ -136,6 +186,26 @@ export default function Lancamentos() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Novo Lançamento</DialogTitle></DialogHeader>
           <LancamentoForm onSubmit={handleCreate} onCancel={() => setModalAberto(false)} />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!editandoLanc} onOpenChange={open => { if (!open) setEditandoLanc(null) }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Editar Lançamento</DialogTitle></DialogHeader>
+          {editandoLanc && (
+            <LancamentoForm
+              key={editandoLanc.id}
+              defaultValues={{
+                tipo: editandoLanc.tipo as 'Receita' | 'Despesa',
+                descricao: editandoLanc.descricao,
+                valor: editandoLanc.valor.toString(),
+                dataVencimento: editandoLanc.dataVencimento.slice(0, 10),
+                categoria: editandoLanc.categoria,
+                observacao: editandoLanc.observacao ?? undefined,
+              }}
+              onSubmit={handleEditLanc}
+              onCancel={() => setEditandoLanc(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
       {ConfirmDialogNode}

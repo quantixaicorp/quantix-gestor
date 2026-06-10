@@ -27,8 +27,11 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 export default function DetalheOrcamento() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { orcamento, loading, error, get, enviar, aprovar, rejeitar, cancelar, converter } = useOrcamentos()
+  const { orcamento, loading, error, get, enviar, aprovar, rejeitar, cancelar, converter, gerarCobranca } = useOrcamentos()
   const [acao, setAcao] = useState<string | null>(null)
+  const [modalCobranca, setModalCobranca] = useState(false)
+  const [dataVencCobranca, setDataVencCobranca] = useState(new Date().toISOString().slice(0, 10))
+  const [gerandoCob, setGerandoCob] = useState(false)
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => {
@@ -69,6 +72,20 @@ export default function DetalheOrcamento() {
     const digits = orcamento.clienteWhatsapp.replace(/\D/g, '')
     const phone = digits.startsWith('55') ? digits : `55${digits}`
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank')
+  }
+
+  async function handleGerarCobranca() {
+    if (!id) return
+    setGerandoCob(true)
+    try {
+      await gerarCobranca(id, dataVencCobranca)
+      setModalCobranca(false)
+      toast.success('Cobrança criada com sucesso!')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao gerar cobrança')
+    } finally {
+      setGerandoCob(false)
+    }
   }
 
   async function handleConverter() {
@@ -146,9 +163,24 @@ export default function DetalheOrcamento() {
           </>
         )}
         {o.status === 'Aprovado' && (
-          <Button onClick={handleConverter} disabled={acao !== null}>
-            {acao === 'converter' ? '...' : 'Converter em Venda'}
-          </Button>
+          <>
+            <Button onClick={handleConverter} disabled={acao !== null}>
+              {acao === 'converter' ? '...' : 'Converter em Venda'}
+            </Button>
+            {o.clienteId && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(
+                  `/contratos/novo?clienteId=${o.clienteId}&titulo=${encodeURIComponent(o.titulo)}`
+                )}
+              >
+                Criar Contrato
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setModalCobranca(true)}>
+              Gerar Cobrança
+            </Button>
+          </>
         )}
         {o.status === 'Convertido' && o.vendaId && (
           <Button variant="outline" onClick={() => navigate('/vendas')}>
@@ -159,6 +191,25 @@ export default function DetalheOrcamento() {
           <FileText size={16} className="mr-2" /> PDF
         </Button>
       </div>
+
+      {o.tokenPublico && o.status !== 'Rascunho' && (
+        <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
+          <p className="text-sm flex-1 truncate font-mono text-muted-foreground">
+            {window.location.origin}/orcamento/{o.tokenPublico}
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              void navigator.clipboard.writeText(
+                `${window.location.origin}/orcamento/${o.tokenPublico}`
+              )
+            }}
+          >
+            Copiar link
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-1 text-sm text-muted-foreground">
         <p>Válido até: <strong className="text-foreground">{fmtDate(o.dataValidade)}</strong></p>
@@ -201,6 +252,28 @@ export default function DetalheOrcamento() {
       </div>
 
       <Button variant="ghost" onClick={() => navigate('/orcamentos')}>← Voltar</Button>
+      {modalCobranca && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => { setModalCobranca(false); setDataVencCobranca(new Date().toISOString().slice(0, 10)) }}>
+          <div className="bg-background rounded-xl border p-6 w-full max-w-sm flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+            <h2 className="font-bold">Gerar Cobrança</h2>
+            <p className="text-sm text-muted-foreground">
+              Será criada uma cobrança de {fmt(o.total)} vinculada a este orçamento.
+            </p>
+            <div>
+              <label className="block text-sm mb-1">Vencimento</label>
+              <input type="date" value={dataVencCobranca} required
+                onChange={e => setDataVencCobranca(e.target.value)}
+                className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm" />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleGerarCobranca} disabled={gerandoCob}>
+                {gerandoCob ? 'Gerando...' : 'Gerar'}
+              </Button>
+              <Button variant="outline" onClick={() => { setModalCobranca(false); setDataVencCobranca(new Date().toISOString().slice(0, 10)) }}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
       {ConfirmDialogNode}
     </div>
   )

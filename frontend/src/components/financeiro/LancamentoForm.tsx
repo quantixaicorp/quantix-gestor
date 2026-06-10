@@ -1,10 +1,12 @@
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { CreateLancamentoRequest } from '@/types/financeiro'
+import { useCategoriasLancamento } from '@/hooks/useCategoriasLancamento'
+import type { CreateLancamentoRequest, CategoriaLancamentoResponse } from '@/types/financeiro'
 
 const schema = z.object({
   tipo: z.enum(['Receita', 'Despesa']),
@@ -18,24 +20,30 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
-const categoriasDespesa = ['Aluguel', 'Fornecedor', 'Utilidades', 'Salários', 'Marketing', 'Outros']
-const categoriasReceita = ['Venda', 'Serviço', 'Outros']
-
 interface Props {
   defaultTipo?: 'Receita' | 'Despesa'
+  defaultValues?: Partial<FormValues>
   onSubmit: (data: CreateLancamentoRequest) => Promise<void>
   onCancel: () => void
 }
 
-export default function LancamentoForm({ defaultTipo = 'Despesa', onSubmit, onCancel }: Props) {
-  const { register, watch, handleSubmit, formState: { errors, isSubmitting } } =
+export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues, onSubmit, onCancel }: Props) {
+  const { register, watch, handleSubmit, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { tipo: defaultTipo },
+      defaultValues: { tipo: defaultTipo ?? 'Despesa', ...defaultValues },
     })
 
   const tipo = watch('tipo')
-  const categorias = tipo === 'Despesa' ? categoriasDespesa : categoriasReceita
+  const { list: listCategorias } = useCategoriasLancamento()
+  const [categorias, setCategorias] = useState<CategoriaLancamentoResponse[]>([])
+
+  useEffect(() => {
+    void listCategorias(tipo).then(cats => {
+      setCategorias(cats)
+      if (!defaultValues?.categoria) setValue('categoria', '')
+    })
+  }, [tipo, listCategorias, setValue, defaultValues?.categoria])
 
   function handleFormSubmit(data: FormValues) {
     return onSubmit({ ...data, valor: parseFloat(data.valor) })
@@ -79,7 +87,7 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', onSubmit, onCa
         <select {...register('categoria')}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
           <option value="">Selecione...</option>
-          {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+          {categorias.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
         </select>
         {errors.categoria && <p className="text-xs text-destructive">{errors.categoria.message}</p>}
       </div>

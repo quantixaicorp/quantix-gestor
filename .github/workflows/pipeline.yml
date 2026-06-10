@@ -54,6 +54,7 @@ jobs:
         working-directory: backend
         run: |
           dotnet tool restore
+          dotnet restore src/GestorAI.API/GestorAI.API.csproj -r linux-x64
           dotnet ef migrations bundle \
             --project src/GestorAI.API/GestorAI.API.csproj \
             --output ../publish/migrate \
@@ -101,24 +102,23 @@ jobs:
           rsync -az --delete -e ssh \
             ./publish/backend/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}/
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chown -R www-data:www-data ${{ secrets.VPS_DEPLOY_PATH }}"
 
       - name: Sync frontend
         run: |
           rsync -az --delete -e ssh \
             ./publish/frontend/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_FRONTEND_PATH }}/
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chown -R www-data:www-data ${{ secrets.VPS_FRONTEND_PATH }}"
 
       - name: Run migrations
         run: |
           rsync -az -e ssh ./publish/migrate \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/gestorai-migrate
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} bash -e -c '
-            chmod +x /tmp/gestorai-migrate
-            set -a
-            source ${{ secrets.VPS_ENV_FILE }}
-            set +a
-            /tmp/gestorai-migrate
-          '
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chmod +x /tmp/gestorai-migrate && set -a && . ${{ secrets.VPS_ENV_FILE }} && set +a && /tmp/gestorai-migrate"
 
       - name: Restart service
         run: |

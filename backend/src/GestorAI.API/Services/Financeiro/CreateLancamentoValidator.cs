@@ -1,11 +1,15 @@
 using FluentValidation;
+using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Financeiro;
+using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Shared.MultiTenancy;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.Financeiro;
 
 public class CreateLancamentoValidator : AbstractValidator<CreateLancamentoRequest>
 {
-    public CreateLancamentoValidator()
+    public CreateLancamentoValidator(AppDbContext db, TenantContext tenantContext)
     {
         RuleFor(x => x.Tipo)
             .Must(t => t is "Receita" or "Despesa")
@@ -13,6 +17,14 @@ public class CreateLancamentoValidator : AbstractValidator<CreateLancamentoReque
         RuleFor(x => x.Descricao).NotEmpty().MaximumLength(300);
         RuleFor(x => x.Valor).GreaterThan(0);
         RuleFor(x => x.DataVencimento).NotEmpty();
-        RuleFor(x => x.Categoria).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Categoria)
+            .NotEmpty().MaximumLength(100)
+            .MustAsync(async (request, categoria, ct) =>
+            {
+                if (!Enum.TryParse<TipoLancamento>(request.Tipo, out var tipo)) return false;
+                return await db.CategoriasLancamento
+                    .AnyAsync(c => c.Nome == categoria && c.Tipo == tipo, ct);
+            })
+            .WithMessage("Categoria não encontrada para o tipo informado.");
     }
 }

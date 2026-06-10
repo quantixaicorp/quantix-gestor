@@ -1,9 +1,15 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
 import type {
-  CobrancaListItem, CobrancaResponse,
+  AgingData, CobrancaAsaasResponse, CobrancaListItem, CobrancaResponse,
   CreateCobrancaRequest, PagarCobrancaRequest,
 } from '@/types/cobranca'
+
+interface CobrancaResumo {
+  totalAReceber: number
+  totalVencido: number
+  totalRecebidoNoMes: number
+}
 
 export function useCobrancas() {
   const [cobrancas, setCobrancas] = useState<CobrancaListItem[]>([])
@@ -60,5 +66,17 @@ export function useCobrancas() {
     window.open(url, '_blank')
   }, [])
 
-  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp }
+  const fetchAging = useCallback(async (): Promise<AgingData> => {
+    return api.get<AgingData>('/api/cobrancas/aging')
+  }, [])
+
+  const fetchResumo = useCallback(async (): Promise<CobrancaResumo> => {
+    return api.get<CobrancaResumo>('/api/cobrancas/resumo')
+  }, [])
+
+  const enviarAsaas = useCallback(async (id: string, billingType: 'PIX' | 'BOLETO') => {
+    return api.post<CobrancaAsaasResponse>(`/api/cobrancas/${id}/enviar-asaas`, { billingType })
+  }, [])
+
+  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging, fetchResumo, enviarAsaas }
 }

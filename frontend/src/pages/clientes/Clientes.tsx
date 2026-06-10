@@ -1,22 +1,52 @@
 import { useEffect, useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { useClientes } from '@/hooks/useClientes'
+import { useConfirm } from '@/hooks/useConfirm'
+import { toast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ClienteForm from '@/components/clientes/ClienteForm'
-import type { CreateClienteRequest } from '@/types/clientes'
+import type { CreateClienteRequest, UpdateClienteRequest, ClienteResponse } from '@/types/clientes'
 
 export default function Clientes() {
-  const { clientes, loading, list, create } = useClientes()
+  const { clientes, loading, list, create, update, remove } = useClientes()
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [editando, setEditando] = useState<ClienteResponse | null>(null)
+  const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { list() }, [list])
 
   async function handleCreate(data: CreateClienteRequest) {
     await create(data)
     setModalAberto(false)
+  }
+
+  async function handleEdit(data: UpdateClienteRequest) {
+    if (!editando) return
+    try {
+      await update(editando.id, data)
+      setEditando(null)
+      toast.success('Cliente atualizado')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar cliente')
+    }
+  }
+
+  async function handleRemove(c: ClienteResponse) {
+    const ok = await confirm({
+      title: 'Excluir cliente?',
+      description: `${c.nome} será removido permanentemente.`,
+      variant: 'destructive',
+    })
+    if (!ok) return
+    try {
+      await remove(c.id)
+      toast.success('Cliente excluído')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
+    }
   }
 
   const filtrados = clientes.filter(c =>
@@ -53,6 +83,7 @@ export default function Clientes() {
                 <th className="px-4 py-3 text-left font-medium">WhatsApp</th>
                 <th className="px-4 py-3 text-left font-medium">E-mail</th>
                 <th className="px-4 py-3 text-left font-medium">Cadastrado em</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -64,11 +95,23 @@ export default function Clientes() {
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(c.dataCadastro).toLocaleDateString('pt-BR')}
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost"
+                        onClick={e => { e.stopPropagation(); setEditando(c) }}>
+                        <Pencil size={14} />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={e => { e.stopPropagation(); void handleRemove(c) }}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filtrados.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     Nenhum cliente encontrado
                   </td>
                 </tr>
@@ -84,6 +127,27 @@ export default function Clientes() {
           <ClienteForm onSubmit={handleCreate} onCancel={() => setModalAberto(false)} />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editando} onOpenChange={open => { if (!open) setEditando(null) }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar Cliente</DialogTitle></DialogHeader>
+          {editando && (
+            <ClienteForm
+              key={editando.id}
+              defaultValues={{
+                nome: editando.nome,
+                whatsapp: editando.whatsapp,
+                email: editando.email ?? '',
+                observacoes: editando.observacoes ?? '',
+              }}
+              onSubmit={handleEdit}
+              onCancel={() => setEditando(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {ConfirmDialogNode}
     </div>
   )
 }

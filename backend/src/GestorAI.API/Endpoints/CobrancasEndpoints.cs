@@ -14,6 +14,13 @@ public static class CobrancasEndpoints
             CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.ListAsync(status, clienteId, mes, ct)));
 
+        group.MapGet("/resumo", async (CobrancaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetResumoAsync(ct)));
+
+        group.MapGet("/aging", async (
+            CobrancaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetAgingAsync(ct)));
+
         group.MapGet("/{id:guid}", async (Guid id, CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetAsync(id, ct)));
 
@@ -32,5 +39,9 @@ public static class CobrancasEndpoints
 
         group.MapGet("/{id:guid}/whatsapp", async (Guid id, CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetWhatsappUrlAsync(id, ct)));
+
+        group.MapPost("/{id:guid}/enviar-asaas", async (
+            Guid id, EnviarAsaasRequest req, CobrancaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.EnviarAsaasAsync(id, req, ct)));
     }
 }

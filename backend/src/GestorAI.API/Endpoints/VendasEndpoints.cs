@@ -33,6 +33,10 @@ public static class VendasEndpoints
             Guid id, FecharVendaRequest req, VendaService svc, CancellationToken ct) =>
             Results.Ok(await svc.FecharAsync(id, req, ct)));
 
+        group.MapPut("/{id:guid}", async (
+            Guid id, UpdateVendaRequest req, VendaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.UpdateAsync(id, req, ct)));
+
         group.MapDelete("/{id:guid}", async (
             Guid id, VendaService svc, CancellationToken ct) =>
         {

@@ -57,6 +57,26 @@ public class ClienteService(AppDbContext db, TenantContext tenantContext)
         return ToResponse(cliente);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var cliente = await db.Clientes
+            .FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Cliente não encontrado.", 404);
+
+        var temVinculos =
+            await db.Contratos.AnyAsync(c => c.ClienteId == id, ct) ||
+            await db.Cobrancas.AnyAsync(c => c.ClienteId == id, ct) ||
+            await db.Orcamentos.AnyAsync(o => o.ClienteId == id, ct) ||
+            await db.Vendas.AnyAsync(v => v.ClienteId == id, ct);
+
+        if (temVinculos)
+            throw new AppException(
+                "Este cliente possui dados vinculados (contratos, cobranças, orçamentos ou vendas) e não pode ser excluído.", 400);
+
+        db.Clientes.Remove(cliente);
+        await db.SaveChangesAsync(ct);
+    }
+
     private static ClienteResponse ToResponse(Cliente c) =>
         new(c.Id, c.Nome, c.Whatsapp, c.Email, c.Observacoes, c.DataCadastro);
 }

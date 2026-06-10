@@ -13,6 +13,7 @@ import {
   Wallet,
   TrendingDown,
   TrendingUp,
+  Tag,
   Users,
   BarChart3,
   Scissors,
@@ -26,6 +27,8 @@ import {
   ChevronDown,
   Link as LinkIcon,
   Truck,
+  Plug,
+  Bot,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -79,6 +82,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Wallet,       label: 'Lançamentos',      path: '/financeiro' },
       { icon: TrendingDown, label: 'Contas a Pagar',   path: '/financeiro/pagar' },
       { icon: TrendingUp,   label: 'Contas a Receber', path: '/financeiro/receber' },
+      { icon: Tag,          label: 'Categorias',       path: '/financeiro/categorias' },
     ],
   },
   {
@@ -104,6 +108,7 @@ const menuGroups: MenuGroup[] = [
     label: 'Contratos',
     items: [
       { icon: FileText,    label: 'Contratos', path: '/contratos' },
+      { icon: FileText,    label: 'Templates', path: '/contratos/templates' },
       { icon: DollarSign, label: 'Cobranças',  path: '/cobrancas' },
     ],
   },
@@ -111,6 +116,14 @@ const menuGroups: MenuGroup[] = [
     label: 'Configurações',
     items: [
       { icon: LinkIcon, label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
+      { icon: Plug, label: 'Integrações', path: '/configuracoes/integracoes' },
+    ],
+  },
+  {
+    label: 'Automação',
+    items: [
+      { icon: Bot, label: 'Configurações', path: '/configuracoes/automacao' },
+      { icon: Bot, label: 'Log de envios',  path: '/automacao/log' },
     ],
   },
 ]

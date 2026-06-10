@@ -17,7 +17,7 @@ namespace GestorAI.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.16")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -26,878 +26,1348 @@ namespace GestorAI.API.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<Guid?>("ClienteId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
 
                     b.Property<string>("ClienteNome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cliente_nome");
 
                     b.Property<string>("ClienteTelefone")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cliente_telefone");
 
                     b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
 
                     b.Property<DateTime>("DataHoraFim")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_hora_fim");
 
                     b.Property<DateTime>("DataHoraInicio")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_hora_inicio");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<Guid>("ProfissionalId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("profissional_id");
 
                     b.Property<Guid>("ServicoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("servico_id");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<Guid?>("VendaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("venda_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_agendamentos");
 
-                    b.HasIndex("ClienteId");
+                    b.HasIndex("ClienteId")
+                        .HasDatabaseName("ix_agendamentos_cliente_id");
 
-                    b.HasIndex("ProfissionalId");
+                    b.HasIndex("ProfissionalId")
+                        .HasDatabaseName("ix_agendamentos_profissional_id");
 
-                    b.HasIndex("ServicoId");
+                    b.HasIndex("ServicoId")
+                        .HasDatabaseName("ix_agendamentos_servico_id");
 
-                    b.ToTable("Agendamentos");
+                    b.ToTable("agendamentos", (string)null);
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.AutomacaoLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CobrancaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cobranca_id");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("ErroMsg")
+                        .HasColumnType("text")
+                        .HasColumnName("erro_msg");
+
+                    b.Property<bool>("Sucesso")
+                        .HasColumnType("boolean")
+                        .HasColumnName("sucesso");
+
+                    b.Property<int>("TipoEvento")
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo_evento");
+
+                    b.HasKey("Id")
+                        .HasName("pk_automacao_logs");
+
+                    b.HasIndex("CobrancaId", "TipoEvento")
+                        .HasDatabaseName("ix_automacao_logs_cobranca_id_tipo_evento");
+
+                    b.ToTable("automacao_logs", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.BloqueioAgenda", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("DataFim")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_fim");
 
                     b.Property<DateTime>("DataInicio")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_inicio");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Motivo")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("motivo");
 
                     b.Property<Guid?>("ProfissionalId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("profissional_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_bloqueios_agenda");
 
-                    b.HasIndex("ProfissionalId");
+                    b.HasIndex("ProfissionalId")
+                        .HasDatabaseName("ix_bloqueios_agenda_profissional_id");
 
-                    b.ToTable("BloqueiosAgenda");
+                    b.ToTable("bloqueios_agenda", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Categoria", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_categorias");
 
-                    b.ToTable("Categorias");
+                    b.ToTable("categorias", (string)null);
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.CategoriaLancamento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo");
+
+                    b.HasKey("Id")
+                        .HasName("pk_categorias_lancamento");
+
+                    b.HasIndex("EmpresaId", "Tipo", "Nome")
+                        .IsUnique()
+                        .HasDatabaseName("ix_categorias_lancamento_empresa_id_tipo_nome");
+
+                    b.ToTable("categorias_lancamento", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Cliente", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("DataCadastro")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_cadastro");
 
                     b.Property<string>("Email")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("email");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
                     b.Property<string>("Observacoes")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
 
                     b.Property<string>("Whatsapp")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("whatsapp");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_clientes");
 
                     b.HasIndex("EmpresaId", "Whatsapp")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_clientes_empresa_id_whatsapp");
 
-                    b.ToTable("Clientes");
+                    b.ToTable("clientes", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Cobranca", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AsaasBoletoUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("asaas_boleto_url");
+
+                    b.Property<string>("AsaasId")
+                        .HasColumnType("text")
+                        .HasColumnName("asaas_id");
+
+                    b.Property<string>("AsaasPaymentLink")
+                        .HasColumnType("text")
+                        .HasColumnName("asaas_payment_link");
+
+                    b.Property<string>("AsaasPixQrCode")
+                        .HasColumnType("text")
+                        .HasColumnName("asaas_pix_qr_code");
 
                     b.Property<Guid>("ClienteId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
 
                     b.Property<Guid?>("ContratoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("contrato_id");
 
                     b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
 
                     b.Property<DateTime?>("DataPagamento")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_pagamento");
 
                     b.Property<DateOnly>("DataVencimento")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("data_vencimento");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<int?>("FormaPagamento")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("forma_pagamento");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<string>("Referencia")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("referencia");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<decimal>("Valor")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_cobrancas");
 
-                    b.HasIndex("ClienteId");
+                    b.HasIndex("ClienteId")
+                        .HasDatabaseName("ix_cobrancas_cliente_id");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("ContratoId")
+                        .HasDatabaseName("ix_cobrancas_contrato_id");
 
-                    b.ToTable("Cobrancas");
+                    b.ToTable("cobrancas", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.ConfiguracaoEmpresa", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<int?>("Ambiente")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("ambiente");
+
+                    b.Property<string>("AsaasApiKey")
+                        .HasColumnType("text")
+                        .HasColumnName("asaas_api_key");
+
+                    b.Property<bool>("AsaasSandbox")
+                        .HasColumnType("boolean")
+                        .HasColumnName("asaas_sandbox");
 
                     b.Property<string>("Bairro")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("bairro");
 
                     b.Property<string>("Cep")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cep");
 
                     b.Property<string>("Cnpj")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cnpj");
 
                     b.Property<string>("CodigoMunicipio")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("codigo_municipio");
 
                     b.Property<string>("Complemento")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("complemento");
 
                     b.Property<string>("CorPrimaria")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cor_primaria");
 
                     b.Property<string>("CscId")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("csc_id");
 
                     b.Property<string>("CscToken")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("csc_token");
 
                     b.Property<string>("DescricaoPublica")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("descricao_publica");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("EvolutionApiKey")
+                        .HasColumnType("text")
+                        .HasColumnName("evolution_api_key");
+
+                    b.Property<string>("EvolutionApiUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("evolution_api_url");
+
+                    b.Property<string>("EvolutionInstance")
+                        .HasColumnType("text")
+                        .HasColumnName("evolution_instance");
 
                     b.Property<string>("FocusNfeToken")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("focus_nfe_token");
 
                     b.Property<string>("InscricaoEstadual")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("inscricao_estadual");
 
                     b.Property<string>("InscricaoMunicipal")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("inscricao_municipal");
+
+                    b.Property<bool>("Lembrete1dAntes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lembrete1d_antes");
+
+                    b.Property<bool>("Lembrete1dDepois")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lembrete1d_depois");
+
+                    b.Property<bool>("Lembrete3dAntes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lembrete3d_antes");
+
+                    b.Property<bool>("Lembrete3dDepois")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lembrete3d_depois");
+
+                    b.Property<bool>("Lembrete7dDepois")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lembrete7d_depois");
+
+                    b.Property<bool>("LembreteNoDia")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lembrete_no_dia");
 
                     b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("logo_url");
 
                     b.Property<string>("Logradouro")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("logradouro");
 
                     b.Property<string>("Municipio")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("municipio");
 
                     b.Property<string>("NomeFantasia")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome_fantasia");
 
                     b.Property<string>("Numero")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("numero");
 
                     b.Property<string>("RazaoSocial")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("razao_social");
 
                     b.Property<int?>("RegimeTributario")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("regime_tributario");
 
                     b.Property<int?>("SerieNfce")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("serie_nfce");
 
                     b.Property<int?>("SerieNfe")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("serie_nfe");
 
                     b.Property<string>("Slug")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("slug");
 
                     b.Property<string>("Uf")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("uf");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_configuracoes_empresa");
 
                     b.HasIndex("Slug")
                         .IsUnique()
+                        .HasDatabaseName("ix_configuracoes_empresa_slug")
                         .HasFilter("\"Slug\" IS NOT NULL");
 
-                    b.ToTable("ConfiguracoesEmpresa");
+                    b.ToTable("configuracoes_empresa", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Contrato", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("ClienteId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
 
                     b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
 
                     b.Property<DateOnly?>("DataFim")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("data_fim");
 
                     b.Property<DateOnly>("DataInicio")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("data_inicio");
 
                     b.Property<int>("DiaVencimento")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("dia_vencimento");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<int>("Numero")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("numero");
 
                     b.Property<string>("Objeto")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("objeto");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<int>("Periodicidade")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("periodicidade");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<int>("TipoCobranca")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo_cobranca");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("titulo");
 
                     b.Property<decimal>("Valor")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_contratos");
 
-                    b.HasIndex("ClienteId");
+                    b.HasIndex("ClienteId")
+                        .HasDatabaseName("ix_contratos_cliente_id");
 
-                    b.ToTable("Contratos");
+                    b.ToTable("contratos", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.ContratoItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("ContratoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("contrato_id");
 
                     b.Property<string>("Descricao")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
 
                     b.Property<decimal>("Quantidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
 
                     b.Property<decimal>("ValorUnitario")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor_unitario");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_contrato_itens");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("ContratoId")
+                        .HasDatabaseName("ix_contrato_itens_contrato_id");
 
                     b.ToTable("ContratoItens", (string)null);
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.ContratoTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<int>("DiaVencimento")
+                        .HasColumnType("integer")
+                        .HasColumnName("dia_vencimento");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
+
+                    b.Property<string>("Objeto")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("objeto");
+
+                    b.Property<int>("Periodicidade")
+                        .HasColumnType("integer")
+                        .HasColumnName("periodicidade");
+
+                    b.Property<int>("TipoCobranca")
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo_cobranca");
+
+                    b.Property<decimal?>("ValorPadrao")
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor_padrao");
+
+                    b.HasKey("Id")
+                        .HasName("pk_contrato_templates");
+
+                    b.ToTable("contrato_templates", (string)null);
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.ContratoTemplateItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ContratoTemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("contrato_template_id");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
+
+                    b.Property<decimal>("Quantidade")
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
+
+                    b.Property<decimal>("ValorUnitario")
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor_unitario");
+
+                    b.HasKey("Id")
+                        .HasName("pk_contrato_template_itens");
+
+                    b.HasIndex("ContratoTemplateId")
+                        .HasDatabaseName("ix_contrato_template_itens_contrato_template_id");
+
+                    b.ToTable("ContratoTemplateItens", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.DisponibilidadeSemanal", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateOnly>("DataFim")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("data_fim");
 
                     b.Property<DateOnly>("DataInicio")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("data_inicio");
 
                     b.Property<int>("DiaSemana")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("dia_semana");
 
                     b.Property<TimeSpan>("HoraFim")
-                        .HasColumnType("interval");
+                        .HasColumnType("interval")
+                        .HasColumnName("hora_fim");
 
                     b.Property<TimeSpan>("HoraInicio")
-                        .HasColumnType("interval");
+                        .HasColumnType("interval")
+                        .HasColumnName("hora_inicio");
 
                     b.Property<Guid>("ProfissionalId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("profissional_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_disponibilidade_semanais");
 
-                    b.HasIndex("ProfissionalId");
+                    b.HasIndex("ProfissionalId")
+                        .HasDatabaseName("ix_disponibilidade_semanais_profissional_id");
 
-                    b.ToTable("DisponibilidadeSemanais");
+                    b.ToTable("disponibilidade_semanais", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Fornecedor", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Cep")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cep");
 
                     b.Property<string>("Cidade")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cidade");
 
                     b.Property<string>("CnpjCpf")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cnpj_cpf");
 
                     b.Property<string>("Contato")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("contato");
 
                     b.Property<DateTime>("DataCadastro")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_cadastro");
 
                     b.Property<string>("Email")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("email");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Logradouro")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("logradouro");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
                     b.Property<string>("Observacoes")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
 
                     b.Property<string>("Telefone")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("telefone");
 
                     b.Property<string>("Uf")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("uf");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_fornecedores");
 
                     b.HasIndex("EmpresaId", "CnpjCpf")
                         .IsUnique()
+                        .HasDatabaseName("ix_fornecedores_empresa_id_cnpj_cpf")
                         .HasFilter("\"CnpjCpf\" IS NOT NULL");
 
-                    b.ToTable("Fornecedores");
+                    b.ToTable("fornecedores", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.ItemVenda", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<decimal>("Desconto")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("desconto");
 
                     b.Property<decimal>("PrecoUnitario")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("preco_unitario");
 
                     b.Property<Guid>("ProdutoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("produto_id");
 
                     b.Property<decimal>("Quantidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
 
                     b.Property<decimal>("Total")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("total");
 
                     b.Property<Guid>("VendaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("venda_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_itens_venda");
 
-                    b.HasIndex("ProdutoId");
+                    b.HasIndex("ProdutoId")
+                        .HasDatabaseName("ix_itens_venda_produto_id");
 
-                    b.HasIndex("VendaId");
+                    b.HasIndex("VendaId")
+                        .HasDatabaseName("ix_itens_venda_venda_id");
 
-                    b.ToTable("ItensVenda");
+                    b.ToTable("itens_venda", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Lancamento", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Categoria")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("categoria");
 
                     b.Property<DateTime?>("DataPagamento")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_pagamento");
 
                     b.Property<DateTime>("DataVencimento")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_vencimento");
 
                     b.Property<string>("Descricao")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<int>("Tipo")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo");
 
                     b.Property<decimal>("Valor")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor");
 
                     b.Property<Guid?>("VendaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("venda_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_lancamentos");
 
                     b.HasIndex("VendaId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_lancamentos_venda_id");
 
-                    b.ToTable("Lancamentos");
+                    b.ToTable("lancamentos", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.MovimentacaoEstoque", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("DataHora")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_hora");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<int>("Origem")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("origem");
 
                     b.Property<Guid>("ProdutoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("produto_id");
 
                     b.Property<decimal>("Quantidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
 
                     b.Property<Guid?>("ReferenciaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("referencia_id");
 
                     b.Property<int>("Tipo")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_movimentacoes_estoque");
 
-                    b.HasIndex("ProdutoId");
+                    b.HasIndex("ProdutoId")
+                        .HasDatabaseName("ix_movimentacoes_estoque_produto_id");
 
-                    b.ToTable("MovimentacoesEstoque");
+                    b.ToTable("movimentacoes_estoque", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.NotaFiscal", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime?>("AutorizadaEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("autorizada_em");
 
                     b.Property<DateTime?>("CanceladaEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("cancelada_em");
 
                     b.Property<string>("ChaveAcesso")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("chave_acesso");
 
                     b.Property<DateTime>("CriadaEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criada_em");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("FocusNfeId")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("focus_nfe_id");
 
                     b.Property<string>("FocusNfeRef")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("focus_nfe_ref");
 
                     b.Property<string>("MensagemErro")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("mensagem_erro");
 
                     b.Property<int>("Modelo")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("modelo");
 
                     b.Property<int?>("Numero")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("numero");
 
                     b.Property<string>("PdfUrl")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("pdf_url");
 
                     b.Property<string>("Protocolo")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("protocolo");
 
                     b.Property<string>("ProtocoloCancelamento")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("protocolo_cancelamento");
 
                     b.Property<int?>("Serie")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("serie");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<Guid>("VendaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("venda_id");
 
                     b.Property<string>("XmlUrl")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("xml_url");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_notas_fiscais");
 
-                    b.HasIndex("VendaId");
+                    b.HasIndex("VendaId")
+                        .HasDatabaseName("ix_notas_fiscais_venda_id");
 
-                    b.ToTable("NotasFiscais");
+                    b.ToTable("notas_fiscais", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.NotaFiscalItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Cfop")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("cfop");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Ncm")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("ncm");
 
                     b.Property<string>("NomeProduto")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome_produto");
 
                     b.Property<Guid>("NotaFiscalId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("nota_fiscal_id");
 
                     b.Property<decimal>("PrecoUnitario")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("preco_unitario");
 
                     b.Property<decimal>("Quantidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
 
                     b.Property<decimal>("Total")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("total");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_nota_fiscal_itens");
 
-                    b.HasIndex("NotaFiscalId");
+                    b.HasIndex("NotaFiscalId")
+                        .HasDatabaseName("ix_nota_fiscal_itens_nota_fiscal_id");
 
-                    b.ToTable("NotaFiscalItens");
+                    b.ToTable("nota_fiscal_itens", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Orcamento", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<Guid?>("ClienteId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
 
                     b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
 
                     b.Property<DateTime>("DataValidade")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_validade");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<int>("Numero")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("numero");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("titulo");
+
+                    b.Property<Guid?>("TokenPublico")
+                        .HasColumnType("uuid")
+                        .HasColumnName("token_publico");
 
                     b.Property<Guid?>("VendaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("venda_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_orcamentos");
 
-                    b.HasIndex("ClienteId");
+                    b.HasIndex("ClienteId")
+                        .HasDatabaseName("ix_orcamentos_cliente_id");
 
-                    b.ToTable("Orcamentos");
+                    b.ToTable("orcamentos", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.OrcamentoItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Descricao")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
 
                     b.Property<Guid>("OrcamentoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("orcamento_id");
 
                     b.Property<Guid?>("ProdutoId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("produto_id");
 
                     b.Property<decimal>("Quantidade")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("quantidade");
 
                     b.Property<int>("Tipo")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo");
 
                     b.Property<decimal>("ValorUnitario")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("valor_unitario");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_orcamento_itens");
 
-                    b.HasIndex("OrcamentoId");
+                    b.HasIndex("OrcamentoId")
+                        .HasDatabaseName("ix_orcamento_itens_orcamento_id");
 
-                    b.HasIndex("ProdutoId");
+                    b.HasIndex("ProdutoId")
+                        .HasDatabaseName("ix_orcamento_itens_produto_id");
 
-                    b.ToTable("OrcamentoItens");
+                    b.ToTable("orcamento_itens", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Produto", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("ativo");
 
                     b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("atualizado_em");
 
                     b.Property<Guid>("CategoriaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("categoria_id");
 
                     b.Property<string>("CodigoBarras")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("codigo_barras");
 
                     b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
 
                     b.Property<decimal>("CustoMedio")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("custo_medio");
 
                     b.Property<string>("Descricao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
 
                     b.Property<int?>("DuracaoMinutos")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("duracao_minutos");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<decimal>("EstoqueAtual")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("estoque_atual");
 
                     b.Property<decimal>("EstoqueMinimo")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("estoque_minimo");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
                     b.Property<decimal>("PrecoVenda")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("preco_venda");
 
                     b.Property<int>("Tipo")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("tipo");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_produtos");
 
-                    b.HasIndex("CategoriaId");
+                    b.HasIndex("CategoriaId")
+                        .HasDatabaseName("ix_produtos_categoria_id");
 
-                    b.ToTable("Produtos");
+                    b.ToTable("produtos", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Profissional", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("ativo");
 
                     b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
 
                     b.Property<string>("Telefone")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("telefone");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_profissionais");
 
-                    b.ToTable("Profissionais");
+                    b.ToTable("profissionais", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Venda", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<Guid?>("ClienteId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("cliente_id");
 
                     b.Property<DateTime>("DataHora")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("data_hora");
 
                     b.Property<decimal>("Desconto")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("desconto");
 
                     b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
 
                     b.Property<int>("FormaPagamento")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("forma_pagamento");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("observacao");
 
                     b.Property<int?>("Parcelas")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("parcelas");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<decimal>("Subtotal")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("subtotal");
 
                     b.Property<decimal>("Total")
-                        .HasColumnType("numeric");
+                        .HasColumnType("numeric")
+                        .HasColumnName("total");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_vendas");
 
-                    b.HasIndex("ClienteId");
+                    b.HasIndex("ClienteId")
+                        .HasDatabaseName("ix_vendas_cliente_id");
 
-                    b.ToTable("Vendas");
+                    b.ToTable("vendas", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Agendamento", b =>
                 {
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany()
-                        .HasForeignKey("ClienteId");
+                        .HasForeignKey("ClienteId")
+                        .HasConstraintName("fk_agendamentos_clientes_cliente_id");
 
                     b.HasOne("GestorAI.API.Domain.Entities.Profissional", "Profissional")
                         .WithMany("Agendamentos")
                         .HasForeignKey("ProfissionalId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_agendamentos_profissionais_profissional_id");
 
                     b.HasOne("GestorAI.API.Domain.Entities.Produto", "Servico")
                         .WithMany()
                         .HasForeignKey("ServicoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_agendamentos_produtos_servico_id");
 
                     b.Navigation("Cliente");
 
@@ -910,7 +1380,8 @@ namespace GestorAI.API.Migrations
                 {
                     b.HasOne("GestorAI.API.Domain.Entities.Profissional", "Profissional")
                         .WithMany()
-                        .HasForeignKey("ProfissionalId");
+                        .HasForeignKey("ProfissionalId")
+                        .HasConstraintName("fk_bloqueios_agenda_profissionais_profissional_id");
 
                     b.Navigation("Profissional");
                 });
@@ -921,11 +1392,13 @@ namespace GestorAI.API.Migrations
                         .WithMany()
                         .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_cobrancas_clientes_cliente_id");
 
                     b.HasOne("GestorAI.API.Domain.Entities.Contrato", "Contrato")
                         .WithMany("Cobrancas")
-                        .HasForeignKey("ContratoId");
+                        .HasForeignKey("ContratoId")
+                        .HasConstraintName("fk_cobrancas_contratos_contrato_id");
 
                     b.Navigation("Cliente");
 
@@ -938,7 +1411,8 @@ namespace GestorAI.API.Migrations
                         .WithMany()
                         .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_contratos_clientes_cliente_id");
 
                     b.Navigation("Cliente");
                 });
@@ -949,7 +1423,18 @@ namespace GestorAI.API.Migrations
                         .WithMany("Itens")
                         .HasForeignKey("ContratoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_contrato_itens_contratos_contrato_id");
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.ContratoTemplateItem", b =>
+                {
+                    b.HasOne("GestorAI.API.Domain.Entities.ContratoTemplate", null)
+                        .WithMany("Itens")
+                        .HasForeignKey("ContratoTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_contrato_template_itens_contrato_templates_contrato_template_");
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.DisponibilidadeSemanal", b =>
@@ -958,7 +1443,8 @@ namespace GestorAI.API.Migrations
                         .WithMany("Disponibilidades")
                         .HasForeignKey("ProfissionalId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_disponibilidade_semanais_profissionais_profissional_id");
 
                     b.Navigation("Profissional");
                 });
@@ -969,13 +1455,15 @@ namespace GestorAI.API.Migrations
                         .WithMany("ItensVenda")
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_itens_venda_produtos_produto_id");
 
                     b.HasOne("GestorAI.API.Domain.Entities.Venda", "Venda")
                         .WithMany("Itens")
                         .HasForeignKey("VendaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_itens_venda_vendas_venda_id");
 
                     b.Navigation("Produto");
 
@@ -986,7 +1474,8 @@ namespace GestorAI.API.Migrations
                 {
                     b.HasOne("GestorAI.API.Domain.Entities.Venda", "Venda")
                         .WithOne("Lancamento")
-                        .HasForeignKey("GestorAI.API.Domain.Entities.Lancamento", "VendaId");
+                        .HasForeignKey("GestorAI.API.Domain.Entities.Lancamento", "VendaId")
+                        .HasConstraintName("fk_lancamentos_vendas_venda_id");
 
                     b.Navigation("Venda");
                 });
@@ -997,7 +1486,8 @@ namespace GestorAI.API.Migrations
                         .WithMany("Movimentacoes")
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_movimentacoes_estoque_produtos_produto_id");
 
                     b.Navigation("Produto");
                 });
@@ -1008,7 +1498,8 @@ namespace GestorAI.API.Migrations
                         .WithMany()
                         .HasForeignKey("VendaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_notas_fiscais_vendas_venda_id");
 
                     b.Navigation("Venda");
                 });
@@ -1019,7 +1510,8 @@ namespace GestorAI.API.Migrations
                         .WithMany("Itens")
                         .HasForeignKey("NotaFiscalId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_nota_fiscal_itens_notas_fiscais_nota_fiscal_id");
 
                     b.Navigation("NotaFiscal");
                 });
@@ -1028,7 +1520,8 @@ namespace GestorAI.API.Migrations
                 {
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany()
-                        .HasForeignKey("ClienteId");
+                        .HasForeignKey("ClienteId")
+                        .HasConstraintName("fk_orcamentos_clientes_cliente_id");
 
                     b.Navigation("Cliente");
                 });
@@ -1039,11 +1532,13 @@ namespace GestorAI.API.Migrations
                         .WithMany("Itens")
                         .HasForeignKey("OrcamentoId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_orcamento_itens_orcamentos_orcamento_id");
 
                     b.HasOne("GestorAI.API.Domain.Entities.Produto", "Produto")
                         .WithMany()
-                        .HasForeignKey("ProdutoId");
+                        .HasForeignKey("ProdutoId")
+                        .HasConstraintName("fk_orcamento_itens_produtos_produto_id");
 
                     b.Navigation("Orcamento");
 
@@ -1056,7 +1551,8 @@ namespace GestorAI.API.Migrations
                         .WithMany("Produtos")
                         .HasForeignKey("CategoriaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_produtos_categorias_categoria_id");
 
                     b.Navigation("Categoria");
                 });
@@ -1065,7 +1561,8 @@ namespace GestorAI.API.Migrations
                 {
                     b.HasOne("GestorAI.API.Domain.Entities.Cliente", "Cliente")
                         .WithMany("Vendas")
-                        .HasForeignKey("ClienteId");
+                        .HasForeignKey("ClienteId")
+                        .HasConstraintName("fk_vendas_clientes_cliente_id");
 
                     b.Navigation("Cliente");
                 });
@@ -1084,6 +1581,11 @@ namespace GestorAI.API.Migrations
                 {
                     b.Navigation("Cobrancas");
 
+                    b.Navigation("Itens");
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.ContratoTemplate", b =>
+                {
                     b.Navigation("Itens");
                 });
 

@@ -3,6 +3,7 @@ import { api } from '@/services/api'
 import type {
   LancamentoResponse, CreateLancamentoRequest,
   PagarLancamentoRequest, FluxoCaixaResponse,
+  LancamentoResumo, UpdateLancamentoRequest,
 } from '@/types/financeiro'
 
 export function useFinanceiro() {
@@ -59,5 +60,15 @@ export function useFinanceiro() {
     return data
   }, [])
 
-  return { lancamentos, fluxo, loading, error, list, create, pagar, cancelar, remove, getFluxoCaixa }
+  const update = useCallback(async (id: string, req: UpdateLancamentoRequest) => {
+    const result = await api.put<LancamentoResponse>(`/api/lancamentos/${id}`, req)
+    setLancamentos(prev => prev.map(l => l.id === id ? result : l))
+    return result
+  }, [])
+
+  const fetchResumo = useCallback(async (): Promise<LancamentoResumo> => {
+    return api.get<LancamentoResumo>('/api/lancamentos/resumo')
+  }, [])
+
+  return { lancamentos, fluxo, loading, error, list, create, pagar, cancelar, remove, getFluxoCaixa, update, fetchResumo }
 }

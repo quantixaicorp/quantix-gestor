@@ -12,6 +12,7 @@ import Historico from '@/pages/vendas/Historico'
 import Lancamentos from '@/pages/financeiro/Lancamentos'
 import ContasPagar from '@/pages/financeiro/ContasPagar'
 import ContasReceber from '@/pages/financeiro/ContasReceber'
+import Categorias from '@/pages/financeiro/Categorias'
 import Relatorios from '@/pages/relatorios/Relatorios'
 import Orcamentos from '@/pages/orcamentos/Orcamentos'
 import NovoOrcamento from '@/pages/orcamentos/NovoOrcamento'
@@ -27,17 +28,23 @@ import Fiscal from '@/pages/fiscal/Fiscal'
 import Contratos from '@/pages/contratos/Contratos'
 import NovoContrato from '@/pages/contratos/NovoContrato'
 import DetalheContrato from '@/pages/contratos/DetalheContrato'
+import ContratoTemplatesPage from '@/pages/contratos/ContratoTemplates'
 import Cobrancas from '@/pages/cobrancas/Cobrancas'
 import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
 import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
+import OrcamentoPublicoPage from '@/pages/orcamentos-publicos/OrcamentoPublico'
 import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
+import Integracoes from '@/pages/configuracoes/Integracoes'
+import Automacao from '@/pages/configuracoes/Automacao'
 import Fornecedores from '@/pages/fornecedores/Fornecedores'
+import LogAutomacao from '@/pages/automacao/LogAutomacao'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth />, errorElement: <ErrorPage /> },
   { path: '/auth/callback', element: <AuthCallback />, errorElement: <ErrorPage /> },
   { path: '/agendar/:slug', element: <AgendamentoPublico />, errorElement: <ErrorPage /> },
+  { path: '/orcamento/:token', element: <OrcamentoPublicoPage />, errorElement: <ErrorPage /> },
   {
     element: <AppLayout />,
     errorElement: <ErrorPage />,
@@ -60,17 +67,22 @@ export const router = createBrowserRouter([
       { path: '/financeiro', element: <Lancamentos /> },
       { path: '/financeiro/pagar', element: <ContasPagar /> },
       { path: '/financeiro/receber', element: <ContasReceber /> },
+      { path: '/financeiro/categorias', element: <Categorias /> },
       { path: '/clientes', element: <Clientes /> },
       { path: '/fornecedores', element: <Fornecedores /> },
       { path: '/relatorios', element: <Relatorios /> },
       { path: '/fiscal', element: <Fiscal /> },
       { path: '/contratos', element: <Contratos /> },
       { path: '/contratos/novo', element: <NovoContrato /> },
+      { path: '/contratos/templates', element: <ContratoTemplatesPage /> },
       { path: '/contratos/:id', element: <DetalheContrato /> },
       { path: '/cobrancas', element: <Cobrancas /> },
       { path: '/cobrancas/nova', element: <NovaCobranca /> },
       { path: '/cobrancas/:id', element: <DetalheCobranca /> },
       { path: '/configuracoes/agendamento-publico', element: <AgendamentoPublicoConfig /> },
+      { path: '/configuracoes/integracoes', element: <Integracoes /> },
+      { path: '/configuracoes/automacao', element: <Automacao /> },
+      { path: '/automacao/log', element: <LogAutomacao /> },
     ],
   },
 ])

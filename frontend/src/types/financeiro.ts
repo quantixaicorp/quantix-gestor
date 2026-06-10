@@ -38,3 +38,34 @@ export interface FluxoCaixaResponse {
   saldoFinal: number
   itens: FluxoCaixaItemResponse[]
 }
+
+export interface LancamentoResumo {
+  totalReceitasMes: number
+  totalDespesasMes: number
+  saldoMes: number
+  totalPendente: number
+}
+
+export interface UpdateLancamentoRequest {
+  tipo: 'Receita' | 'Despesa'
+  descricao: string
+  valor: number
+  dataVencimento: string
+  categoria: string
+  observacao?: string
+}
+
+export interface CategoriaLancamentoResponse {
+  id: string
+  nome: string
+  tipo: 'Receita' | 'Despesa'
+}
+
+export interface CreateCategoriaLancamentoRequest {
+  nome: string
+  tipo: 'Receita' | 'Despesa'
+}
+
+export interface UpdateCategoriaLancamentoRequest {
+  nome: string
+}

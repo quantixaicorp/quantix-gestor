@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<ItemVenda> ItensVenda => Set<ItemVenda>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Lancamento> Lancamentos => Set<Lancamento>();
+    public DbSet<CategoriaLancamento> CategoriasLancamento => Set<CategoriaLancamento>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
     public DbSet<OrcamentoItem> OrcamentoItens => Set<OrcamentoItem>();
     public DbSet<Profissional> Profissionais => Set<Profissional>();
@@ -27,6 +28,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<Contrato> Contratos => Set<Contrato>();
     public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
     public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
+    public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
+    public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
+    public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +51,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<Venda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Cliente>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Lancamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<CategoriaLancamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<CategoriaLancamento>()
+            .HasIndex(c => new { c.EmpresaId, c.Tipo, c.Nome })
+            .IsUnique();
         modelBuilder.Entity<Orcamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Profissional>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<BloqueioAgenda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
@@ -77,9 +85,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .HasFilter("\"Slug\" IS NOT NULL");
 
         modelBuilder.Entity<Fornecedor>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<Fornecedor>()
             .HasIndex(f => new { f.EmpresaId, f.CnpjCpf })
             .IsUnique()
             .HasFilter("\"CnpjCpf\" IS NOT NULL");
+
+        modelBuilder.Entity<ContratoTemplate>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<ContratoTemplateItem>().ToTable("ContratoTemplateItens");
+        modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<AutomacaoLog>()
+            .HasIndex(l => new { l.CobrancaId, l.TipoEvento });
     }
 }

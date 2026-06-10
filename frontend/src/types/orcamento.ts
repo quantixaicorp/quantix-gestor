@@ -34,6 +34,7 @@ export interface OrcamentoResponse {
   status: OrcamentoStatus
   observacao: string | null
   vendaId: string | null
+  tokenPublico: string | null
   criadoEm: string
   itens: OrcamentoItemResponse[]
   total: number

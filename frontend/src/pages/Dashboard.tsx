@@ -3,6 +3,7 @@ import {
   TrendingUp, ShoppingCart, PackageX,
   AlertTriangle, ArrowUpCircle, Wallet,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useDashboard } from '@/hooks/useDashboard'
 import KpiCard from '@/components/dashboard/KpiCard'
 import GraficoVendas from '@/components/dashboard/GraficoVendas'
@@ -70,7 +71,7 @@ export default function Dashboard() {
           <PackageX size={18} className="text-yellow-600 shrink-0" />
           <p className="text-sm text-yellow-700 dark:text-yellow-400">
             <strong>{kpis.produtosEstoqueBaixo} produto(s)</strong> com estoque abaixo do mínimo.{' '}
-            <a href="/estoque" className="underline font-medium">Ver estoque →</a>
+            <Link to="/estoque" className="underline font-medium">Ver estoque →</Link>
           </p>
         </div>
       )}

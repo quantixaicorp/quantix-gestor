@@ -103,6 +103,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         var profId   = new Guid("10000000-0000-0000-0000-000000000002");
         var entId    = new Guid("10000000-0000-0000-0000-000000000003");
 
+        var criadoBasico = new DateTime(2026, 6, 10, 16, 15, 2, 245, DateTimeKind.Utc).AddTicks(7080);
+        var criadoProf   = new DateTime(2026, 6, 10, 16, 15, 2, 245, DateTimeKind.Utc).AddTicks(7810);
+
         modelBuilder.Entity<PlanoSaaS>().HasData(
             new PlanoSaaS
             {
@@ -111,6 +114,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
                 Descricao = "Gestão essencial para pequenos negócios",
                 Preco = 97m,
                 Features = """["asaas_cobrancas","nota_fiscal"]""",
+                CriadoEm = criadoBasico,
             },
             new PlanoSaaS
             {
@@ -119,6 +123,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
                 Descricao = "Automações e integrações completas",
                 Preco = 197m,
                 Features = """["asaas_cobrancas","nota_fiscal","automacoes_whatsapp","assinatura_digital","relatorios_avancados"]""",
+                CriadoEm = criadoProf,
             },
             new PlanoSaaS
             {
@@ -127,6 +132,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
                 Descricao = "Multi-profissional, sinal de reserva, tudo incluso",
                 Preco = 397m,
                 Features = """["asaas_cobrancas","nota_fiscal","automacoes_whatsapp","assinatura_digital","relatorios_avancados","sinal_reserva","multi_profissional"]""",
+                CriadoEm = criadoProf,
             }
         );
     }

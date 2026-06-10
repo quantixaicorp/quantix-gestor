@@ -45,4 +45,9 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public bool Lembrete1dDepois { get; set; }
     public bool Lembrete3dDepois { get; set; }
     public bool Lembrete7dDepois { get; set; }
+
+    // Agendamentos avançados
+    public bool AprovarAutomaticamente { get; set; } = true;
+    public decimal? ValorSinal { get; set; }
+    public int? HorasLimiteCancelamento { get; set; }
 }

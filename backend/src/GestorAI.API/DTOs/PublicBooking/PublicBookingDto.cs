@@ -32,7 +32,9 @@ public record PublicAgendamentoConfirmado(
     string ServicoNome,
     string ProfissionalNome,
     DateTime DataHoraInicio,
-    DateTime DataHoraFim);
+    DateTime DataHoraFim,
+    string? SinalPixQrCode = null,
+    decimal? SinalValor = null);
 
 public record ConfigurarBrandingRequest(
     string Slug,

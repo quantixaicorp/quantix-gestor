@@ -25,7 +25,8 @@ public static class FinanceiroEndpoints
 
         group.MapPut("/lancamentos/{id:guid}", async (
             Guid id, UpdateLancamentoRequest req, LancamentoService svc, CancellationToken ct) =>
-            Results.Ok(await svc.UpdateAsync(id, req, ct)));
+            Results.Ok(await svc.UpdateAsync(id, req, ct)))
+            .AddEndpointFilter<ValidationFilter<UpdateLancamentoRequest>>();
 
         group.MapPost("/lancamentos", async (
             CreateLancamentoRequest req, LancamentoService svc, CancellationToken ct) =>

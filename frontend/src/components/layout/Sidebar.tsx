@@ -13,6 +13,7 @@ import {
   Wallet,
   TrendingDown,
   TrendingUp,
+  Tag,
   Users,
   BarChart3,
   Scissors,
@@ -81,6 +82,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Wallet,       label: 'Lançamentos',      path: '/financeiro' },
       { icon: TrendingDown, label: 'Contas a Pagar',   path: '/financeiro/pagar' },
       { icon: TrendingUp,   label: 'Contas a Receber', path: '/financeiro/receber' },
+      { icon: Tag,          label: 'Categorias',       path: '/financeiro/categorias' },
     ],
   },
   {

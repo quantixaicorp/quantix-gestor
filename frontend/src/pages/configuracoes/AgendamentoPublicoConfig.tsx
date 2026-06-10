@@ -11,6 +11,9 @@ interface BrandingConfig {
   corPrimaria: string | null
   descricaoPublica: string | null
   logoUrl: string | null
+  aprovarAutomaticamente: boolean
+  valorSinal: number | null
+  horasLimiteCancelamento: number | null
 }
 
 interface ConfiguracaoEmpresaBranding {
@@ -19,6 +22,9 @@ interface ConfiguracaoEmpresaBranding {
   corPrimaria?: string
   descricaoPublica?: string
   logoUrl?: string
+  aprovarAutomaticamente?: boolean
+  valorSinal?: number | null
+  horasLimiteCancelamento?: number | null
 }
 
 export default function AgendamentoPublicoConfig() {
@@ -28,6 +34,9 @@ export default function AgendamentoPublicoConfig() {
     corPrimaria: '#3B82F6',
     descricaoPublica: '',
     logoUrl: null,
+    aprovarAutomaticamente: true,
+    valorSinal: null,
+    horasLimiteCancelamento: null,
   })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -41,6 +50,9 @@ export default function AgendamentoPublicoConfig() {
         corPrimaria: data.corPrimaria ?? '#3B82F6',
         descricaoPublica: data.descricaoPublica ?? '',
         logoUrl: data.logoUrl ?? null,
+        aprovarAutomaticamente: data.aprovarAutomaticamente ?? true,
+        valorSinal: data.valorSinal ?? null,
+        horasLimiteCancelamento: data.horasLimiteCancelamento ?? null,
       }))
       .catch(() => {})
   }, [])
@@ -62,6 +74,9 @@ export default function AgendamentoPublicoConfig() {
         nomeExibicao: config.nomeExibicao || null,
         corPrimaria: config.corPrimaria,
         descricaoPublica: config.descricaoPublica,
+        aprovarAutomaticamente: config.aprovarAutomaticamente,
+        valorSinal: config.valorSinal,
+        horasLimiteCancelamento: config.horasLimiteCancelamento,
       })
       toast.success('Configurações salvas!')
     } catch (e) {
@@ -247,6 +262,55 @@ export default function AgendamentoPublicoConfig() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-md border p-4 space-y-4">
+        <h2 className="font-semibold">Política de Agendamento</h2>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="aprovarAuto"
+              checked={config.aprovarAutomaticamente}
+              onChange={e => setConfig(c => ({ ...c, aprovarAutomaticamente: e.target.checked }))}
+              className="h-4 w-4"
+            />
+            <Label htmlFor="aprovarAuto">Confirmar agendamentos automaticamente</Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Quando desmarcado, novos agendamentos ficam "Aguardando Confirmação" até você aprovar.
+          </p>
+        </div>
+
+        <div className="grid gap-2">
+          <Label>Valor do sinal de reserva (R$)</Label>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={config.valorSinal ?? ''}
+            onChange={e => setConfig(c => ({ ...c, valorSinal: e.target.value ? Number(e.target.value) : null }))}
+            placeholder="0,00 (sem sinal)"
+          />
+          <p className="text-xs text-muted-foreground">
+            Valor cobrado via PIX no momento do agendamento. Requer Asaas configurado.
+          </p>
+        </div>
+
+        <div className="grid gap-2">
+          <Label>Horas mínimas para cancelamento</Label>
+          <Input
+            type="number"
+            min="0"
+            value={config.horasLimiteCancelamento ?? ''}
+            onChange={e => setConfig(c => ({ ...c, horasLimiteCancelamento: e.target.value ? Number(e.target.value) : null }))}
+            placeholder="Ex: 24 (sem restrição se vazio)"
+          />
+          <p className="text-xs text-muted-foreground">
+            Clientes não poderão cancelar com menos de X horas de antecedência.
+          </p>
         </div>
       </div>
 

@@ -16,6 +16,9 @@ public class Agendamento : ITenantEntity
     public DateTime DataHoraFim { get; set; }
     public AgendamentoStatus Status { get; set; } = AgendamentoStatus.Agendado;
     public string? Observacao { get; set; }
+    public bool SinalPago { get; set; } = false;
+    public string? SinalAsaasId { get; set; }
+    public string? SinalPixQrCode { get; set; }
     public Guid? VendaId { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public Profissional? Profissional { get; set; }

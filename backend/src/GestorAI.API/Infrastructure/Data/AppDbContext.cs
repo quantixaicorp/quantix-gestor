@@ -31,6 +31,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
     public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
     public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
+    public DbSet<PlanoSaaS> PlanosSaaS => Set<PlanoSaaS>();
+    public DbSet<EmpresaPlano> EmpresasPlano => Set<EmpresaPlano>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,5 +98,36 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<AutomacaoLog>()
             .HasIndex(l => new { l.CobrancaId, l.TipoEvento });
+
+        var basicoId = new Guid("10000000-0000-0000-0000-000000000001");
+        var profId   = new Guid("10000000-0000-0000-0000-000000000002");
+        var entId    = new Guid("10000000-0000-0000-0000-000000000003");
+
+        modelBuilder.Entity<PlanoSaaS>().HasData(
+            new PlanoSaaS
+            {
+                Id = basicoId,
+                Nome = "Básico",
+                Descricao = "Gestão essencial para pequenos negócios",
+                Preco = 97m,
+                Features = """["asaas_cobrancas","nota_fiscal"]""",
+            },
+            new PlanoSaaS
+            {
+                Id = profId,
+                Nome = "Profissional",
+                Descricao = "Automações e integrações completas",
+                Preco = 197m,
+                Features = """["asaas_cobrancas","nota_fiscal","automacoes_whatsapp","assinatura_digital","relatorios_avancados"]""",
+            },
+            new PlanoSaaS
+            {
+                Id = entId,
+                Nome = "Enterprise",
+                Descricao = "Multi-profissional, sinal de reserva, tudo incluso",
+                Preco = 397m,
+                Features = """["asaas_cobrancas","nota_fiscal","automacoes_whatsapp","assinatura_digital","relatorios_avancados","sinal_reserva","multi_profissional"]""",
+            }
+        );
     }
 }

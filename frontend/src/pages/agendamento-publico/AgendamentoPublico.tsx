@@ -273,6 +273,30 @@ export default function AgendamentoPublico() {
               <p><span className="font-medium">Data:</span> {fmtData(bk.confirmado.dataHoraInicio)}</p>
               <p><span className="font-medium">Horário:</span> {fmtHora(bk.confirmado.dataHoraInicio)}</p>
             </div>
+            {bk.confirmado.sinalPixQrCode && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-4 space-y-2 text-left">
+                <p className="font-semibold text-amber-800">Pagamento de sinal necessário</p>
+                <p className="text-sm text-amber-700">
+                  Copie o código PIX abaixo para confirmar sua reserva:
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white border rounded px-2 py-1 text-xs break-all">
+                    {bk.confirmado.sinalPixQrCode}
+                  </code>
+                  <button
+                    className="text-xs text-amber-800 underline shrink-0"
+                    onClick={() => void navigator.clipboard.writeText(bk.confirmado!.sinalPixQrCode!)}
+                  >
+                    Copiar
+                  </button>
+                </div>
+                {bk.confirmado.sinalValor && (
+                  <p className="text-sm font-medium text-amber-800">
+                    Valor: {bk.confirmado.sinalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

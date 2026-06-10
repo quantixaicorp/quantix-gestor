@@ -57,5 +57,12 @@ public static class FiscalEndpoints
             await svc.SalvarAutomacaoConfigAsync(req, ct);
             return Results.Ok();
         });
+
+        group.MapPut("/configuracao-empresa/white-label", async (
+            SalvarWhiteLabelRequest req, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+        {
+            await svc.SalvarWhiteLabelAsync(req, ct);
+            return Results.Ok();
+        });
     }
 }

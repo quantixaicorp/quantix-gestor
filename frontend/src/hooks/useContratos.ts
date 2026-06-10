@@ -87,5 +87,12 @@ export function useContratos() {
     return api.get<ContratoVencendoItem[]>(`/api/contratos/vencendo?dias=${dias}`)
   }, [])
 
-  return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, fetchVencendo }
+  const enviarAssinatura = useCallback(async (id: string, emailSignatario: string) => {
+    return api.post<{ docKey: string; viewerUrl: string; status: string }>(
+      `/api/contratos/${id}/enviar-assinatura`,
+      { emailSignatario }
+    )
+  }, [])
+
+  return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, fetchVencendo, enviarAssinatura }
 }

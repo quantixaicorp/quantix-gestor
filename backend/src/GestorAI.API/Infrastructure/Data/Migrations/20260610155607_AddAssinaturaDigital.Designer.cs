@@ -3,17 +3,20 @@ using System;
 using GestorAI.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GestorAI.API.Migrations
+namespace GestorAI.API.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260610155607_AddAssinaturaDigital")]
+    partial class AddAssinaturaDigital
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,18 +73,6 @@ namespace GestorAI.API.Migrations
                     b.Property<Guid>("ServicoId")
                         .HasColumnType("uuid")
                         .HasColumnName("servico_id");
-
-                    b.Property<string>("SinalAsaasId")
-                        .HasColumnType("text")
-                        .HasColumnName("sinal_asaas_id");
-
-                    b.Property<bool>("SinalPago")
-                        .HasColumnType("boolean")
-                        .HasColumnName("sinal_pago");
-
-                    b.Property<string>("SinalPixQrCode")
-                        .HasColumnType("text")
-                        .HasColumnName("sinal_pix_qr_code");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -368,10 +359,6 @@ namespace GestorAI.API.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("ambiente");
 
-                    b.Property<bool>("AprovarAutomaticamente")
-                        .HasColumnType("boolean")
-                        .HasColumnName("aprovar_automaticamente");
-
                     b.Property<string>("AsaasApiKey")
                         .HasColumnType("text")
                         .HasColumnName("asaas_api_key");
@@ -387,6 +374,14 @@ namespace GestorAI.API.Migrations
                     b.Property<string>("Cep")
                         .HasColumnType("text")
                         .HasColumnName("cep");
+
+                    b.Property<string>("ClickSignApiKey")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_api_key");
+
+                    b.Property<bool>("ClickSignSandbox")
+                        .HasColumnType("boolean")
+                        .HasColumnName("click_sign_sandbox");
 
                     b.Property<string>("Cnpj")
                         .HasColumnType("text")
@@ -435,10 +430,6 @@ namespace GestorAI.API.Migrations
                     b.Property<string>("FocusNfeToken")
                         .HasColumnType("text")
                         .HasColumnName("focus_nfe_token");
-
-                    b.Property<int?>("HorasLimiteCancelamento")
-                        .HasColumnType("integer")
-                        .HasColumnName("horas_limite_cancelamento");
 
                     b.Property<string>("InscricaoEstadual")
                         .HasColumnType("text")
@@ -516,10 +507,6 @@ namespace GestorAI.API.Migrations
                         .HasColumnType("text")
                         .HasColumnName("uf");
 
-                    b.Property<decimal?>("ValorSinal")
-                        .HasColumnType("numeric")
-                        .HasColumnName("valor_sinal");
-
                     b.HasKey("Id")
                         .HasName("pk_configuracoes_empresa");
 
@@ -537,6 +524,18 @@ namespace GestorAI.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("ClickSignDocKey")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_doc_key");
+
+                    b.Property<string>("ClickSignStatus")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_status");
+
+                    b.Property<string>("ClickSignViewerUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_viewer_url");
 
                     b.Property<Guid>("ClienteId")
                         .HasColumnType("uuid")

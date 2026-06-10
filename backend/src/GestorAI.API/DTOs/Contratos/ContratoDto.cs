@@ -49,7 +49,13 @@ public record ContratoResponse(
     string? Observacao,
     DateTime CriadoEm,
     List<ContratoItemResponse> Itens,
-    decimal Total);
+    decimal Total,
+    string? ClickSignStatus,
+    string? ClickSignViewerUrl);
+
+public record EnviarAssinaturaRequest(string EmailSignatario);
+
+public record EnviarAssinaturaResponse(string DocKey, string ViewerUrl, string Status);
 
 public record ContratoListItem(
     Guid Id,

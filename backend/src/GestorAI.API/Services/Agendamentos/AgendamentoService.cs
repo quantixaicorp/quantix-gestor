@@ -213,6 +213,31 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
         return await GetAsync(id, ct);
     }
 
+    public async Task<AgendamentoResponse> CancelarPublicoAsync(Guid id, CancellationToken ct)
+    {
+        var a = await FindAsync(id, ct);
+        if (a.Status == AgendamentoStatus.Cancelado)
+            throw new AppException("Agendamento já está cancelado.", 400);
+        if (a.Status == AgendamentoStatus.Concluido)
+            throw new AppException("Agendamento já concluído não pode ser cancelado.", 400);
+
+        var config = await db.ConfiguracoesEmpresa
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.EmpresaId == a.EmpresaId, ct);
+
+        if (config?.HorasLimiteCancelamento is int horas)
+        {
+            var horasAte = (a.DataHoraInicio - DateTime.UtcNow).TotalHours;
+            if (horasAte < horas)
+                throw new AppException(
+                    $"Cancelamentos devem ser feitos com pelo menos {horas} hora(s) de antecedência.", 400);
+        }
+
+        a.Status = AgendamentoStatus.Cancelado;
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
     public async Task<AgendamentoResponse> RecusarAsync(Guid id, CancellationToken ct)
     {
         var a = await FindAsync(id, ct);

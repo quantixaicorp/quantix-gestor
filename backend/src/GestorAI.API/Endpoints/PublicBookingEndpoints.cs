@@ -1,4 +1,5 @@
 using GestorAI.API.DTOs.PublicBooking;
+using GestorAI.API.Services.Agendamentos;
 using GestorAI.API.Services.PublicBooking;
 
 namespace GestorAI.API.Endpoints;
@@ -54,6 +55,14 @@ public static class PublicBookingEndpoints
             var empresaId = await svc.ResolveEmpresaAsync(slug, ct);
             var result = await svc.CriarAgendamentoAsync(empresaId, req, ct);
             return Results.Created($"/public/{slug}/agendamentos/{result.Id}", result);
+        });
+
+        group.MapPost("/agendamentos/{id:guid}/cancelar", async (
+            string slug, Guid id,
+            PublicBookingService svc, AgendamentoService agendamentoSvc, CancellationToken ct) =>
+        {
+            await svc.ResolveEmpresaAsync(slug, ct);
+            return Results.Ok(await agendamentoSvc.CancelarPublicoAsync(id, ct));
         });
     }
 }

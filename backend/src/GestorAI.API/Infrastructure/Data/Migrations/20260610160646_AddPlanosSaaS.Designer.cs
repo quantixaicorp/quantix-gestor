@@ -3,21 +3,24 @@ using System;
 using GestorAI.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GestorAI.API.Migrations
+namespace GestorAI.API.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260610160646_AddPlanosSaaS")]
+    partial class AddPlanosSaaS
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -70,18 +73,6 @@ namespace GestorAI.API.Migrations
                     b.Property<Guid>("ServicoId")
                         .HasColumnType("uuid")
                         .HasColumnName("servico_id");
-
-                    b.Property<string>("SinalAsaasId")
-                        .HasColumnType("text")
-                        .HasColumnName("sinal_asaas_id");
-
-                    b.Property<bool>("SinalPago")
-                        .HasColumnType("boolean")
-                        .HasColumnName("sinal_pago");
-
-                    b.Property<string>("SinalPixQrCode")
-                        .HasColumnType("text")
-                        .HasColumnName("sinal_pix_qr_code");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -368,10 +359,6 @@ namespace GestorAI.API.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("ambiente");
 
-                    b.Property<bool>("AprovarAutomaticamente")
-                        .HasColumnType("boolean")
-                        .HasColumnName("aprovar_automaticamente");
-
                     b.Property<string>("AsaasApiKey")
                         .HasColumnType("text")
                         .HasColumnName("asaas_api_key");
@@ -387,6 +374,14 @@ namespace GestorAI.API.Migrations
                     b.Property<string>("Cep")
                         .HasColumnType("text")
                         .HasColumnName("cep");
+
+                    b.Property<string>("ClickSignApiKey")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_api_key");
+
+                    b.Property<bool>("ClickSignSandbox")
+                        .HasColumnType("boolean")
+                        .HasColumnName("click_sign_sandbox");
 
                     b.Property<string>("Cnpj")
                         .HasColumnType("text")
@@ -435,10 +430,6 @@ namespace GestorAI.API.Migrations
                     b.Property<string>("FocusNfeToken")
                         .HasColumnType("text")
                         .HasColumnName("focus_nfe_token");
-
-                    b.Property<int?>("HorasLimiteCancelamento")
-                        .HasColumnType("integer")
-                        .HasColumnName("horas_limite_cancelamento");
 
                     b.Property<string>("InscricaoEstadual")
                         .HasColumnType("text")
@@ -516,10 +507,6 @@ namespace GestorAI.API.Migrations
                         .HasColumnType("text")
                         .HasColumnName("uf");
 
-                    b.Property<decimal?>("ValorSinal")
-                        .HasColumnType("numeric")
-                        .HasColumnName("valor_sinal");
-
                     b.HasKey("Id")
                         .HasName("pk_configuracoes_empresa");
 
@@ -537,6 +524,18 @@ namespace GestorAI.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("ClickSignDocKey")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_doc_key");
+
+                    b.Property<string>("ClickSignStatus")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_status");
+
+                    b.Property<string>("ClickSignViewerUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("click_sign_viewer_url");
 
                     b.Property<Guid>("ClienteId")
                         .HasColumnType("uuid")
@@ -756,6 +755,42 @@ namespace GestorAI.API.Migrations
                         .HasDatabaseName("ix_disponibilidade_semanais_profissional_id");
 
                     b.ToTable("disponibilidade_semanais", (string)null);
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.EmpresaPlano", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ativo");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime?>("FimEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("fim_em");
+
+                    b.Property<DateTime>("InicioEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("inicio_em");
+
+                    b.Property<Guid>("PlanoSaaSId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plano_saa_s_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_empresas_plano");
+
+                    b.HasIndex("PlanoSaaSId")
+                        .HasDatabaseName("ix_empresas_plano_plano_saa_s_id");
+
+                    b.ToTable("empresas_plano", (string)null);
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Fornecedor", b =>
@@ -1209,6 +1244,78 @@ namespace GestorAI.API.Migrations
                     b.ToTable("orcamento_itens", (string)null);
                 });
 
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.PlanoSaaS", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ativo");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
+
+                    b.Property<string>("Features")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("features");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
+
+                    b.Property<decimal>("Preco")
+                        .HasColumnType("numeric")
+                        .HasColumnName("preco");
+
+                    b.HasKey("Id")
+                        .HasName("pk_planos_saa_s");
+
+                    b.ToTable("planos_saa_s", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
+                            Ativo = true,
+                            CriadoEm = new DateTime(2026, 6, 10, 16, 6, 45, 837, DateTimeKind.Utc).AddTicks(120),
+                            Descricao = "Gestão essencial para pequenos negócios",
+                            Features = "[\"asaas_cobrancas\",\"nota_fiscal\"]",
+                            Nome = "Básico",
+                            Preco = 97m
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
+                            Ativo = true,
+                            CriadoEm = new DateTime(2026, 6, 10, 16, 6, 45, 837, DateTimeKind.Utc).AddTicks(860),
+                            Descricao = "Automações e integrações completas",
+                            Features = "[\"asaas_cobrancas\",\"nota_fiscal\",\"automacoes_whatsapp\",\"assinatura_digital\",\"relatorios_avancados\"]",
+                            Nome = "Profissional",
+                            Preco = 197m
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000003"),
+                            Ativo = true,
+                            CriadoEm = new DateTime(2026, 6, 10, 16, 6, 45, 837, DateTimeKind.Utc).AddTicks(860),
+                            Descricao = "Multi-profissional, sinal de reserva, tudo incluso",
+                            Features = "[\"asaas_cobrancas\",\"nota_fiscal\",\"automacoes_whatsapp\",\"assinatura_digital\",\"relatorios_avancados\",\"sinal_reserva\",\"multi_profissional\"]",
+                            Nome = "Enterprise",
+                            Preco = 397m
+                        });
+                });
+
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Produto", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1473,6 +1580,18 @@ namespace GestorAI.API.Migrations
                     b.Navigation("Profissional");
                 });
 
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.EmpresaPlano", b =>
+                {
+                    b.HasOne("GestorAI.API.Domain.Entities.PlanoSaaS", "Plano")
+                        .WithMany("EmpresasPlano")
+                        .HasForeignKey("PlanoSaaSId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_empresas_plano_planos_saa_s_plano_saa_s_id");
+
+                    b.Navigation("Plano");
+                });
+
             modelBuilder.Entity("GestorAI.API.Domain.Entities.ItemVenda", b =>
                 {
                     b.HasOne("GestorAI.API.Domain.Entities.Produto", "Produto")
@@ -1621,6 +1740,11 @@ namespace GestorAI.API.Migrations
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Orcamento", b =>
                 {
                     b.Navigation("Itens");
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.PlanoSaaS", b =>
+                {
+                    b.Navigation("EmpresasPlano");
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Produto", b =>

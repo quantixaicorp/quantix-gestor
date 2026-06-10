@@ -32,6 +32,9 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public string? DescricaoPublica { get; set; }
     public string? AsaasApiKey { get; set; }
     public bool AsaasSandbox { get; set; } = true;
+    // ClickSign (Assinatura Digital)
+    public string? ClickSignApiKey { get; set; }
+    public bool ClickSignSandbox { get; set; } = true;
 
     // Evolution API (WhatsApp)
     public string? EvolutionApiUrl { get; set; }
@@ -45,4 +48,18 @@ public class ConfiguracaoEmpresa : ITenantEntity
     public bool Lembrete1dDepois { get; set; }
     public bool Lembrete3dDepois { get; set; }
     public bool Lembrete7dDepois { get; set; }
+
+    // Agendamentos avançados
+    public bool AprovarAutomaticamente { get; set; } = true;
+    public decimal? ValorSinal { get; set; }
+    public int? HorasLimiteCancelamento { get; set; }
+
+    // White label — domínio customizado
+    public string? DominioCustomizado { get; set; }
+
+    // Billing SaaS — Asaas Marketplace
+    public string? AsaasClienteIdSaaS { get; set; }
+    public string? AssinaturaAsaasId { get; set; }
+    public string? StatusAssinatura { get; set; }
+    public DateTime? ProximaCobrancaEm { get; set; }
 }

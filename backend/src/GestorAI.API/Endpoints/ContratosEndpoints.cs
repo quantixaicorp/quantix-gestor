@@ -1,4 +1,5 @@
 using GestorAI.API.DTOs.Contratos;
+using GestorAI.API.Services;
 using GestorAI.API.Services.Contratos;
 
 namespace GestorAI.API.Endpoints;
@@ -46,5 +47,13 @@ public static class ContratosEndpoints
         group.MapPost("/{id:guid}/gerar-cobrancas", async (
             Guid id, GerarCobrancasRequest req, ContratoService svc, CancellationToken ct) =>
             Results.Ok(await svc.GerarCobrancasAsync(id, req, ct)));
+
+        group.MapPost("/{id:guid}/enviar-assinatura", async (
+            Guid id, EnviarAssinaturaRequest req,
+            ContratoService svc, ClickSignService clickSign, FeatureService features, CancellationToken ct) =>
+        {
+            await features.RequireFeatureAsync("assinatura_digital", ct);
+            return Results.Ok(await svc.EnviarAssinaturaAsync(id, req, clickSign, ct));
+        });
     }
 }

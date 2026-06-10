@@ -37,6 +37,8 @@ export interface PublicAgendamentoConfirmado {
   profissionalNome: string
   dataHoraInicio: string
   dataHoraFim: string
+  sinalPixQrCode?: string
+  sinalValor?: number
 }
 
 export interface PublicCriarAgendamentoRequest {

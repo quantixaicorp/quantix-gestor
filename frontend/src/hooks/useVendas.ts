@@ -32,7 +32,7 @@ export function useVendas() {
     const result = await api.post<VendaResponse>('/api/vendas', req)
     setVendas(prev => [
       {
-        id: result.id, clienteNome: result.clienteNome,
+        id: result.id, clienteId: result.clienteId, clienteNome: result.clienteNome,
         dataHora: result.dataHora, status: result.status,
         total: result.total, formaPagamento: result.formaPagamento,
       },

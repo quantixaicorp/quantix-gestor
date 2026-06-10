@@ -146,7 +146,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         {
             EmpresaId = tenantContext.EmpresaId,
             ClienteId = o.ClienteId,
-            Status = StatusVenda.Aberta,
+            Status = StatusVenda.Concluida,
             Subtotal = subtotal,
             Desconto = 0,
             Total = subtotal,
@@ -166,7 +166,41 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
                 Desconto = 0,
                 Total = item.Quantidade * item.ValorUnitario,
             });
+
+            var produto = await db.Produtos.FindAsync([item.ProdutoId!.Value], ct);
+            if (produto is not null)
+            {
+                produto.EstoqueAtual -= item.Quantidade;
+                produto.AtualizadoEm = DateTime.UtcNow;
+
+                db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+                {
+                    EmpresaId = tenantContext.EmpresaId,
+                    ProdutoId = item.ProdutoId!.Value,
+                    Tipo = TipoMovimentacao.Saida,
+                    Quantidade = item.Quantidade,
+                    Origem = OrigemMovimentacao.Venda,
+                    ReferenciaId = venda.Id,
+                });
+            }
         }
+
+        var nomeCliente = o.ClienteId.HasValue
+            ? (await db.Clientes.FindAsync([o.ClienteId.Value], ct))?.Nome ?? "Cliente"
+            : "Venda balcão";
+
+        db.Lancamentos.Add(new Lancamento
+        {
+            EmpresaId = tenantContext.EmpresaId,
+            Tipo = TipoLancamento.Receita,
+            Descricao = $"Venda — {nomeCliente} (ORC-{o.Numero:D3})",
+            Valor = subtotal,
+            DataVencimento = DateTime.UtcNow,
+            DataPagamento = DateTime.UtcNow,
+            Status = StatusLancamento.Pago,
+            Categoria = "Venda",
+            VendaId = venda.Id,
+        });
 
         o.VendaId = venda.Id;
         o.Status = OrcamentoStatus.Convertido;

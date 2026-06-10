@@ -322,9 +322,10 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
             .FirstOrDefaultAsync(l => l.VendaId == id, ct);
         if (lancamento is not null)
         {
-            lancamento.Descricao = req.ClienteId.HasValue
-                ? $"Venda — {(await db.Clientes.FindAsync([req.ClienteId.Value], ct))?.Nome ?? "Cliente"}"
+            var nomeCliente = req.ClienteId.HasValue
+                ? (await db.Clientes.FindAsync([req.ClienteId.Value], ct))?.Nome ?? "Cliente"
                 : "Venda balcão";
+            lancamento.Descricao = $"Venda — {nomeCliente}";
             lancamento.DataVencimento = req.DataHora;
             lancamento.DataPagamento = req.DataHora;
         }

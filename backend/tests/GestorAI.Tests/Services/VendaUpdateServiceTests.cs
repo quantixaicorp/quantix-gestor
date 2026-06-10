@@ -102,6 +102,6 @@ public class VendaUpdateServiceTests
 
         var lancAtualizado = await db.Lancamentos.IgnoreQueryFilters().FirstAsync(l => l.Id == lancamento.Id);
         Assert.Equal(novaData.Date, lancAtualizado.DataVencimento.Date);
-        Assert.Equal("Venda balcão", lancAtualizado.Descricao);
+        Assert.Equal("Venda — Venda balcão", lancAtualizado.Descricao);
     }
 }

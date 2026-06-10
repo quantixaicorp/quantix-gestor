@@ -91,6 +91,7 @@ builder.Services.AddScoped<FornecedorService>();
 builder.Services.AddScoped<VendaService>();
 // Services — Financeiro
 builder.Services.AddScoped<LancamentoService>();
+builder.Services.AddScoped<CategoriaLancamentoService>();
 // Services — Dashboard
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<RelatorioService>();

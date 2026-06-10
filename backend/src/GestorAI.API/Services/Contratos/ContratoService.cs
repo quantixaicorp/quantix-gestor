@@ -356,5 +356,55 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         c.DataInicio, c.DataFim, c.Periodicidade.ToString(),
         c.DiaVencimento, c.Status.ToString(), c.Observacao, c.CriadoEm,
         c.Itens.Select(i => new ContratoItemResponse(i.Id, i.Descricao, i.Quantidade, i.ValorUnitario)).ToList(),
-        c.Itens.Sum(i => i.Quantidade * i.ValorUnitario));
+        c.Itens.Sum(i => i.Quantidade * i.ValorUnitario),
+        c.ClickSignStatus,
+        c.ClickSignViewerUrl);
+
+    public async Task<EnviarAssinaturaResponse> EnviarAssinaturaAsync(
+        Guid id, EnviarAssinaturaRequest req, ClickSignService clickSignService, CancellationToken ct)
+    {
+        var contrato = await FindAsync(id, ct);
+        if (contrato.Status != ContratoStatus.Ativo)
+            throw new AppException("Apenas contratos ativos podem ser enviados para assinatura.", 400);
+
+        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
+            ?? throw new AppException("Configuração da empresa não encontrada.", 404);
+
+        if (string.IsNullOrWhiteSpace(config.ClickSignApiKey))
+            throw new AppException("API Key do ClickSign não configurada. Acesse Configurações → Integrações.", 400);
+
+        var html = await GetPdfHtmlAsync(id, ct);
+        var pdfBytes = await GerarPdfAsync(html);
+
+        var nomeArquivo = $"contrato-{contrato.Numero:D3}.pdf";
+        var docResult = await clickSignService.CriarDocumentoAsync(
+            config.ClickSignApiKey, config.ClickSignSandbox, nomeArquivo, pdfBytes, ct);
+
+        await clickSignService.AdicionarSignatarioAsync(
+            config.ClickSignApiKey, config.ClickSignSandbox,
+            docResult.DocKey, contrato.Cliente!.Nome, req.EmailSignatario, ct);
+
+        contrato.ClickSignDocKey = docResult.DocKey;
+        contrato.ClickSignStatus = "Pendente";
+        contrato.ClickSignViewerUrl = docResult.ViewerUrl;
+        await db.SaveChangesAsync(ct);
+
+        return new EnviarAssinaturaResponse(docResult.DocKey, docResult.ViewerUrl, "Pendente");
+    }
+
+    private static async Task<byte[]> GerarPdfAsync(string html)
+    {
+        using var browser = await PuppeteerSharp.Puppeteer.LaunchAsync(new PuppeteerSharp.LaunchOptions
+        {
+            Headless = true,
+            Args = ["--no-sandbox", "--disable-setuid-sandbox"],
+        });
+        using var page = await browser.NewPageAsync();
+        await page.SetContentAsync(html);
+        return await page.PdfDataAsync(new PuppeteerSharp.PdfOptions
+        {
+            Format = PuppeteerSharp.Media.PaperFormat.A4,
+            PrintBackground = true,
+        });
+    }
 }

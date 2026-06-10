@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
-import type { VendaListItem, VendaResponse, CreateVendaRequest, FecharVendaRequest } from '@/types/vendas'
+import type { VendaListItem, VendaResponse, CreateVendaRequest, FecharVendaRequest, UpdateVendaRequest } from '@/types/vendas'
 
 export function useVendas() {
   const [vendas, setVendas] = useState<VendaListItem[]>([])
@@ -57,5 +57,13 @@ export function useVendas() {
     setVendas(prev => prev.filter(v => v.id !== id))
   }, [])
 
-  return { vendas, loading, error, list, get, create, cancelar, fechar, remove }
+  const update = useCallback(async (id: string, req: UpdateVendaRequest) => {
+    const result = await api.put<VendaResponse>(`/api/vendas/${id}`, req)
+    setVendas(prev => prev.map(v => v.id === id
+      ? { ...v, clienteId: result.clienteId, clienteNome: result.clienteNome, formaPagamento: result.formaPagamento, dataHora: result.dataHora }
+      : v))
+    return result
+  }, [])
+
+  return { vendas, loading, error, list, get, create, cancelar, fechar, remove, update }
 }

@@ -57,7 +57,7 @@ export default function Dashboard() {
 
       <div className="rounded-xl border bg-card p-4 space-y-3">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Financeiro — mês atual</p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <KpiCard titulo="Saldo do mês" valor={fmt(saldoMes)} icon={Wallet}
             cor={saldoMes >= 0 ? 'green' : 'red'} />
           <KpiCard titulo="A receber (pendente)" valor={fmt(kpis.contasReceberPendentes)} icon={ArrowUpCircle} cor="green" />

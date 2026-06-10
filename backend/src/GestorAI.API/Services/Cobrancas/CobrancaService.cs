@@ -123,7 +123,7 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
     public async Task<CobrancaResumo> GetResumoAsync(CancellationToken ct)
     {
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
         var aReceber = await db.Cobrancas
             .Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento >= hoje)

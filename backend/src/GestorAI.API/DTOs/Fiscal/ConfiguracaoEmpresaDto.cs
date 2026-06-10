@@ -26,6 +26,8 @@ public record ConfiguracaoEmpresaResponse(
     string? DescricaoPublica,
     string? AsaasApiKey,
     bool AsaasSandbox,
+    string? ClickSignApiKey,
+    bool ClickSignSandbox,
     string? EvolutionApiUrl,
     bool TemEvolutionKey,
     string? EvolutionInstance,
@@ -36,7 +38,7 @@ public record ConfiguracaoEmpresaResponse(
     bool Lembrete3dDepois,
     bool Lembrete7dDepois);
 
-public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox);
+public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox, string? ClickSignApiKey, bool ClickSignSandbox);
 
 public record SalvarAutomacaoConfigRequest(
     string? EvolutionApiUrl,

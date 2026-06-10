@@ -27,6 +27,8 @@ export interface ContratoResponse {
   criadoEm: string
   itens: ContratoItemResponse[]
   total: number
+  clickSignStatus: string | null
+  clickSignViewerUrl: string | null
 }
 
 export interface ContratoListItem {

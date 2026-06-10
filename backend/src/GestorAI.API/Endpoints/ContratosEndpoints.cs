@@ -46,5 +46,9 @@ public static class ContratosEndpoints
         group.MapPost("/{id:guid}/gerar-cobrancas", async (
             Guid id, GerarCobrancasRequest req, ContratoService svc, CancellationToken ct) =>
             Results.Ok(await svc.GerarCobrancasAsync(id, req, ct)));
+
+        group.MapPost("/{id:guid}/enviar-assinatura", async (
+            Guid id, EnviarAssinaturaRequest req, ContratoService svc, ClickSignService clickSign, CancellationToken ct) =>
+            Results.Ok(await svc.EnviarAssinaturaAsync(id, req, clickSign, ct)));
     }
 }

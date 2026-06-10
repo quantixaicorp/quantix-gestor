@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function DetalheContrato() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { contrato, loading, error, get, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar } = useContratos()
+  const { contrato, loading, error, get, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, enviarAssinatura } = useContratos()
 
   const [modalGerar, setModalGerar] = useState(false)
   const [de, setDe] = useState('')
@@ -23,6 +23,9 @@ export default function DetalheContrato() {
   const [gerandoMsg, setGerandoMsg] = useState('')
   const [actionError, setActionError] = useState('')
   const [renovando, setRenovando] = useState(false)
+  const [modalAssinatura, setModalAssinatura] = useState(false)
+  const [emailAssinatura, setEmailAssinatura] = useState('')
+  const [enviandoAss, setEnviandoAss] = useState(false)
 
   useEffect(() => { if (id) void get(id) }, [id, get])
 
@@ -53,6 +56,22 @@ export default function DetalheContrato() {
 
   const c = contrato
 
+  async function handleEnviarAssinatura() {
+    if (!id) return
+    setEnviandoAss(true)
+    setActionError('')
+    try {
+      await enviarAssinatura(c.id, emailAssinatura)
+      setModalAssinatura(false)
+      setEmailAssinatura('')
+      void get(id)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Erro ao enviar para assinatura')
+    } finally {
+      setEnviandoAss(false)
+    }
+  }
+
   async function handleRenovar() {
     if (!id) return
     setRenovando(true)
@@ -73,16 +92,37 @@ export default function DetalheContrato() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/contratos')}>
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-xl font-bold">Contrato {String(c.numero).padStart(3, '0')}</h1>
           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
             {c.status}
           </span>
+          {c.clickSignStatus && (
+            <span className={cn(
+              'px-2 py-0.5 rounded-full text-xs font-medium',
+              c.clickSignStatus === 'Assinado'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+            )}>
+              Assinatura: {c.clickSignStatus}
+            </span>
+          )}
+          {c.clickSignViewerUrl && (
+            <a href={c.clickSignViewerUrl} target="_blank" rel="noreferrer"
+              className="text-xs text-primary underline">
+              Ver documento
+            </a>
+          )}
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 flex-wrap">
           {c.status !== 'Rascunho' && (
             <Button variant="outline" size="sm" onClick={() => downloadPdf(c.id)}>
               <FileDown className="h-4 w-4 mr-1" /> PDF
+            </Button>
+          )}
+          {c.status === 'Ativo' && !c.clickSignStatus && (
+            <Button variant="outline" size="sm" onClick={() => setModalAssinatura(true)}>
+              Enviar para Assinatura
             </Button>
           )}
           {c.status === 'Ativo' && (
@@ -163,6 +203,27 @@ export default function DetalheContrato() {
           </>
         )}
       </div>
+
+      {modalAssinatura && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-background rounded-xl border p-6 w-full max-w-sm flex flex-col gap-4">
+            <h2 className="font-bold">Enviar para Assinatura Digital</h2>
+            <p className="text-sm text-muted-foreground">O contrato será enviado via ClickSign para o email informado.</p>
+            <div>
+              <label className="block text-sm mb-1">Email do signatário</label>
+              <input type="email" value={emailAssinatura} onChange={e => setEmailAssinatura(e.target.value)}
+                placeholder="cliente@email.com"
+                className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm" />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleEnviarAssinatura} disabled={enviandoAss || !emailAssinatura}>
+                {enviandoAss ? 'Enviando...' : 'Enviar'}
+              </Button>
+              <Button variant="outline" onClick={() => setModalAssinatura(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modalGerar && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">

@@ -106,6 +106,7 @@ builder.Services.AddScoped<ContratoService>();
 builder.Services.AddScoped<ContratoTemplateService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<AsaasService>();
+builder.Services.AddScoped<ClickSignService>();
 builder.Services.AddScoped<IEvolutionApiService, EvolutionApiService>();
 builder.Services.AddScoped<LembreteCobrancaService>();
 builder.Services.AddScoped<GeracaoCobrancaService>();

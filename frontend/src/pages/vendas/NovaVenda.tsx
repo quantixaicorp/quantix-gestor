@@ -80,10 +80,13 @@ export default function NovaVenda() {
   }
 
   async function handleCriarCliente(data: CreateClienteRequest) {
-    const novoCliente = await createCliente(data)
-    await listClientes()
-    setClienteId(novoCliente.id)
-    setModalNovoCliente(false)
+    try {
+      const novoCliente = await createCliente(data)
+      setClienteId(novoCliente.id)
+      setModalNovoCliente(false)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao criar cliente')
+    }
   }
 
   async function confirmarVenda() {
@@ -209,7 +212,7 @@ export default function NovaVenda() {
           {!vendaIdParam && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Cliente (opcional)</Label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <select value={clienteId} onChange={e => setClienteId(e.target.value)}
                   className="flex h-9 flex-1 rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
                   <option value="">Balcão (sem cliente)</option>

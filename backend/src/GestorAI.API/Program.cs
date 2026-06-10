@@ -113,6 +113,7 @@ builder.Services.AddHostedService<AutomacaoHostedService>();
 builder.Services.AddScoped<CobrancaService>();
 builder.Services.AddScoped<PublicBookingService>();
 builder.Services.AddScoped<IValidator<CreateLancamentoRequest>, CreateLancamentoValidator>();
+builder.Services.AddScoped<IValidator<UpdateLancamentoRequest>, UpdateLancamentoValidator>();
 builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamentoValidator>();
 // Validators
 builder.Services.AddScoped<IValidator<CreateProdutoRequest>, CreateProdutoValidator>();

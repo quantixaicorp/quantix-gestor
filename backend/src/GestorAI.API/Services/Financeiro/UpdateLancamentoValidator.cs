@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.Financeiro;
 
-public class CreateLancamentoValidator : AbstractValidator<CreateLancamentoRequest>
+public class UpdateLancamentoValidator : AbstractValidator<UpdateLancamentoRequest>
 {
-    public CreateLancamentoValidator(AppDbContext db, TenantContext tenantContext)
+    public UpdateLancamentoValidator(AppDbContext db, TenantContext tenantContext)
     {
         RuleFor(x => x.Tipo)
             .Must(t => t is "Receita" or "Despesa")

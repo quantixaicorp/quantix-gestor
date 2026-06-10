@@ -12,6 +12,7 @@ import Historico from '@/pages/vendas/Historico'
 import Lancamentos from '@/pages/financeiro/Lancamentos'
 import ContasPagar from '@/pages/financeiro/ContasPagar'
 import ContasReceber from '@/pages/financeiro/ContasReceber'
+import Categorias from '@/pages/financeiro/Categorias'
 import Relatorios from '@/pages/relatorios/Relatorios'
 import Orcamentos from '@/pages/orcamentos/Orcamentos'
 import NovoOrcamento from '@/pages/orcamentos/NovoOrcamento'
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
       { path: '/financeiro', element: <Lancamentos /> },
       { path: '/financeiro/pagar', element: <ContasPagar /> },
       { path: '/financeiro/receber', element: <ContasReceber /> },
+      { path: '/financeiro/categorias', element: <Categorias /> },
       { path: '/clientes', element: <Clientes /> },
       { path: '/fornecedores', element: <Fornecedores /> },
       { path: '/relatorios', element: <Relatorios /> },

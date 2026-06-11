@@ -78,5 +78,10 @@ export function useCobrancas() {
     return api.post<CobrancaAsaasResponse>(`/api/cobrancas/${id}/enviar-asaas`, { billingType })
   }, [])
 
-  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging, fetchResumo, enviarAsaas }
+  const deletar = useCallback(async (id: string) => {
+    await api.delete(`/api/cobrancas/${id}`)
+    setCobrancas(prev => prev.filter(c => c.id !== id))
+  }, [])
+
+  return { cobrancas, cobranca, loading, error, list, get, create, pagar, cancelar, abrirWhatsapp, fetchAging, fetchResumo, enviarAsaas, deletar }
 }

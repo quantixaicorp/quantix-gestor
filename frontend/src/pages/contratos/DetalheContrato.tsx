@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function DetalheContrato() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { contrato, loading, error, get, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, enviarAssinatura } = useContratos()
+  const { contrato, loading, error, get, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, enviarAssinatura, deletar } = useContratos()
 
   const [modalGerar, setModalGerar] = useState(false)
   const [de, setDe] = useState('')
@@ -184,11 +184,15 @@ export default function DetalheContrato() {
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {c.status === 'Rascunho' && (
           <>
             <Button onClick={() => handleAcao(() => ativar(c.id))} className="bg-green-600 hover:bg-green-700">Ativar</Button>
             <Button variant="outline" className="text-destructive" onClick={() => handleAcao(() => cancelar(c.id))}>Cancelar</Button>
+            <Button variant="destructive" size="sm"
+              onClick={() => { if (confirm('Excluir este contrato permanentemente?')) void handleAcao(async () => { await deletar(c.id); navigate('/contratos') }) }}>
+              Excluir
+            </Button>
           </>
         )}
         {c.status === 'Ativo' && (
@@ -201,6 +205,12 @@ export default function DetalheContrato() {
               </Button>
             )}
           </>
+        )}
+        {c.status === 'Cancelado' && (
+          <Button variant="destructive" size="sm"
+            onClick={() => { if (confirm('Excluir este contrato permanentemente?')) void handleAcao(async () => { await deletar(c.id); navigate('/contratos') }) }}>
+            Excluir
+          </Button>
         )}
       </div>
 

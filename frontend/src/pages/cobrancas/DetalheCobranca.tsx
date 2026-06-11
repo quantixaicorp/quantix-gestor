@@ -17,7 +17,7 @@ const FORMAS_PAGAMENTO = ['Dinheiro', 'Pix', 'Cartao', 'Outro']
 export default function DetalheCobranca() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { cobranca, loading, error, get, pagar, cancelar, abrirWhatsapp, enviarAsaas } = useCobrancas()
+  const { cobranca, loading, error, get, pagar, cancelar, abrirWhatsapp, enviarAsaas, deletar } = useCobrancas()
 
   const [modalPagar, setModalPagar] = useState(false)
   const [dataPagamento, setDataPagamento] = useState('')
@@ -35,6 +35,15 @@ export default function DetalheCobranca() {
     if (!id) return
     setActionError('')
     try { await cancelar(id) } catch (e) { setActionError(e instanceof Error ? e.message : 'Erro') }
+  }
+
+  const handleDeletar = async () => {
+    if (!id || !confirm('Excluir esta cobrança permanentemente?')) return
+    setActionError('')
+    try {
+      await deletar(id)
+      navigate('/cobrancas')
+    } catch (e) { setActionError(e instanceof Error ? e.message : 'Erro ao excluir') }
   }
 
   const handlePagar = async () => {
@@ -113,13 +122,17 @@ export default function DetalheCobranca() {
       </div>
 
       {(c.status === 'Pendente' || c.status === 'Vencido') && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button onClick={() => setModalPagar(true)}>Registrar Pagamento</Button>
           <Button variant="outline" size="sm" onClick={handleWhatsapp}>
             <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
           </Button>
           <Button variant="outline" className="text-destructive" onClick={handleCancelar}>Cancelar</Button>
+          <Button variant="destructive" size="sm" onClick={() => void handleDeletar()}>Excluir</Button>
         </div>
+      )}
+      {c.status === 'Cancelado' && (
+        <Button variant="destructive" size="sm" onClick={() => void handleDeletar()}>Excluir</Button>
       )}
 
       {(c.status === 'Pendente' || c.status === 'Vencido') && !c.asaasId && (

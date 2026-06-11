@@ -110,6 +110,25 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         return ToResponse(c);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var c = await db.Contratos
+            .Include(c => c.Itens)
+            .FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Contrato não encontrado.", 404);
+
+        if (c.Status != ContratoStatus.Rascunho && c.Status != ContratoStatus.Cancelado)
+            throw new AppException("Apenas contratos em rascunho ou cancelados podem ser excluídos.", 400);
+
+        var temCobrancaPaga = await db.Cobrancas
+            .AnyAsync(cb => cb.ContratoId == id && cb.Status == CobrancaStatus.Pago, ct);
+        if (temCobrancaPaga)
+            throw new AppException("Não é possível excluir um contrato com cobranças pagas.", 400);
+
+        db.Contratos.Remove(c);
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task<List<CobrancaListItem>> GerarCobrancasAsync(
         Guid id, GerarCobrancasRequest req, CancellationToken ct)
     {

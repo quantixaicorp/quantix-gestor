@@ -44,5 +44,11 @@ public static class CobrancasEndpoints
             Guid id, EnviarAsaasRequest req,
             CobrancaService svc, CancellationToken ct) =>
             Results.Ok(await svc.EnviarAsaasAsync(id, req, ct)));
+
+        group.MapDelete("/{id:guid}", async (Guid id, CobrancaService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        });
     }
 }

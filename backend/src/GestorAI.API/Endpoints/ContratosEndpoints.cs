@@ -52,5 +52,11 @@ public static class ContratosEndpoints
             Guid id, EnviarAssinaturaRequest req,
             ContratoService svc, ClickSignService clickSign, CancellationToken ct) =>
             Results.Ok(await svc.EnviarAssinaturaAsync(id, req, clickSign, ct)));
+
+        group.MapDelete("/{id:guid}", async (Guid id, ContratoService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        });
     }
 }

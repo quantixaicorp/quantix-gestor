@@ -86,12 +86,24 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         c.Status = CobrancaStatus.Pago;
         c.DataPagamento = req.DataPagamento;
         c.FormaPagamento = forma;
+
+        CriarLancamentoReceita(c, c.DataPagamento);
+
         await db.SaveChangesAsync(ct);
 
         if (c.ContratoId.HasValue)
             await VerificarEncerramentoContratoAsync(c.ContratoId.Value, ct);
 
         return await GetAsync(id, ct);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var c = await FindAsync(id, ct);
+        if (c.Status == CobrancaStatus.Pago)
+            throw new AppException("Cobranças pagas não podem ser excluídas.", 400);
+        db.Cobrancas.Remove(c);
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task<CobrancaResponse> CancelarAsync(Guid id, CancellationToken ct)
@@ -225,6 +237,9 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
             "CREDIT_CARD" => FormaPagamento.Cartao,
             _ => FormaPagamento.Outro,
         };
+
+        CriarLancamentoReceita(cobranca, cobranca.DataPagamento);
+
         await db.SaveChangesAsync(ct);
 
         if (cobranca.ContratoId.HasValue)
@@ -258,6 +273,21 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
             contrato.Status = ContratoStatus.Encerrado;
             await db.SaveChangesAsync(ct);
         }
+    }
+
+    private void CriarLancamentoReceita(Cobranca c, DateTime? dataPagamento)
+    {
+        db.Lancamentos.Add(new Lancamento
+        {
+            EmpresaId = c.EmpresaId,
+            Tipo = TipoLancamento.Receita,
+            Descricao = c.Referencia,
+            Valor = c.Valor,
+            DataVencimento = c.DataVencimento.ToDateTime(TimeOnly.MinValue),
+            DataPagamento = dataPagamento,
+            Status = StatusLancamento.Pago,
+            Categoria = "Cobrança",
+        });
     }
 
     private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>

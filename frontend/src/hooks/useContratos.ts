@@ -94,5 +94,10 @@ export function useContratos() {
     )
   }, [])
 
-  return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, fetchVencendo, enviarAssinatura }
+  const deletar = useCallback(async (id: string) => {
+    await api.delete(`/api/contratos/${id}`)
+    setContratos(prev => prev.filter(c => c.id !== id))
+  }, [])
+
+  return { contratos, contrato, loading, error, list, get, create, ativar, encerrar, cancelar, gerarCobrancas, downloadPdf, renovar, fetchVencendo, enviarAssinatura, deletar }
 }

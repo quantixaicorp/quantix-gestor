@@ -18,6 +18,7 @@ public class Contrato : ITenantEntity
     public int DiaVencimento { get; set; }
     public ContratoStatus Status { get; set; } = ContratoStatus.Rascunho;
     public string? Observacao { get; set; }
+    public Guid? AssinaturaClienteId { get; set; }
     // Assinatura digital (ClickSign)
     public string? ClickSignDocKey { get; set; }
     public string? ClickSignStatus { get; set; }

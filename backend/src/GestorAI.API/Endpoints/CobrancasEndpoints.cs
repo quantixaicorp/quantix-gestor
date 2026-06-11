@@ -1,5 +1,4 @@
 using GestorAI.API.DTOs.Cobrancas;
-using GestorAI.API.Services;
 using GestorAI.API.Services.Cobrancas;
 
 namespace GestorAI.API.Endpoints;
@@ -43,10 +42,7 @@ public static class CobrancasEndpoints
 
         group.MapPost("/{id:guid}/enviar-asaas", async (
             Guid id, EnviarAsaasRequest req,
-            CobrancaService svc, FeatureService features, CancellationToken ct) =>
-        {
-            await features.RequireFeatureAsync("asaas_cobrancas", ct);
-            return Results.Ok(await svc.EnviarAsaasAsync(id, req, ct));
-        });
+            CobrancaService svc, CancellationToken ct) =>
+            Results.Ok(await svc.EnviarAsaasAsync(id, req, ct)));
     }
 }

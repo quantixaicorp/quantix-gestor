@@ -31,8 +31,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
     public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
     public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
-    public DbSet<PlanoSaaS> PlanosSaaS => Set<PlanoSaaS>();
-    public DbSet<EmpresaPlano> EmpresasPlano => Set<EmpresaPlano>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,41 +99,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<AutomacaoLog>()
             .HasIndex(l => new { l.CobrancaId, l.TipoEvento });
 
-        var basicoId = new Guid("10000000-0000-0000-0000-000000000001");
-        var profId   = new Guid("10000000-0000-0000-0000-000000000002");
-        var entId    = new Guid("10000000-0000-0000-0000-000000000003");
-
-        var criadoBasico = new DateTime(2026, 6, 10, 16, 15, 2, 245, DateTimeKind.Utc).AddTicks(7080);
-        var criadoProf   = new DateTime(2026, 6, 10, 16, 15, 2, 245, DateTimeKind.Utc).AddTicks(7810);
-
-        modelBuilder.Entity<PlanoSaaS>().HasData(
-            new PlanoSaaS
-            {
-                Id = basicoId,
-                Nome = "Básico",
-                Descricao = "Gestão essencial para pequenos negócios",
-                Preco = 97m,
-                Features = """["asaas_cobrancas","nota_fiscal"]""",
-                CriadoEm = criadoBasico,
-            },
-            new PlanoSaaS
-            {
-                Id = profId,
-                Nome = "Profissional",
-                Descricao = "Automações e integrações completas",
-                Preco = 197m,
-                Features = """["asaas_cobrancas","nota_fiscal","automacoes_whatsapp","assinatura_digital","relatorios_avancados"]""",
-                CriadoEm = criadoProf,
-            },
-            new PlanoSaaS
-            {
-                Id = entId,
-                Nome = "Enterprise",
-                Descricao = "Multi-profissional, sinal de reserva, tudo incluso",
-                Preco = 397m,
-                Features = """["asaas_cobrancas","nota_fiscal","automacoes_whatsapp","assinatura_digital","relatorios_avancados","sinal_reserva","multi_profissional"]""",
-                CriadoEm = criadoProf,
-            }
-        );
     }
 }

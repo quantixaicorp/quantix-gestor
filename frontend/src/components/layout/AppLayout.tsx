@@ -4,39 +4,9 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import Sidebar from './Sidebar'
 import { cn } from '@/lib/utils'
-import { api } from '@/services/api'
-
-function hexToHsl(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  const max = Math.max(r, g, b), min = Math.min(r, g, b)
-  let h = 0, s = 0
-  const l = (max + min) / 2
-  if (max !== min) {
-    const d = max - min
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
-    h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6
-      : max === g ? ((b - r) / d + 2) / 6
-      : ((r - g) / d + 4) / 6
-  }
-  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`
-}
 
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth()
-
-  useEffect(() => {
-    if (!isAuthenticated) return
-    api.get<{ corPrimaria?: string | null }>('/api/configuracao-empresa')
-      .then(cfg => {
-        if (cfg.corPrimaria?.startsWith('#')) {
-          const hsl = hexToHsl(cfg.corPrimaria)
-          document.documentElement.style.setProperty('--primary', hsl)
-        }
-      })
-      .catch(() => {})
-  }, [isAuthenticated])
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem('sidebar-collapsed') === 'true' }

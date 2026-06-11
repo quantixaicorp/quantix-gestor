@@ -29,8 +29,6 @@ import {
   Truck,
   Plug,
   Bot,
-  CreditCard,
-  Palette,
   Building2,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
@@ -121,8 +119,6 @@ const menuGroups: MenuGroup[] = [
       { icon: Building2, label: 'Empresa', path: '/configuracoes/empresa' },
       { icon: LinkIcon, label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
       { icon: Plug, label: 'Integrações', path: '/configuracoes/integracoes' },
-      { icon: CreditCard, label: 'Plano', path: '/configuracoes/plano' },
-      { icon: Palette, label: 'White Label', path: '/configuracoes/white-label' },
     ],
   },
   {

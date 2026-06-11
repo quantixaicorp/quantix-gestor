@@ -59,9 +59,5 @@ public class ConfiguracaoEmpresa : ITenantEntity
     // White label — domínio customizado
     public string? DominioCustomizado { get; set; }
 
-    // Billing SaaS — Asaas Marketplace
-    public string? AsaasClienteIdSaaS { get; set; }
-    public string? AssinaturaAsaasId { get; set; }
-    public string? StatusAssinatura { get; set; }
-    public DateTime? ProximaCobrancaEm { get; set; }
+
 }

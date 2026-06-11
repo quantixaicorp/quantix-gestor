@@ -197,30 +197,20 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       {/* Logo header */}
       <div className="flex flex-col items-center justify-center border-b border-sidebar-border px-3 pt-2 pb-2 shrink-0 gap-1">
         {!showLabels ? (
-          <div className="rounded-xl overflow-hidden mx-auto" style={{ width: '48px', height: '48px', position: 'relative' }}>
+          <img
+            src="/logo-gestorai.png"
+            alt="GestorAI"
+            className="rounded-xl mx-auto"
+            style={{ width: '48px', height: '48px', objectFit: 'contain' }}
+          />
+        ) : (
+          <>
             <img
               src="/logo-gestorai.png"
               alt="GestorAI"
-              style={{
-                width: 'auto',
-                height: '200%',
-                transform: 'translateY(-50%)',
-              }}
+              className="w-full rounded-xl"
+              style={{ height: '52px', objectFit: 'contain', objectPosition: 'left center' }}
             />
-          </div>
-        ) : (
-          <>
-            <div className="rounded-xl overflow-hidden w-full" style={{ height: '52px', position: 'relative' }}>
-              <img
-                src="/logo-gestorai.png"
-                alt="GestorAI"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  transform: 'translateY(-50%)',
-                }}
-              />
-            </div>
             <span className="text-[10px] text-sidebar-muted tracking-wide">by QuantixAI</span>
           </>
         )}

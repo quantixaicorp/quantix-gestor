@@ -57,6 +57,6 @@ public static class ContratosEndpoints
         {
             await svc.DeleteAsync(id, ct);
             return Results.NoContent();
-        });
+        }).RequireAuthorization("AdminOnly");
     }
 }

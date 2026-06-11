@@ -38,6 +38,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasDefaultSchema("gestor");
+
         modelBuilder.Entity<Cliente>()
             .HasIndex(c => new { c.EmpresaId, c.Whatsapp })
             .IsUnique();

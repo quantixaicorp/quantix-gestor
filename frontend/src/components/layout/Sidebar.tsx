@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -34,7 +34,10 @@ import {
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
+import { api } from '@/services/api'
 import { cn } from '@/lib/utils'
+
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
 interface MenuItem {
   icon: React.ElementType
@@ -137,6 +140,36 @@ const menuGroups: MenuGroup[] = [
   },
 ]
 
+function hexToHsl(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  let h = 0, s = 0
+  const l = (max + min) / 2
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break
+      case g: h = ((b - r) / d + 2) / 6; break
+      case b: h = ((r - g) / d + 4) / 6; break
+    }
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)]
+}
+
+function hslVars(h: number, s: number, l: number): string {
+  return `${h} ${s}% ${Math.max(0, Math.min(100, l))}%`
+}
+
+function isLightHex(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128
+}
+
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
@@ -144,11 +177,30 @@ interface SidebarProps {
   onMobileClose: () => void
 }
 
+interface EmpresaInfo {
+  logoUrl: string
+  nomeFantasia: string
+  corPrimaria: string
+}
+
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
   const { resolved, toggleTheme } = useTheme()
+  const [empresa, setEmpresa] = useState<EmpresaInfo | null>(null)
+
+  useEffect(() => {
+    api.get<{ logoUrl: string | null; nomeFantasia: string | null; corPrimaria: string | null }>(
+      '/api/configuracao-empresa'
+    )
+      .then(c => setEmpresa({
+        logoUrl: c.logoUrl ?? '',
+        nomeFantasia: c.nomeFantasia ?? '',
+        corPrimaria: c.corPrimaria ?? '',
+      }))
+      .catch(() => {})
+  }, [])
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
@@ -172,51 +224,79 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   }
 
   const handleNavClick = () => {
-    // Close mobile drawer when a link is clicked
     onMobileClose()
   }
 
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose
   const ThemeIcon = resolved === 'dark' ? Sun : Moon
 
-  // On mobile: full-width drawer (always expanded); on desktop: collapsed/expanded
   const isMobileDrawer = mobileOpen
   const showLabels = isMobileDrawer || !collapsed
 
+  const dynamicSidebarStyle = useMemo((): React.CSSProperties => {
+    const cor = empresa?.corPrimaria
+    if (!cor || !cor.startsWith('#') || cor.length < 7) return {}
+    const [h, s, l] = hexToHsl(cor)
+    const light = isLightHex(cor)
+    const delta = light ? -1 : 1
+    return {
+      '--sidebar-background': hslVars(h, s, l),
+      '--sidebar-foreground': light ? '220 20% 10%' : '210 40% 98%',
+      '--sidebar-muted': light ? '220 10% 35%' : '215 16% 65%',
+      '--sidebar-accent': hslVars(h, s, l + delta * 8),
+      '--sidebar-border': hslVars(h, Math.max(s - 5, 0), l + delta * 12),
+      '--sidebar-primary': light ? '220 20% 10%' : '210 40% 98%',
+    } as React.CSSProperties
+  }, [empresa?.corPrimaria])
+
+  const logoSrc = empresa?.logoUrl
+    ? (empresa.logoUrl.startsWith('http') ? empresa.logoUrl : `${API_BASE}${empresa.logoUrl}`)
+    : null
+
+  const initial = (empresa?.nomeFantasia?.[0] ?? 'E').toUpperCase()
+
   return (
     <aside
+      style={dynamicSidebarStyle}
       className={cn(
         'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border flex flex-col',
         'transition-[width,transform] duration-300 overflow-hidden',
-        'w-64',                                         // mobile always full width
-        collapsed ? 'lg:w-16' : 'lg:w-64',             // desktop width by state
-        mobileOpen ? 'translate-x-0' : '-translate-x-full',  // mobile show/hide
-        'lg:translate-x-0',                             // always visible on desktop
+        'w-64',
+        collapsed ? 'lg:w-16' : 'lg:w-64',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        'lg:translate-x-0',
       )}
     >
-      {/* Logo header */}
-      <div className="flex flex-col items-center justify-center border-b border-sidebar-border px-3 pt-2 pb-2 shrink-0 gap-1">
+      {/* Company logo header */}
+      <div className="flex flex-col items-center justify-center border-b border-sidebar-border px-3 pt-3 pb-2 shrink-0 gap-1">
         {!showLabels ? (
-          <img
-            src="/logo-gestorai.png"
-            alt="GestorAI"
-            className="rounded-xl mx-auto"
-            style={{ width: '48px', height: '48px', objectFit: 'contain' }}
-          />
+          logoSrc
+            ? <img src={logoSrc} alt={empresa?.nomeFantasia || 'Empresa'}
+                className="rounded-lg mx-auto object-cover"
+                style={{ width: '40px', height: '40px' }} />
+            : <div className="w-10 h-10 rounded-lg bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-base">
+                {initial}
+              </div>
         ) : (
-          <>
-            <img
-              src="/logo-gestorai.png"
-              alt="GestorAI"
-              className="w-full rounded-xl"
-              style={{ height: '52px', objectFit: 'contain', objectPosition: 'left center' }}
-            />
-            <span className="text-[10px] text-sidebar-muted tracking-wide">by QuantixAI</span>
-          </>
+          <div className="flex items-center gap-2 w-full">
+            {logoSrc
+              ? <img src={logoSrc} alt={empresa?.nomeFantasia || 'Empresa'}
+                  className="rounded-lg object-cover shrink-0"
+                  style={{ width: '36px', height: '36px' }} />
+              : <div className="w-9 h-9 rounded-lg bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-sm shrink-0">
+                  {initial}
+                </div>
+            }
+            {empresa?.nomeFantasia && (
+              <span className="text-sm font-semibold text-sidebar-foreground truncate leading-tight">
+                {empresa.nomeFantasia}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Controls bar — theme + collapse (hidden on mobile drawer) */}
+      {/* Controls bar — theme + collapse */}
       <div className={cn(
         'border-b border-sidebar-border shrink-0',
         !showLabels ? 'flex flex-col items-center gap-1 py-2' : 'flex justify-end gap-1 px-3 py-1'
@@ -228,7 +308,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         >
           <ThemeIcon className="h-4 w-4" />
         </button>
-        {/* Hide collapse toggle on mobile drawer */}
         <button
           onClick={onToggle}
           className="hidden lg:block p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"

@@ -47,8 +47,13 @@ export default function AppLayout() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <span className="font-semibold text-sidebar-foreground text-sm">GestorAI</span>
       </header>
+
+      {/* GestorAI badge — always visible, top-right */}
+      <div className="fixed top-2 right-3 z-50 flex items-center gap-1.5 bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none select-none">
+        <img src="/logo-gestorai.png" alt="GestorAI" className="h-4 w-4 object-contain opacity-70" />
+        <span className="text-[10px] font-medium text-foreground/50 tracking-wide">GestorAI</span>
+      </div>
 
       {/* Backdrop for mobile drawer */}
       {mobileOpen && (

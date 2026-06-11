@@ -1,6 +1,6 @@
 // frontend/src/pages/planos/PlanoDetalhe.tsx
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/useToast'
@@ -8,9 +8,11 @@ import type { PlanoAssinaturaResponse } from '@/types/assinaturas'
 
 export default function PlanoDetalhe() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [plano, setPlano] = useState<PlanoAssinaturaResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [slug, setSlug] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -26,6 +28,19 @@ export default function PlanoDetalhe() {
   if (!plano) return <p className="text-red-500">Plano não encontrado.</p>
 
   const checkoutUrl = `${window.location.origin}/assinar/${slug}/${plano.id}`
+
+  async function handleDelete() {
+    if (!confirm('Excluir este plano permanentemente?')) return
+    setDeleting(true)
+    try {
+      await api.delete(`/api/planos-assinatura/${plano!.id}`)
+      toast.success('Plano excluído')
+      navigate('/planos')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
+      setDeleting(false)
+    }
+  }
 
   async function toggleAtivo() {
     try {
@@ -45,9 +60,16 @@ export default function PlanoDetalhe() {
           <h1 className="text-2xl font-bold">{plano.nome}</h1>
           <span className="text-sm bg-muted px-2 py-0.5 rounded-full">{plano.nicho}</span>
         </div>
-        <Button variant={plano.ativo ? 'outline' : 'default'} size="sm" onClick={() => void toggleAtivo()}>
-          {plano.ativo ? 'Desativar' : 'Ativar'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant={plano.ativo ? 'outline' : 'default'} size="sm" onClick={() => void toggleAtivo()}>
+            {plano.ativo ? 'Desativar' : 'Ativar'}
+          </Button>
+          {!plano.ativo && plano.totalAssinantes === 0 && (
+            <Button variant="destructive" size="sm" onClick={() => void handleDelete()} disabled={deleting}>
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border p-4 space-y-2">

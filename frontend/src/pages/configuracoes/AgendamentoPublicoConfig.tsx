@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +7,7 @@ import { toast } from '@/hooks/useToast'
 import type { ConfiguracaoEmpresaResponse } from '@/types/fiscal'
 
 export default function AgendamentoPublicoConfig() {
+  const [slug, setSlug] = useState('')
   const [aprovarAutomaticamente, setAprovarAutomaticamente] = useState(true)
   const [valorSinal, setValorSinal] = useState('')
   const [horasLimiteCancelamento, setHorasLimiteCancelamento] = useState('')
@@ -16,6 +16,7 @@ export default function AgendamentoPublicoConfig() {
   useEffect(() => {
     api.get<ConfiguracaoEmpresaResponse>('/api/configuracao-empresa')
       .then(c => {
+        setSlug(c.slug ?? '')
         setAprovarAutomaticamente(c.aprovarAutomaticamente)
         setValorSinal(c.valorSinal != null ? String(c.valorSinal) : '')
         setHorasLimiteCancelamento(c.horasLimiteCancelamento != null ? String(c.horasLimiteCancelamento) : '')
@@ -39,16 +40,35 @@ export default function AgendamentoPublicoConfig() {
     }
   }
 
+  const bookingUrl = slug ? `${window.location.origin}/agendar/${slug}` : null
+
   return (
     <div className="space-y-6 max-w-lg">
       <h1 className="text-2xl font-bold">Agendamento Online</h1>
 
-      <p className="text-sm text-muted-foreground">
-        Configure logo, cor e slug da página pública em{' '}
-        <Link to="/configuracoes/empresa" className="underline text-primary">
-          Configuração da Empresa
-        </Link>.
-      </p>
+      {bookingUrl ? (
+        <div className="rounded-md border p-4 space-y-2">
+          <p className="font-medium text-sm">Link público para clientes</p>
+          <div className="flex items-center gap-2">
+            <code className="text-xs bg-muted px-2 py-1.5 rounded flex-1 break-all">{bookingUrl}</code>
+            <Button size="sm" variant="outline"
+              onClick={() => { void navigator.clipboard.writeText(bookingUrl); toast.success('Copiado!') }}>
+              Copiar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Envie este link para seus clientes agendarem online.
+          </p>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Configure o slug da empresa em{' '}
+          <a href="/configuracoes/empresa" className="underline text-primary">
+            Configuração da Empresa
+          </a>{' '}
+          para gerar o link público.
+        </p>
+      )}
 
       <div className="rounded-md border p-4 space-y-4">
         <h2 className="font-semibold">Política de Agendamento</h2>

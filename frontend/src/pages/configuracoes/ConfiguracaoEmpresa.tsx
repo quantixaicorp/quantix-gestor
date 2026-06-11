@@ -66,10 +66,6 @@ export default function ConfiguracaoEmpresa() {
   const [focusNfeToken, setFocusNfeToken] = useState('')
   const [savingNfe, setSavingNfe] = useState(false)
 
-  // Agendamento
-  const [agend, setAgend] = useState({ aprovarAutomaticamente: true, valorSinal: '', horasLimiteCancelamento: '' })
-  const [savingAgend, setSavingAgend] = useState(false)
-
   useEffect(() => {
     api.get<ConfiguracaoEmpresaResponse>('/api/configuracao-empresa')
       .then(c => {
@@ -77,7 +73,6 @@ export default function ConfiguracaoEmpresa() {
         setEnd({ logradouro: c.logradouro ?? '', numero: c.numero ?? '', complemento: c.complemento ?? '', bairro: c.bairro ?? '', codigoMunicipio: c.codigoMunicipio ?? '', municipio: c.municipio ?? '', uf: c.uf ?? '', cep: c.cep ?? '' })
         setVisual({ slug: c.slug ?? '', nomeExibicao: c.nomeFantasia ?? '', corPrimaria: c.corPrimaria ?? '#2563eb', descricaoPublica: c.descricaoPublica ?? '', logoUrl: c.logoUrl ?? '' })
         setNfe({ regimeTributario: c.regimeTributario ?? 1, ambiente: c.ambiente ?? 2, serieNfe: c.serieNfe ?? 1, serieNfce: c.serieNfce ?? 1 })
-        setAgend({ aprovarAutomaticamente: c.aprovarAutomaticamente, valorSinal: c.valorSinal != null ? String(c.valorSinal) : '', horasLimiteCancelamento: c.horasLimiteCancelamento != null ? String(c.horasLimiteCancelamento) : '' })
         setTemToken(c.temToken)
       })
       .catch(() => toast.error('Erro ao carregar configurações'))
@@ -121,19 +116,6 @@ export default function ConfiguracaoEmpresa() {
       toast.success('Configuração NF-e salva!')
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setSavingNfe(false) }
-  }
-
-  async function saveAgend() {
-    setSavingAgend(true)
-    try {
-      await api.put('/api/configuracao-empresa/agendamento', {
-        aprovarAutomaticamente: agend.aprovarAutomaticamente,
-        valorSinal: agend.valorSinal ? parseFloat(agend.valorSinal) : null,
-        horasLimiteCancelamento: agend.horasLimiteCancelamento ? parseInt(agend.horasLimiteCancelamento) : null,
-      })
-      toast.success('Configuração de agendamento salva!')
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
-    finally { setSavingAgend(false) }
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -284,30 +266,6 @@ export default function ConfiguracaoEmpresa() {
         </Field>
       </Section>
 
-      {/* Agendamento Online */}
-      <Section title="Agendamento Online" onSave={() => void saveAgend()} saving={savingAgend}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="aprovarAuto" checked={agend.aprovarAutomaticamente}
-              onChange={e => setAgend(v => ({ ...v, aprovarAutomaticamente: e.target.checked }))}
-              className="h-4 w-4" />
-            <Label htmlFor="aprovarAuto">Confirmar agendamentos automaticamente</Label>
-          </div>
-          <p className="text-xs text-muted-foreground -mt-2">
-            Quando desmarcado, novos agendamentos ficam aguardando confirmação manual.
-          </p>
-          <Field label="Valor do sinal de reserva (R$)">
-            <Input type="number" min="0" step="0.01" value={agend.valorSinal}
-              onChange={e => setAgend(v => ({ ...v, valorSinal: e.target.value }))}
-              placeholder="0,00 (sem sinal)" />
-          </Field>
-          <Field label="Horas mínimas para cancelamento">
-            <Input type="number" min="0" value={agend.horasLimiteCancelamento}
-              onChange={e => setAgend(v => ({ ...v, horasLimiteCancelamento: e.target.value }))}
-              placeholder="Ex: 24 (sem restrição se vazio)" />
-          </Field>
-        </div>
-      </Section>
     </div>
   )
 }

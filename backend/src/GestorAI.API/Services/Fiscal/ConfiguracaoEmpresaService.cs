@@ -210,7 +210,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         if (file.Length > 2 * 1024 * 1024)
             throw new AppException("Arquivo muito grande. Máximo 2MB.", 400);
 
-        var dir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads", "logos");
+        var dir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "logos");
         Directory.CreateDirectory(dir);
 
         var fileName = $"{tenantContext.EmpresaId}{ext}";
@@ -219,7 +219,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         await using var stream = File.Create(fullPath);
         await file.CopyToAsync(stream, ct);
 
-        var logoUrl = $"/uploads/logos/{fileName}";
+        var logoUrl = $"/logos/{fileName}";
 
         var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
             ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };

@@ -22,8 +22,8 @@ export default function AssinarPlano() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_BASE}/public/${slug}/info`).then(r => r.json() as Promise<EmpresaInfo>),
-      fetch(`${API_BASE}/public/${slug}/planos/${planoId}`).then(r => r.json() as Promise<PlanoAssinaturaResponse>),
+      fetch(`${API_BASE}/public/${slug}/info`).then(r => r.ok ? r.json() as Promise<EmpresaInfo> : Promise.reject()),
+      fetch(`${API_BASE}/public/${slug}/planos/${planoId}`).then(r => r.ok ? r.json() as Promise<PlanoAssinaturaResponse> : Promise.reject()),
     ]).then(([i, p]) => { setInfo(i); setPlano(p) })
       .catch(() => setErro('Plano não encontrado.'))
       .finally(() => setLoading(false))

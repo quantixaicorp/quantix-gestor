@@ -30,6 +30,7 @@ import {
   Plug,
   Bot,
   Building2,
+  CreditCard,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -128,6 +129,12 @@ const menuGroups: MenuGroup[] = [
       { icon: Bot, label: 'Log de envios',  path: '/automacao/log' },
     ],
   },
+  {
+    label: 'Assinaturas',
+    items: [
+      { icon: CreditCard, label: 'Planos', path: '/planos' },
+    ],
+  },
 ]
 
 interface SidebarProps {
@@ -192,13 +199,12 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         {!showLabels ? (
           <div className="rounded-xl overflow-hidden mx-auto" style={{ width: '48px', height: '48px', position: 'relative' }}>
             <img
-              src="/logo-gestorai.jpeg"
+              src="/logo-gestorai.png"
               alt="GestorAI"
               style={{
                 width: 'auto',
                 height: '200%',
                 transform: 'translateY(-50%)',
-                filter: 'invert(1) hue-rotate(180deg)',
               }}
             />
           </div>
@@ -206,13 +212,12 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
           <>
             <div className="rounded-xl overflow-hidden w-full" style={{ height: '52px', position: 'relative' }}>
               <img
-                src="/logo-gestorai.jpeg"
+                src="/logo-gestorai.png"
                 alt="GestorAI"
                 style={{
                   width: '100%',
                   height: 'auto',
                   transform: 'translateY(-50%)',
-                  filter: 'invert(1) hue-rotate(180deg)',
                 }}
               />
             </div>

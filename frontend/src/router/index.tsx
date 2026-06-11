@@ -34,6 +34,8 @@ import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
 import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
 import OrcamentoPublicoPage from '@/pages/orcamentos-publicos/OrcamentoPublico'
+import AssinarSlug from '@/pages/publico/AssinarSlug'
+import AssinarPlano from '@/pages/publico/AssinarPlano'
 import ConfiguracaoEmpresa from '@/pages/configuracoes/ConfiguracaoEmpresa'
 import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
 import Integracoes from '@/pages/configuracoes/Integracoes'
@@ -49,6 +51,8 @@ export const router = createBrowserRouter([
   { path: '/auth/callback', element: <AuthCallback />, errorElement: <ErrorPage /> },
   { path: '/agendar/:slug', element: <AgendamentoPublico />, errorElement: <ErrorPage /> },
   { path: '/orcamento/:token', element: <OrcamentoPublicoPage />, errorElement: <ErrorPage /> },
+  { path: '/assinar/:slug', element: <AssinarSlug />, errorElement: <ErrorPage /> },
+  { path: '/assinar/:slug/:planoId', element: <AssinarPlano />, errorElement: <ErrorPage /> },
   {
     element: <AppLayout />,
     errorElement: <ErrorPage />,

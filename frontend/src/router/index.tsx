@@ -34,6 +34,7 @@ import NovaCobranca from '@/pages/cobrancas/NovaCobranca'
 import DetalheCobranca from '@/pages/cobrancas/DetalheCobranca'
 import AgendamentoPublico from '@/pages/agendamento-publico/AgendamentoPublico'
 import OrcamentoPublicoPage from '@/pages/orcamentos-publicos/OrcamentoPublico'
+import ConfiguracaoEmpresa from '@/pages/configuracoes/ConfiguracaoEmpresa'
 import AgendamentoPublicoConfig from '@/pages/configuracoes/AgendamentoPublicoConfig'
 import Integracoes from '@/pages/configuracoes/Integracoes'
 import Automacao from '@/pages/configuracoes/Automacao'
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
       { path: '/cobrancas', element: <Cobrancas /> },
       { path: '/cobrancas/nova', element: <NovaCobranca /> },
       { path: '/cobrancas/:id', element: <DetalheCobranca /> },
+      { path: '/configuracoes/empresa', element: <ConfiguracaoEmpresa /> },
       { path: '/configuracoes/agendamento-publico', element: <AgendamentoPublicoConfig /> },
       { path: '/configuracoes/integracoes', element: <Integracoes /> },
       { path: '/configuracoes/automacao', element: <Automacao /> },

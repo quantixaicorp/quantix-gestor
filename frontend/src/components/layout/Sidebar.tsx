@@ -31,6 +31,7 @@ import {
   Bot,
   CreditCard,
   Palette,
+  Building2,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -117,6 +118,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Configurações',
     items: [
+      { icon: Building2, label: 'Empresa', path: '/configuracoes/empresa' },
       { icon: LinkIcon, label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
       { icon: Plug, label: 'Integrações', path: '/configuracoes/integracoes' },
       { icon: CreditCard, label: 'Plano', path: '/configuracoes/plano' },

@@ -42,6 +42,8 @@ export interface ConfiguracaoEmpresaResponse {
   cnpj: string | null
   inscricaoEstadual: string | null
   inscricaoMunicipal: string | null
+  telefone: string | null
+  email: string | null
   logradouro: string | null
   numero: string | null
   complemento: string | null
@@ -55,6 +57,27 @@ export interface ConfiguracaoEmpresaResponse {
   serieNfe: number | null
   serieNfce: number | null
   temToken: boolean
+  slug: string | null
+  logoUrl: string | null
+  corPrimaria: string | null
+  descricaoPublica: string | null
+  asaasApiKey: string | null
+  asaasSandbox: boolean
+  clickSignApiKey: string | null
+  clickSignSandbox: boolean
+  evolutionApiUrl: string | null
+  temEvolutionKey: boolean
+  evolutionInstance: string | null
+  lembrete3dAntes: boolean
+  lembrete1dAntes: boolean
+  lembreteNoDia: boolean
+  lembrete1dDepois: boolean
+  lembrete3dDepois: boolean
+  lembrete7dDepois: boolean
+  dominioCustomizado: string | null
+  aprovarAutomaticamente: boolean
+  valorSinal: number | null
+  horasLimiteCancelamento: number | null
 }
 
 export interface AtualizarConfiguracaoEmpresaRequest {
@@ -63,6 +86,8 @@ export interface AtualizarConfiguracaoEmpresaRequest {
   cnpj?: string
   inscricaoEstadual?: string
   inscricaoMunicipal?: string
+  telefone?: string
+  email?: string
   logradouro?: string
   numero?: string
   complemento?: string

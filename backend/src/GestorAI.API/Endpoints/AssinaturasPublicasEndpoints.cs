@@ -4,6 +4,7 @@ public static class AssinaturasPublicasEndpoints
 {
     public static void MapAssinaturasPublicas(this IEndpointRouteBuilder app)
     {
-        // Implementado na Task 7
+        // Public subscription routes are registered in PublicBookingEndpoints
+        // to avoid duplicate /public/{slug} route group prefix.
     }
 }

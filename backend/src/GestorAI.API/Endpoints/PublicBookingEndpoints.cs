@@ -1,5 +1,7 @@
+using GestorAI.API.DTOs.Assinaturas;
 using GestorAI.API.DTOs.PublicBooking;
 using GestorAI.API.Services.Agendamentos;
+using GestorAI.API.Services.Assinaturas;
 using GestorAI.API.Services.PublicBooking;
 
 namespace GestorAI.API.Endpoints;
@@ -63,6 +65,32 @@ public static class PublicBookingEndpoints
         {
             await svc.ResolveEmpresaAsync(slug, ct);
             return Results.Ok(await agendamentoSvc.CancelarPublicoAsync(id, ct));
+        });
+
+        group.MapGet("/planos", async (
+            string slug, PlanoAssinaturaService svc,
+            PublicBookingService publicSvc, CancellationToken ct) =>
+        {
+            var empresaId = await publicSvc.ResolveEmpresaAsync(slug, ct);
+            var planos = await svc.ListPublicAsync(empresaId, ct);
+            return Results.Ok(planos);
+        });
+
+        group.MapGet("/planos/{planoId:guid}", async (
+            string slug, Guid planoId,
+            PlanoAssinaturaService svc, PublicBookingService publicSvc, CancellationToken ct) =>
+        {
+            var empresaId = await publicSvc.ResolveEmpresaAsync(slug, ct);
+            return Results.Ok(await svc.GetPublicAsync(empresaId, planoId, ct));
+        });
+
+        group.MapPost("/planos/{planoId:guid}/assinar", async (
+            string slug, Guid planoId,
+            AssinarRequest req,
+            AssinaturaService svc, PublicBookingService publicSvc, CancellationToken ct) =>
+        {
+            var empresaId = await publicSvc.ResolveEmpresaAsync(slug, ct);
+            return Results.Ok(await svc.AssinarAsync(empresaId, planoId, req, ct));
         });
     }
 }

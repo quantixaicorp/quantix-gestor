@@ -31,6 +31,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
     public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
     public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
+    public DbSet<PlanoAssinatura> PlanosAssinatura => Set<PlanoAssinatura>();
+    public DbSet<PlanoAssinaturaItem> PlanosAssinaturaItens => Set<PlanoAssinaturaItem>();
+    public DbSet<AssinaturaCliente> AssinaturasCliente => Set<AssinaturaCliente>();
+    public DbSet<NichoTemplate> NichoTemplates => Set<NichoTemplate>();
+    public DbSet<NichoTemplateItem> NichoTemplateItens => Set<NichoTemplateItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +103,42 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
         modelBuilder.Entity<AutomacaoLog>()
             .HasIndex(l => new { l.CobrancaId, l.TipoEvento });
+
+        modelBuilder.Entity<PlanoAssinatura>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<AssinaturaCliente>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+
+        modelBuilder.Entity<PlanoAssinaturaItem>().ToTable("PlanoAssinaturaItens");
+        modelBuilder.Entity<NichoTemplateItem>().ToTable("NichoTemplateItens");
+
+        modelBuilder.Entity<PlanoAssinaturaItem>()
+            .HasOne(i => i.Plano)
+            .WithMany(p => p.Itens)
+            .HasForeignKey(i => i.PlanoAssinaturaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AssinaturaCliente>()
+            .HasOne(a => a.Cliente)
+            .WithMany()
+            .HasForeignKey(a => a.ClienteId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AssinaturaCliente>()
+            .HasOne(a => a.Plano)
+            .WithMany(p => p.Assinantes)
+            .HasForeignKey(a => a.PlanoAssinaturaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AssinaturaCliente>()
+            .HasOne(a => a.Contrato)
+            .WithMany()
+            .HasForeignKey(a => a.ContratoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<NichoTemplateItem>()
+            .HasOne(i => i.Template)
+            .WithMany(t => t.Itens)
+            .HasForeignKey(i => i.NichoTemplateId)
+            .OnDelete(DeleteBehavior.Cascade);
 
     }
 }

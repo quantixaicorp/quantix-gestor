@@ -17,7 +17,7 @@ public static class AssinaturasEndpoints
         group.MapPost("/{id:guid}/cancelar", async (Guid id, AssinaturaService svc, CancellationToken ct) =>
         {
             await svc.CancelarAsync(id, ct);
-            return Results.Ok();
+            return Results.NoContent();
         });
     }
 }

@@ -3,6 +3,7 @@ using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Contratos;
 using GestorAI.API.DTOs.Cobrancas;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Shared;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
@@ -173,7 +174,7 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
             c.DataVencimento, c.Status.ToString())).ToList();
     }
 
-    public async Task<string> GetPdfHtmlAsync(Guid id, CancellationToken ct)
+    public async Task<string> GetPdfHtmlAsync(Guid id, string apiBase, CancellationToken ct)
     {
         var c = await db.Contratos
             .Include(c => c.Cliente)
@@ -181,50 +182,37 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Contrato não encontrado.", 404);
 
+        var cfg = await db.ConfiguracoesEmpresa
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(e => e.EmpresaId == tenantContext.EmpresaId, ct);
+
         var total = c.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
         var linhas = string.Join("", c.Itens.Select(i =>
             $"<tr><td>{i.Descricao}</td><td>{i.Quantidade:N2}</td>" +
             $"<td>R$ {i.ValorUnitario:N2}</td><td>R$ {i.Quantidade * i.ValorUnitario:N2}</td></tr>"));
 
-        return $$"""
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head><meta charset="UTF-8">
-            <style>
-              body { font-family: sans-serif; padding: 40px; color: #111; max-width: 800px; margin: auto; }
-              h1 { font-size: 20px; margin-bottom: 4px; }
-              .meta { color: #555; font-size: 13px; margin-bottom: 24px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-              th { background: #f5f5f5; }
-              .total { text-align: right; font-weight: bold; font-size: 15px; margin-top: 8px; }
-              .objeto { background: #f9f9f9; border: 1px solid #ddd; padding: 16px; margin: 16px 0; font-size: 13px; white-space: pre-wrap; }
-              .assinatura { margin-top: 60px; display: flex; gap: 60px; }
-              .assinatura div { border-top: 1px solid #333; padding-top: 8px; font-size: 12px; min-width: 200px; }
-            </style>
-            </head>
-            <body>
-              <h1>CONTRATO {{c.Numero:D3}} — {{c.Titulo}}</h1>
-              <div class="meta">
-                Cliente: {{c.Cliente?.Nome}}<br>
-                Início: {{c.DataInicio:dd/MM/yyyy}}{{(c.DataFim.HasValue ? $" | Término: {c.DataFim:dd/MM/yyyy}" : "")}}<br>
-                Tipo: {{c.TipoCobranca}} | Periodicidade: {{c.Periodicidade}} | Valor: R$ {{c.Valor:N2}}
-              </div>
-              <h2 style="font-size:14px">Objeto</h2>
-              <div class="objeto">{{c.Objeto}}</div>
-              <h2 style="font-size:14px">Itens</h2>
-              <table>
-                <thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
-                <tbody>{{linhas}}</tbody>
-              </table>
-              <div class="total">Total: R$ {{total:N2}}</div>
-              <div class="assinatura">
-                <div>Contratante<br>{{c.Cliente?.Nome}}</div>
-                <div>Contratada</div>
-              </div>
-            </body>
-            </html>
+        var corpo = $$"""
+            <h1>CONTRATO {{c.Numero:D3}} — {{c.Titulo}}</h1>
+            <div class="meta">
+              Cliente: {{c.Cliente?.Nome}}<br>
+              Início: {{c.DataInicio:dd/MM/yyyy}}{{(c.DataFim.HasValue ? $" | Término: {c.DataFim:dd/MM/yyyy}" : "")}}<br>
+              Tipo: {{c.TipoCobranca}} | Periodicidade: {{c.Periodicidade}} | Valor: R$ {{c.Valor:N2}}
+            </div>
+            <h2 style="font-size:14px">Objeto</h2>
+            <div class="objeto">{{c.Objeto}}</div>
+            <h2 style="font-size:14px">Itens</h2>
+            <table>
+              <thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
+              <tbody>{{linhas}}</tbody>
+            </table>
+            <div class="total">Total: R$ {{total:N2}}</div>
+            <div class="assinatura">
+              <div>Contratante<br>{{c.Cliente?.Nome}}</div>
+              <div>Contratada<br>{{cfg?.NomeFantasia ?? cfg?.RazaoSocial ?? ""}}</div>
+            </div>
             """;
+
+        return HtmlDocumentoBase.WrapDocument($"CONTRATO {c.Numero:D3}", corpo, cfg, apiBase);
     }
 
     private static List<DateOnly> CalcularVencimentos(Contrato contrato, DateOnly de, DateOnly ate)
@@ -373,7 +361,7 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         if (string.IsNullOrWhiteSpace(config.ClickSignApiKey))
             throw new AppException("API Key do ClickSign não configurada. Acesse Configurações → Integrações.", 400);
 
-        var html = await GetPdfHtmlAsync(id, ct);
+        var html = await GetPdfHtmlAsync(id, "", ct);
         var pdfBytes = await GerarPdfAsync(html);
 
         var nomeArquivo = $"contrato-{contrato.Numero:D3}.pdf";

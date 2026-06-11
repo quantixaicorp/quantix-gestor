@@ -4,6 +4,7 @@ using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Cobrancas;
 using GestorAI.API.DTOs.Orcamentos;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Shared;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
@@ -211,7 +212,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         return ToResponse(o);
     }
 
-    public async Task<string> GetPdfHtmlAsync(Guid id, CancellationToken ct)
+    public async Task<string> GetPdfHtmlAsync(Guid id, string apiBase, CancellationToken ct)
     {
         var o = await db.Orcamentos
             .Include(o => o.Cliente)
@@ -221,6 +222,10 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
         await ExpireIfNeededAsync([o], ct);
 
+        var cfg = await db.ConfiguracoesEmpresa
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.EmpresaId == tenantContext.EmpresaId, ct);
+
         var total = o.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
         var linhas = string.Join("", o.Itens.Select(i =>
             $"<tr><td>{i.Descricao}</td><td>{i.Quantidade:N2}</td>" +
@@ -228,36 +233,21 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         var clienteHtml = o.Cliente != null ? $"Cliente: {o.Cliente.Nome}<br>" : "";
         var obsHtml = o.Observacao != null ? $"<div class='obs'>Obs: {o.Observacao}</div>" : "";
 
-        return $$"""
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head><meta charset="UTF-8">
-            <style>
-              body { font-family: sans-serif; padding: 32px; color: #111; }
-              h1 { font-size: 22px; margin-bottom: 4px; }
-              .meta { color: #555; font-size: 13px; margin-bottom: 24px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-              th { background: #f5f5f5; }
-              .total { text-align: right; font-weight: bold; font-size: 15px; margin-top: 8px; }
-              .obs { margin-top: 16px; font-size: 13px; color: #555; }
-            </style>
-            </head>
-            <body>
-              <h1>ORC-{{o.Numero:D3}} — {{o.Titulo}}</h1>
-              <div class="meta">
-                {{clienteHtml}}
-                Válido até: {{o.DataValidade:dd/MM/yyyy}} | Status: {{o.Status}}
-              </div>
-              <table>
-                <thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
-                <tbody>{{linhas}}</tbody>
-              </table>
-              <div class="total">Total: R$ {{total:N2}}</div>
-              {{obsHtml}}
-            </body>
-            </html>
+        var corpo = $$"""
+            <h1>ORC-{{o.Numero:D3}} — {{o.Titulo}}</h1>
+            <div class="meta">
+              {{clienteHtml}}
+              Válido até: {{o.DataValidade:dd/MM/yyyy}} | Status: {{o.Status}}
+            </div>
+            <table>
+              <thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
+              <tbody>{{linhas}}</tbody>
+            </table>
+            <div class="total">Total: R$ {{total:N2}}</div>
+            {{obsHtml}}
             """;
+
+        return HtmlDocumentoBase.WrapDocument($"ORC-{o.Numero:D3}", corpo, cfg, apiBase);
     }
 
     public async Task<OrcamentoPublicoResponse> GetPublicoAsync(Guid token, CancellationToken ct)

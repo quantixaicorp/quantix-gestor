@@ -38,9 +38,10 @@ public static class ContratosEndpoints
         group.MapPost("/{id:guid}/renovar", async (Guid id, ContratoService svc, CancellationToken ct) =>
             Results.Ok(await svc.RenovarAsync(id, ct)));
 
-        group.MapGet("/{id:guid}/pdf", async (Guid id, ContratoService svc, CancellationToken ct) =>
+        group.MapGet("/{id:guid}/pdf", async (
+            Guid id, ContratoService svc, IConfiguration config, CancellationToken ct) =>
         {
-            var html = await svc.GetPdfHtmlAsync(id, ct);
+            var html = await svc.GetPdfHtmlAsync(id, config["ApiBase"] ?? "", ct);
             return Results.Content(html, "text/html");
         });
 

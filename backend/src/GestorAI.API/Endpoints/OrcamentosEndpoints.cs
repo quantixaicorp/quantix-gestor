@@ -50,9 +50,9 @@ public static class OrcamentosEndpoints
             Results.Ok(await svc.GerarCobrancaAsync(id, req.DataVencimento, ct)));
 
         group.MapGet("/{id:guid}/pdf", async (
-            Guid id, OrcamentoService svc, CancellationToken ct) =>
+            Guid id, OrcamentoService svc, IConfiguration config, CancellationToken ct) =>
         {
-            var html = await svc.GetPdfHtmlAsync(id, ct);
+            var html = await svc.GetPdfHtmlAsync(id, config["ApiBase"] ?? "", ct);
             return Results.Content(html, "text/html");
         });
     }

@@ -68,6 +68,8 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         if (req.SerieNfe is not null) config.SerieNfe = req.SerieNfe;
         if (req.SerieNfce is not null) config.SerieNfce = req.SerieNfce;
         if (req.FocusNfeToken is not null) config.FocusNfeToken = req.FocusNfeToken;
+        if (req.Telefone is not null) config.Telefone = req.Telefone;
+        if (req.Email is not null) config.Email = req.Email;
 
         await db.SaveChangesAsync(ct);
         return ToResponse(config);
@@ -80,6 +82,8 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.Cnpj,
         c.InscricaoEstadual,
         c.InscricaoMunicipal,
+        c.Telefone,
+        c.Email,
         c.Logradouro,
         c.Numero,
         c.Complemento,
@@ -110,7 +114,10 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.Lembrete1dDepois,
         c.Lembrete3dDepois,
         c.Lembrete7dDepois,
-        c.DominioCustomizado);
+        c.DominioCustomizado,
+        c.AprovarAutomaticamente,
+        c.ValorSinal,
+        c.HorasLimiteCancelamento);
 
     public async Task<ConfiguracaoEmpresaResponse> SalvarBrandingAsync(
         ConfigurarBrandingRequest req, CancellationToken ct)
@@ -133,6 +140,20 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         if (isNew) db.ConfiguracoesEmpresa.Add(config);
         await db.SaveChangesAsync(ct);
         return await ObterAsync(ct);
+    }
+
+    public async Task SalvarAgendamentoAsync(SalvarAgendamentoConfigRequest req, CancellationToken ct)
+    {
+        var existing = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct);
+        if (existing is null)
+        {
+            existing = new ConfiguracaoEmpresa { Id = Guid.NewGuid(), EmpresaId = tenantContext.EmpresaId };
+            db.ConfiguracoesEmpresa.Add(existing);
+        }
+        existing.AprovarAutomaticamente = req.AprovarAutomaticamente;
+        existing.ValorSinal = req.ValorSinal;
+        existing.HorasLimiteCancelamento = req.HorasLimiteCancelamento;
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task SalvarIntegracoesAsync(SalvarIntegracoesRequest req, CancellationToken ct)

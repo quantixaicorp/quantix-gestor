@@ -7,6 +7,8 @@ public record ConfiguracaoEmpresaResponse(
     string? Cnpj,
     string? InscricaoEstadual,
     string? InscricaoMunicipal,
+    string? Telefone,
+    string? Email,
     string? Logradouro,
     string? Numero,
     string? Complemento,
@@ -37,7 +39,10 @@ public record ConfiguracaoEmpresaResponse(
     bool Lembrete1dDepois,
     bool Lembrete3dDepois,
     bool Lembrete7dDepois,
-    string? DominioCustomizado);
+    string? DominioCustomizado,
+    bool AprovarAutomaticamente,
+    decimal? ValorSinal,
+    int? HorasLimiteCancelamento);
 
 public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox, string? ClickSignApiKey, bool ClickSignSandbox);
 
@@ -59,6 +64,11 @@ public record SalvarAutomacaoConfigRequest(
     bool Lembrete3dDepois,
     bool Lembrete7dDepois);
 
+public record SalvarAgendamentoConfigRequest(
+    bool AprovarAutomaticamente,
+    decimal? ValorSinal,
+    int? HorasLimiteCancelamento);
+
 public record AtualizarConfiguracaoEmpresaRequest(
     string? RazaoSocial,
     string? NomeFantasia,
@@ -79,4 +89,6 @@ public record AtualizarConfiguracaoEmpresaRequest(
     int? Ambiente,
     int? SerieNfe,
     int? SerieNfce,
-    string? FocusNfeToken);
+    string? FocusNfeToken,
+    string? Telefone = null,
+    string? Email = null);

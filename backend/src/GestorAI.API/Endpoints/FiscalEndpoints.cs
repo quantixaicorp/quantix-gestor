@@ -64,5 +64,12 @@ public static class FiscalEndpoints
             await svc.SalvarWhiteLabelAsync(req, ct);
             return Results.Ok();
         });
+
+        group.MapPut("/configuracao-empresa/agendamento", async (
+            SalvarAgendamentoConfigRequest req, ConfiguracaoEmpresaService svc, CancellationToken ct) =>
+        {
+            await svc.SalvarAgendamentoAsync(req, ct);
+            return Results.Ok();
+        });
     }
 }

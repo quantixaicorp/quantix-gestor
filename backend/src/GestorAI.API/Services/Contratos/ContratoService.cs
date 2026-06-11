@@ -125,6 +125,11 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         if (temCobrancaPaga)
             throw new AppException("Não é possível excluir um contrato com cobranças pagas.", 400);
 
+        var cobrancasPendentes = await db.Cobrancas
+            .Where(cb => cb.ContratoId == id)
+            .ToListAsync(ct);
+        db.Cobrancas.RemoveRange(cobrancasPendentes);
+
         db.Contratos.Remove(c);
         await db.SaveChangesAsync(ct);
     }

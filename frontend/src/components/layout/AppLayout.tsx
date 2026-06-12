@@ -148,7 +148,7 @@ export default function AppLayout() {
       <main
         className={cn(
           'min-h-screen transition-[margin-left] duration-300',
-          'pl-4 md:pl-6 pr-36 md:pr-40',
+          'px-4 md:px-6',
           'pt-[72px] pb-4 md:pb-6 lg:pt-6',
           collapsed ? 'lg:ml-16' : 'lg:ml-64',
         )}

@@ -310,8 +310,22 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="shrink-0 border-t border-sidebar-border p-2">
+      {/* GestorAI brand + Logout */}
+      <div className="shrink-0 border-t border-sidebar-border p-2 space-y-1">
+        {/* Brand badge */}
+        <div className={cn(
+          'flex items-center gap-2 px-2 py-1.5 rounded-lg',
+          !showLabels && 'justify-center px-0'
+        )}>
+          <img src="/logo-gestorai-icon.png" alt="GestorAI" className="h-6 w-6 object-contain shrink-0 opacity-80" />
+          {showLabels && (
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-[11px] font-bold text-sidebar-foreground/70 tracking-wide">GestorAI</span>
+              <span className="text-[9px] text-sidebar-muted tracking-wide">by QuantixAI</span>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={handleLogout}
           title={!showLabels ? 'Sair' : undefined}

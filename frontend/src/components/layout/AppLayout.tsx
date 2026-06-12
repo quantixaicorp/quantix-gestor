@@ -132,15 +132,6 @@ export default function AppLayout() {
         </button>
       </header>
 
-      {/* GestorAI badge — bottom-right on desktop, top-right on mobile/tablet */}
-      <div className="fixed top-1 right-3 md:top-auto md:bottom-4 md:right-4 z-50 flex items-center gap-2 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-sm rounded-xl px-2.5 py-1.5 pointer-events-none select-none">
-        <img src="/logo-gestorai-icon.png" alt="GestorAI" className="h-8 w-8 object-contain" />
-        <div className="flex flex-col leading-tight">
-          <span className="text-xs font-bold text-gray-900 dark:text-white tracking-wide">GestorAI</span>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 tracking-wide">by QuantixAI</span>
-        </div>
-      </div>
-
       {/* Sidebar — hidden on mobile, always visible on md+ */}
       <Sidebar
         collapsed={effectiveCollapsed}

@@ -232,8 +232,15 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
               })}
             </div>
 
-            {/* Logout */}
-            <div className="shrink-0 border-t px-3 py-2">
+            {/* Brand + Logout */}
+            <div className="shrink-0 border-t px-3 py-2 space-y-1">
+              <div className="flex items-center gap-2 px-3 py-2 opacity-60">
+                <img src="/logo-gestorai-icon.png" alt="GestorAI" className="h-6 w-6 object-contain" />
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[11px] font-bold text-foreground tracking-wide">GestorAI</span>
+                  <span className="text-[9px] text-muted-foreground tracking-wide">by QuantixAI</span>
+                </div>
+              </div>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-3 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"

@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
+
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -165,7 +167,20 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
           <div className="relative bg-background rounded-t-2xl max-h-[82vh] flex flex-col shadow-2xl">
             {/* Handle + header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b shrink-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                {(() => {
+                  const logoUrl = empresaConfig?.logoUrl
+                  const logoSrc = logoUrl
+                    ? (logoUrl.startsWith('http') ? logoUrl : `${API_BASE}${logoUrl}`)
+                    : null
+                  const initial = (empresaConfig?.nomeFantasia?.[0] ?? 'E').toUpperCase()
+                  return logoSrc
+                    ? <img src={logoSrc} alt={empresaConfig?.nomeFantasia || 'Empresa'}
+                        className="h-9 w-9 rounded-full object-cover shrink-0" />
+                    : <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-sm shrink-0">
+                        {initial}
+                      </div>
+                })()}
                 {empresaConfig?.nomeFantasia && (
                   <span className="font-semibold text-sm">{empresaConfig.nomeFantasia}</span>
                 )}

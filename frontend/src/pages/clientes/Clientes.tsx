@@ -74,51 +74,73 @@ export default function Clientes() {
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhum cliente encontrado</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Nome</th>
-                <th className="px-4 py-3 text-left font-medium">WhatsApp</th>
-                <th className="px-4 py-3 text-left font-medium">E-mail</th>
-                <th className="px-4 py-3 text-left font-medium">Cadastrado em</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(c => (
-                <tr key={c.id} className="border-b hover:bg-muted/30 cursor-pointer">
-                  <td className="px-4 py-3 font-medium">{c.nome}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.whatsapp}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.email ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(c.dataCadastro).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost"
-                        onClick={e => { e.stopPropagation(); setEditando(c) }}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={e => { e.stopPropagation(); void handleRemove(c) }}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {filtrados.map(c => (
+              <div key={c.id} className="rounded-lg border bg-card p-4 flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-medium truncate">{c.nome}</p>
+                  <p className="text-sm text-muted-foreground">{c.whatsapp}</p>
+                  {c.email && <p className="text-sm text-muted-foreground truncate">{c.email}</p>}
+                  <p className="text-xs text-muted-foreground">
+                    Cadastrado em {new Date(c.dataCadastro).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => setEditando(c)}>
+                    <Pencil size={14} />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => void handleRemove(c)}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Nome</th>
+                  <th className="px-4 py-3 text-left font-medium">WhatsApp</th>
+                  <th className="px-4 py-3 text-left font-medium">E-mail</th>
+                  <th className="px-4 py-3 text-left font-medium">Cadastrado em</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-              {filtrados.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum cliente encontrado
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtrados.map(c => (
+                  <tr key={c.id} className="border-b hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium">{c.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{c.whatsapp}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{c.email ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {new Date(c.dataCadastro).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => setEditando(c)}>
+                          <Pencil size={14} />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => void handleRemove(c)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>

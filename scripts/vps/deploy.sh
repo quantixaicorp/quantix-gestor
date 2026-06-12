@@ -52,7 +52,7 @@ set -a && . "$ENV_FILE" && set +a
 
 echo "[gestorai-deploy] Publicando backend..."
 mkdir -p "$BACKEND_PATH"
-rsync -a --delete "$WORK_DIR/app/backend/" "$BACKEND_PATH/"
+rsync -a --delete --exclude 'wwwroot/logos/' --exclude 'wwwroot/uploads/' "$WORK_DIR/app/backend/" "$BACKEND_PATH/"
 chown -R www-data:www-data "$BACKEND_PATH"
 
 echo "[gestorai-deploy] Publicando frontend..."

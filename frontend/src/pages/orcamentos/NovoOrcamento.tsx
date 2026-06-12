@@ -90,39 +90,42 @@ export default function NovoOrcamento() {
       <h1 className="text-2xl font-bold">Novo Orçamento</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Título *</Label>
-            <Input value={titulo} onChange={e => setTitulo(e.target.value)}
-              placeholder="Ex: Orçamento - Corte e Escova" />
-          </div>
-          <div className="grid gap-2">
-            <Label>Cliente (opcional)</Label>
-            <select value={clienteId} onChange={e => setClienteId(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
-              <option value="">Sem cliente</option>
-              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-            </select>
-          </div>
-          <div className="grid gap-2">
-            <Label>Válido até *</Label>
-            <Input type="date" value={dataValidade} onChange={e => setDataValidade(e.target.value)} />
-          </div>
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Observação (opcional)</Label>
-            <textarea
-              value={observacao}
-              onChange={e => setObservacao(e.target.value)}
-              placeholder="Informações adicionais para o cliente"
-              rows={3}
-              className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-            />
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados do Orçamento</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2 sm:col-span-2">
+              <Label>Título *</Label>
+              <Input value={titulo} onChange={e => setTitulo(e.target.value)}
+                placeholder="Ex: Orçamento - Corte e Escova" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Cliente (opcional)</Label>
+              <select value={clienteId} onChange={e => setClienteId(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
+                <option value="">Sem cliente</option>
+                {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Válido até *</Label>
+              <Input type="date" value={dataValidade} onChange={e => setDataValidade(e.target.value)} />
+            </div>
+            <div className="grid gap-2 sm:col-span-2">
+              <Label>Observação (opcional)</Label>
+              <textarea
+                value={observacao}
+                onChange={e => setObservacao(e.target.value)}
+                placeholder="Informações adicionais para o cliente"
+                rows={3}
+                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="rounded-xl border bg-card p-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-semibold">Itens</h2>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Itens</p>
             <div className="flex gap-2">
               <select onChange={e => { adicionarProduto(e.target.value); e.target.value = '' }}
                 className="h-9 rounded-md border border-input bg-transparent px-3 text-sm">

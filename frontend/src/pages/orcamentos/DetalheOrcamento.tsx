@@ -115,21 +115,47 @@ export default function DetalheOrcamento() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {o.status === 'Expirado' && (
-        <div className="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          Este orçamento expirou em {fmtDate(o.dataValidade)}.
-        </div>
-      )}
+      <div className="rounded-xl border bg-card p-6 space-y-4">
+        {o.status === 'Expirado' && (
+          <div className="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Este orçamento expirou em {fmtDate(o.dataValidade)}.
+          </div>
+        )}
 
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground font-mono">
-            ORC-{String(o.numero).padStart(3, '0')}
-          </p>
-          <h1 className="text-2xl font-bold">{o.titulo}</h1>
-          {o.clienteNome && <p className="text-muted-foreground">{o.clienteNome}</p>}
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground font-mono">
+              ORC-{String(o.numero).padStart(3, '0')}
+            </p>
+            <h1 className="text-2xl font-bold">{o.titulo}</h1>
+            {o.clienteNome && <p className="text-muted-foreground">{o.clienteNome}</p>}
+          </div>
+          <Badge className={statusClassName(o.status)}>{o.status}</Badge>
         </div>
-        <Badge className={statusClassName(o.status)}>{o.status}</Badge>
+
+        <div className="grid gap-1 text-sm text-muted-foreground">
+          <p>Válido até: <strong className="text-foreground">{fmtDate(o.dataValidade)}</strong></p>
+          {o.observacao && <p>Obs: {o.observacao}</p>}
+        </div>
+
+        {o.tokenPublico && o.status !== 'Rascunho' && (
+          <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
+            <p className="text-sm flex-1 truncate font-mono text-muted-foreground">
+              {window.location.origin}/orcamento/{o.tokenPublico}
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void navigator.clipboard.writeText(
+                  `${window.location.origin}/orcamento/${o.tokenPublico}`
+                )
+              }}
+            >
+              Copiar link
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -190,30 +216,6 @@ export default function DetalheOrcamento() {
         <Button variant="outline" onClick={abrirPdf}>
           <FileText size={16} className="mr-2" /> PDF
         </Button>
-      </div>
-
-      {o.tokenPublico && o.status !== 'Rascunho' && (
-        <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
-          <p className="text-sm flex-1 truncate font-mono text-muted-foreground">
-            {window.location.origin}/orcamento/{o.tokenPublico}
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              void navigator.clipboard.writeText(
-                `${window.location.origin}/orcamento/${o.tokenPublico}`
-              )
-            }}
-          >
-            Copiar link
-          </Button>
-        </div>
-      )}
-
-      <div className="grid gap-1 text-sm text-muted-foreground">
-        <p>Válido até: <strong className="text-foreground">{fmtDate(o.dataValidade)}</strong></p>
-        {o.observacao && <p>Obs: {o.observacao}</p>}
       </div>
 
       <div className="overflow-x-auto rounded-md border">

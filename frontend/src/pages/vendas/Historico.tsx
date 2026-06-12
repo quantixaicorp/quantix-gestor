@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
 import type { UpdateVendaRequest } from '@/types/vendas'
+import { KpiRow } from '@/components/ui/KpiRow'
 
 const statusVariant = (s: string): 'secondary' | 'destructive' | 'outline' =>
   s === 'Concluida' ? 'secondary' :
@@ -85,9 +86,19 @@ export default function Historico() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+  const concluidasTotal = vendas.filter(v => v.status === 'Concluida').reduce((s, v) => s + v.total, 0)
+  const concluidas = vendas.filter(v => v.status === 'Concluida').length
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Histórico de Vendas</h1>
+
+      <KpiRow items={[
+        { label: 'Total vendas', value: String(vendas.length) },
+        { label: 'Concluídas', value: String(concluidas), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Valor total', value: fmt(concluidasTotal), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Ticket médio', value: concluidas > 0 ? fmt(concluidasTotal / concluidas) : '—' },
+      ]} />
 
       <div className="flex gap-3 flex-wrap items-end">
         <div className="grid gap-1">
@@ -109,68 +120,109 @@ export default function Historico() {
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
+      ) : vendas.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhuma venda encontrada</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Data</th>
-                <th className="px-4 py-3 text-left font-medium">Cliente</th>
-                <th className="px-4 py-3 text-left font-medium">Pagamento</th>
-                <th className="px-4 py-3 text-right font-medium">Total</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {vendas.map(v => (
-                <tr key={v.id} className="border-b">
-                  <td className="px-4 py-3">{new Date(v.dataHora).toLocaleString('pt-BR')}</td>
-                  <td className="px-4 py-3">{v.clienteNome ?? 'Balcão'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{v.formaPagamento}</td>
-                  <td className="px-4 py-3 text-right font-medium">{fmt(v.total)}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={statusVariant(v.status)}>{v.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {v.status === 'Concluida' && (
-                        <Button size="sm" variant="ghost"
-                          onClick={() => setEditandoVenda({ id: v.id, clienteId: v.clienteId, formaPagamento: v.formaPagamento, dataHora: v.dataHora })}>
-                          <Pencil size={14} />
-                        </Button>
-                      )}
-                      {v.status === 'Concluida' && (
-                        <Button size="sm" variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          disabled={cancelando === v.id}
-                          onClick={() => handleCancelar(v.id)}>
-                          {cancelando === v.id ? '...' : 'Cancelar'}
-                        </Button>
-                      )}
-                      {isAdmin && (
-                        <Button size="sm" variant="ghost"
-                          disabled={excluindo === v.id}
-                          onClick={() => handleExcluir(v.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          title="Excluir venda">
-                          {excluindo === v.id ? '...' : <Trash2 size={14} />}
-                        </Button>
-                      )}
-                    </div>
-                  </td>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {vendas.map(v => (
+              <div key={v.id} className="rounded-lg border bg-card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{v.clienteNome ?? 'Balcão'}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(v.dataHora).toLocaleString('pt-BR')}</p>
+                  </div>
+                  <Badge variant={statusVariant(v.status)} className="shrink-0">{v.status}</Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{v.formaPagamento}</span>
+                  <span className="font-semibold">{fmt(v.total)}</span>
+                </div>
+                {(v.status === 'Concluida' || isAdmin) && (
+                  <div className="flex gap-1 pt-1">
+                    {v.status === 'Concluida' && (
+                      <Button size="sm" variant="outline"
+                        onClick={() => setEditandoVenda({ id: v.id, clienteId: v.clienteId, formaPagamento: v.formaPagamento, dataHora: v.dataHora })}>
+                        <Pencil size={13} />
+                      </Button>
+                    )}
+                    {v.status === 'Concluida' && (
+                      <Button size="sm" variant="outline" className="flex-1 text-destructive hover:text-destructive"
+                        disabled={cancelando === v.id}
+                        onClick={() => handleCancelar(v.id)}>
+                        {cancelando === v.id ? '...' : 'Cancelar'}
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button size="sm" variant="ghost" disabled={excluindo === v.id}
+                        onClick={() => handleExcluir(v.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                        {excluindo === v.id ? '...' : <Trash2 size={13} />}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Data</th>
+                  <th className="px-4 py-3 text-left font-medium">Cliente</th>
+                  <th className="px-4 py-3 text-left font-medium">Pagamento</th>
+                  <th className="px-4 py-3 text-right font-medium">Total</th>
+                  <th className="px-4 py-3 text-left font-medium">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-              {vendas.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhuma venda encontrada
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {vendas.map(v => (
+                  <tr key={v.id} className="border-b">
+                    <td className="px-4 py-3">{new Date(v.dataHora).toLocaleString('pt-BR')}</td>
+                    <td className="px-4 py-3">{v.clienteNome ?? 'Balcão'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{v.formaPagamento}</td>
+                    <td className="px-4 py-3 text-right font-medium">{fmt(v.total)}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={statusVariant(v.status)}>{v.status}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {v.status === 'Concluida' && (
+                          <Button size="sm" variant="ghost"
+                            onClick={() => setEditandoVenda({ id: v.id, clienteId: v.clienteId, formaPagamento: v.formaPagamento, dataHora: v.dataHora })}>
+                            <Pencil size={14} />
+                          </Button>
+                        )}
+                        {v.status === 'Concluida' && (
+                          <Button size="sm" variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            disabled={cancelando === v.id}
+                            onClick={() => handleCancelar(v.id)}>
+                            {cancelando === v.id ? '...' : 'Cancelar'}
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <Button size="sm" variant="ghost"
+                            disabled={excluindo === v.id}
+                            onClick={() => handleExcluir(v.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Excluir venda">
+                            {excluindo === v.id ? '...' : <Trash2 size={14} />}
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {ConfirmDialogNode}
       {editandoVenda && (

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import FornecedorForm from '@/components/fornecedores/FornecedorForm'
 import { toast } from '@/hooks/useToast'
 import type { FornecedorResponse, CreateFornecedorRequest } from '@/types/fornecedores'
+import { KpiRow } from '@/components/ui/KpiRow'
 
 export default function Fornecedores() {
   const { fornecedores, loading, list, create, update, remove } = useFornecedores()
@@ -62,6 +63,13 @@ export default function Fornecedores() {
         </Button>
       </div>
 
+      <KpiRow items={[
+        { label: 'Total', value: String(fornecedores.length) },
+        { label: 'Com CNPJ/CPF', value: String(fornecedores.filter(f => f.cnpjCpf).length) },
+        { label: 'Com e-mail', value: String(fornecedores.filter(f => f.email).length) },
+        { label: 'Com telefone', value: String(fornecedores.filter(f => f.telefone).length) },
+      ]} />
+
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -74,51 +82,76 @@ export default function Fornecedores() {
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhum fornecedor cadastrado</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Nome</th>
-                <th className="px-4 py-3 text-left font-medium">CNPJ / CPF</th>
-                <th className="px-4 py-3 text-left font-medium">Telefone</th>
-                <th className="px-4 py-3 text-left font-medium">Cidade / UF</th>
-                <th className="px-4 py-3 text-left font-medium">Contato</th>
-                <th className="px-4 py-3 text-left font-medium w-24">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(f => (
-                <tr key={f.id} className="border-b hover:bg-muted/30">
-                  <td className="px-4 py-3 font-medium">{f.nome}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{f.cnpjCpf ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{f.telefone ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {f.cidade && f.uf ? `${f.cidade} / ${f.uf}` : f.cidade ?? '—'}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{f.contato ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => setEditando(f)}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirmandoDelete(f)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {filtrados.map(f => (
+              <div key={f.id} className="rounded-lg border bg-card p-4 flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-medium truncate">{f.nome}</p>
+                  {f.cnpjCpf && <p className="text-sm text-muted-foreground">{f.cnpjCpf}</p>}
+                  {f.telefone && <p className="text-sm text-muted-foreground">{f.telefone}</p>}
+                  {(f.cidade || f.uf) && (
+                    <p className="text-sm text-muted-foreground">
+                      {f.cidade && f.uf ? `${f.cidade} / ${f.uf}` : f.cidade ?? f.uf}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => setEditando(f)}>
+                    <Pencil size={14} />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setConfirmandoDelete(f)}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Nome</th>
+                  <th className="px-4 py-3 text-left font-medium">CNPJ / CPF</th>
+                  <th className="px-4 py-3 text-left font-medium">Telefone</th>
+                  <th className="px-4 py-3 text-left font-medium">Cidade / UF</th>
+                  <th className="px-4 py-3 text-left font-medium">Contato</th>
+                  <th className="px-4 py-3 text-left font-medium w-24">Ações</th>
                 </tr>
-              ))}
-              {filtrados.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum fornecedor cadastrado
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtrados.map(f => (
+                  <tr key={f.id} className="border-b hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium">{f.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.cnpjCpf ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.telefone ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {f.cidade && f.uf ? `${f.cidade} / ${f.uf}` : f.cidade ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.contato ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => setEditando(f)}>
+                          <Pencil size={14} />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirmandoDelete(f)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Modal: novo fornecedor */}

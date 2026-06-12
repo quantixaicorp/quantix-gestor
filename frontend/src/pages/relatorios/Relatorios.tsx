@@ -70,23 +70,22 @@ export default function Relatorios() {
         </Button>
       </div>
 
-      <div className="print:hidden">
+      <div className="rounded-xl border bg-card p-4 space-y-3 print:hidden">
         <FiltrosPeriodo onChange={handlePeriodo} />
-      </div>
-
-      <div className="flex gap-1 border-b print:hidden">
-        {ABAS.map(a => (
-          <button key={a.id}
-            onClick={() => setAba(a.id)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-              aba === a.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}>
-            {a.label}
-          </button>
-        ))}
+        <div className="flex gap-1 border-b">
+          {ABAS.map(a => (
+            <button key={a.id}
+              onClick={() => setAba(a.id)}
+              className={cn(
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                aba === a.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}>
+              {a.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (

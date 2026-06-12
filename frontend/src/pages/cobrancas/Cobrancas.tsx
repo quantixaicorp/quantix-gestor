@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DollarSign, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { KpiRow } from '@/components/ui/KpiRow'
 import { useCobrancas } from '@/hooks/useCobrancas'
 import { AgingPanel } from '@/components/cobrancas/AgingPanel'
 import { ResumoCards } from '@/components/cobrancas/ResumoCards'
@@ -51,11 +52,10 @@ export default function Cobrancas() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <DollarSign className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold">Cobranças</h1>
-        <div className="ml-auto flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">Cobranças</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
             className="h-9 rounded-lg border border-input bg-transparent px-3 text-sm" />
           <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}
@@ -69,6 +69,13 @@ export default function Cobrancas() {
         </div>
       </div>
 
+      <KpiRow items={[
+        { label: 'Total cobranças', value: String(cobrancas.length) },
+        { label: 'Pendentes', value: String(cobrancas.filter(c => c.status === 'Pendente').length), color: 'text-yellow-600 dark:text-yellow-400' },
+        { label: 'Pagas', value: String(cobrancas.filter(c => c.status === 'Pago').length), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Vencidas', value: String(cobrancas.filter(c => c.status === 'Vencido').length), color: cobrancas.some(c => c.status === 'Vencido') ? 'text-red-600 dark:text-red-400' : '' },
+      ]} />
+
       <ResumoCards fetchResumo={fetchResumo} />
 
       <AgingPanel fetchAging={fetchAging} />
@@ -77,53 +84,83 @@ export default function Cobrancas() {
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       )}
 
-      <div className="rounded-xl border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 border-b">
-            <tr>
-              {['Referência', 'Cliente', 'Contrato', 'Valor', 'Vencimento', 'Status', ''].map(h => (
-                <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading && <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</td></tr>}
-            {!loading && cobrancas.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma cobrança encontrada</td></tr>
-            )}
+      {loading ? (
+        <p className="text-muted-foreground">Carregando...</p>
+      ) : cobrancas.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhuma cobrança encontrada</p>
+      ) : (
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
             {cobrancas.map(c => (
-              <tr key={c.id}
-                className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+              <div key={c.id}
+                className="rounded-lg border bg-card p-4 space-y-2 cursor-pointer hover:bg-accent/50 transition-colors"
                 onClick={() => navigate(`/cobrancas/${c.id}`)}>
-                <td className="px-4 py-3 font-medium">{c.referencia}</td>
-                <td className="px-4 py-3">{c.clienteNome}</td>
-                <td className="px-4 py-3 text-muted-foreground text-xs">{c.contratoTitulo ?? '—'}</td>
-                <td className="px-4 py-3 font-medium">{fmtVal(c.valor)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dataVencimento)}</td>
-                <td className="px-4 py-3">
-                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{c.clienteNome}</p>
+                    <p className="text-xs text-muted-foreground">{c.referencia}{c.contratoTitulo ? ` · ${c.contratoTitulo}` : ''}</p>
+                  </div>
+                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium shrink-0', STATUS_STYLES[c.status])}>
                     {c.status}
                   </span>
-                </td>
-                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                  {(c.status === 'Pendente' || c.status === 'Vencido') && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setPagando(c.id)
-                        setDataPagamento(new Date().toISOString().slice(0, 10))
-                      }}
-                    >
-                      Pagar
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Vence: {fmtDate(c.dataVencimento)}</span>
+                  <span className="font-semibold">{fmtVal(c.valor)}</span>
+                </div>
+                {(c.status === 'Pendente' || c.status === 'Vencido') && (
+                  <div onClick={e => e.stopPropagation()}>
+                    <Button size="sm" variant="outline" className="w-full"
+                      onClick={() => { setPagando(c.id); setDataPagamento(new Date().toISOString().slice(0, 10)) }}>
+                      Registrar Pagamento
                     </Button>
-                  )}
-                </td>
-              </tr>
+                  </div>
+                )}
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 border-b">
+                <tr>
+                  {['Referência', 'Cliente', 'Contrato', 'Valor', 'Vencimento', 'Status', ''].map(h => (
+                    <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {cobrancas.map(c => (
+                  <tr key={c.id}
+                    className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/cobrancas/${c.id}`)}>
+                    <td className="px-4 py-3 font-medium">{c.referencia}</td>
+                    <td className="px-4 py-3">{c.clienteNome}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{c.contratoTitulo ?? '—'}</td>
+                    <td className="px-4 py-3 font-medium">{fmtVal(c.valor)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dataVencimento)}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      {(c.status === 'Pendente' || c.status === 'Vencido') && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => { setPagando(c.id); setDataPagamento(new Date().toISOString().slice(0, 10)) }}>
+                          Pagar
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {pagando && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Pencil } from 'lucide-react'
+import { Plus, Trash2, Pencil, Layers2 } from 'lucide-react'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,24 @@ import LancamentoForm from '@/components/financeiro/LancamentoForm'
 import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
 import type { CreateLancamentoRequest, LancamentoResponse, LancamentoResumo, UpdateLancamentoRequest } from '@/types/financeiro'
+import { KpiRow } from '@/components/ui/KpiRow'
+
+function parseGrupoParcelamento(descricao: string): { base: string; total: number } | null {
+  const m = descricao.match(/^(.+)\s(\d+)\/(\d+)$/)
+  if (!m) return null
+  const total = parseInt(m[3])
+  return total >= 2 ? { base: m[1], total } : null
+}
+
+function getLancamentosGrupo(todos: LancamentoResponse[], l: LancamentoResponse): LancamentoResponse[] {
+  const g = parseGrupoParcelamento(l.descricao)
+  if (!g) return []
+  return todos.filter(item => {
+    if (item.vendaId) return false
+    const ig = parseGrupoParcelamento(item.descricao)
+    return ig && ig.base === g.base && ig.total === g.total && item.tipo === l.tipo
+  })
+}
 
 const tipoVariant = (tipo: string) => tipo === 'Receita' ? 'secondary' : 'destructive'
 const statusVariant = (s: string, vencido: boolean) =>
@@ -27,6 +45,9 @@ export default function Lancamentos() {
   const [excluindo, setExcluindo] = useState<string | null>(null)
   const [resumo, setResumo] = useState<LancamentoResumo | null>(null)
   const [editandoLanc, setEditandoLanc] = useState<LancamentoResponse | null>(null)
+  const [filtroTipo, setFiltroTipo] = useState('')
+  const [filtroCategoria, setFiltroCategoria] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('')
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => {
@@ -35,13 +56,14 @@ export default function Lancamentos() {
   }, [list, fetchResumo])
 
   async function handleCreate(data: CreateLancamentoRequest) {
-    try {
-      await create(data)
-      setModalAberto(false)
-      toast.success('Lançamento criado')
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao criar lançamento')
-    }
+    await create(data)
+  }
+
+  function handleAllCreated(count: number) {
+    setModalAberto(false)
+    toast.success(count > 1 ? `${count} parcelas criadas` : 'Lançamento criado')
+    void list()
+    void fetchResumo().then(setResumo).catch(() => {})
   }
 
   async function handleEditLanc(data: CreateLancamentoRequest) {
@@ -70,6 +92,25 @@ export default function Lancamentos() {
     } finally { setExcluindo(null) }
   }
 
+  async function handleExcluirGrupo(l: LancamentoResponse) {
+    const grupo = getLancamentosGrupo(lancamentos, l)
+    if (grupo.length === 0) return
+    const g = parseGrupoParcelamento(l.descricao)!
+    const ok = await confirm({
+      title: `Excluir ${grupo.length} parcelas?`,
+      description: `Todas as parcelas de "${g.base}" serão removidas permanentemente.`,
+      variant: 'destructive',
+    })
+    if (!ok) return
+    setExcluindo(l.id)
+    try {
+      for (const item of grupo) await remove(item.id)
+      toast.success(`${grupo.length} parcelas excluídas`)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
+    } finally { setExcluindo(null) }
+  }
+
   async function handlePagar(l: LancamentoResponse) {
     const ok = await confirm({
       title: 'Confirmar pagamento?',
@@ -85,6 +126,14 @@ export default function Lancamentos() {
     } finally { setPagando(null) }
   }
 
+  const categoriasUnicas = [...new Set(lancamentos.map(l => l.categoria))].sort()
+
+  const lancamentosFiltrados = lancamentos.filter(l =>
+    (!filtroTipo || l.tipo === filtroTipo) &&
+    (!filtroCategoria || l.categoria === filtroCategoria) &&
+    (!filtroStatus || l.status === filtroStatus)
+  )
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -95,97 +144,187 @@ export default function Lancamentos() {
       </div>
 
       {resumo && (
-        <div className="rounded-xl border bg-card p-4 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Resumo do mês</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Receitas pagas', value: resumo.totalReceitasMes, color: 'text-green-600 dark:text-green-400' },
-              { label: 'Despesas pagas', value: resumo.totalDespesasMes, color: 'text-red-600 dark:text-red-400' },
-              { label: 'Saldo', value: resumo.saldoMes, color: resumo.saldoMes >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' },
-              { label: 'Pendentes', value: resumo.totalPendente, color: 'text-yellow-600 dark:text-yellow-400' },
-            ].map(k => (
-              <div key={k.label} className="rounded-lg border bg-background p-3">
-                <p className="text-xs text-muted-foreground">{k.label}</p>
-                <p className={`text-xl font-bold mt-1 ${k.color}`}>
-                  {fmt(k.value)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <KpiRow items={[
+          { label: 'Receitas pagas', value: fmt(resumo.totalReceitasMes), color: 'text-green-600 dark:text-green-400' },
+          { label: 'Despesas pagas', value: fmt(resumo.totalDespesasMes), color: 'text-red-600 dark:text-red-400' },
+          { label: 'Saldo do mês', value: fmt(resumo.saldoMes), color: resumo.saldoMes >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' },
+          { label: 'Pendentes', value: fmt(resumo.totalPendente), color: 'text-yellow-600 dark:text-yellow-400' },
+        ]} />
       )}
 
-      {loading ? <p className="text-muted-foreground">Carregando...</p> : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Descrição</th>
-                <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                <th className="px-4 py-3 text-left font-medium">Vencimento</th>
-                <th className="px-4 py-3 text-right font-medium">Valor</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {lancamentos.map(l => (
-                <tr key={l.id} className="border-b">
-                  <td className="px-4 py-3 font-medium">{l.descricao}</td>
-                  <td className="px-4 py-3">
+      <div className="rounded-xl border bg-card px-4 py-3">
+        <div className="flex flex-wrap gap-2">
+          <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}
+            className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
+            <option value="">Todos os tipos</option>
+            <option value="Receita">Receita</option>
+            <option value="Despesa">Despesa</option>
+          </select>
+          <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}
+            className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
+            <option value="">Todos os status</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Pago">Pago</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+          <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
+            className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
+            <option value="">Todas as categorias</option>
+            {categoriasUnicas.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          {(filtroTipo || filtroCategoria || filtroStatus) && (
+            <button onClick={() => { setFiltroTipo(''); setFiltroCategoria(''); setFiltroStatus('') }}
+              className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground rounded-md border border-input">
+              Limpar filtros
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? <p className="text-muted-foreground">Carregando...</p> : lancamentosFiltrados.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhum lançamento encontrado</p>
+      ) : (
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {lancamentosFiltrados.map(l => (
+              <div key={l.id} className="rounded-lg border bg-card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{l.descricao}</p>
+                    <p className="text-xs text-muted-foreground">{l.categoria}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
                     <Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{l.categoria}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
-                  <td className="px-4 py-3 text-right font-medium">{fmt(l.valor)}</td>
-                  <td className="px-4 py-3">
                     <Badge variant={statusVariant(l.status, l.vencido)}>
                       {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {l.status === 'Pendente' && (
-                        <Button size="sm" variant="outline"
-                          disabled={pagando === l.id}
-                          onClick={() => void handlePagar(l)}>
-                          {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
-                        </Button>
-                      )}
-                      {l.status === 'Pendente' && !l.vendaId && (
-                        <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
-                          <Pencil size={14} />
-                        </Button>
-                      )}
-                      {isAdmin && !l.vendaId && (
-                        <Button size="sm" variant="ghost"
-                          disabled={excluindo === l.id}
-                          onClick={() => void handleExcluir(l)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                          <Trash2 size={14} />
-                        </Button>
-                      )}
-                    </div>
-                  </td>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</span>
+                  <span className={`font-semibold ${l.tipo === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                    {fmt(l.valor)}
+                  </span>
+                </div>
+                {(l.status === 'Pendente' || (isAdmin && !l.vendaId)) && (
+                  <div className="flex gap-1 pt-1 flex-wrap">
+                    {l.status === 'Pendente' && (
+                      <Button size="sm" variant="outline" className="flex-1"
+                        disabled={pagando === l.id}
+                        onClick={() => void handlePagar(l)}>
+                        {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                      </Button>
+                    )}
+                    {l.status === 'Pendente' && !l.vendaId && (
+                      <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
+                        <Pencil size={13} />
+                      </Button>
+                    )}
+                    {isAdmin && !l.vendaId && (
+                      <Button size="sm" variant="ghost" disabled={excluindo === l.id}
+                        onClick={() => void handleExcluir(l)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir esta parcela">
+                        <Trash2 size={13} />
+                      </Button>
+                    )}
+                    {isAdmin && !l.vendaId && getLancamentosGrupo(lancamentos, l).length > 1 && (
+                      <Button size="sm" variant="ghost" disabled={!!excluindo}
+                        onClick={() => void handleExcluirGrupo(l)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
+                        title="Excluir todo o parcelamento">
+                        <Layers2 size={13} />
+                        <span className="text-[11px]">Grupo</span>
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Descrição</th>
+                  <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                  <th className="px-4 py-3 text-left font-medium">Categoria</th>
+                  <th className="px-4 py-3 text-left font-medium">Vencimento</th>
+                  <th className="px-4 py-3 text-right font-medium">Valor</th>
+                  <th className="px-4 py-3 text-left font-medium">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-              {lancamentos.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum lançamento encontrado
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {lancamentosFiltrados.map(l => (
+                  <tr key={l.id} className="border-b">
+                    <td className="px-4 py-3 font-medium">{l.descricao}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{l.categoria}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
+                    <td className="px-4 py-3 text-right font-medium">{fmt(l.valor)}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={statusVariant(l.status, l.vencido)}>
+                        {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        {l.status === 'Pendente' && (
+                          <Button size="sm" variant="outline"
+                            disabled={pagando === l.id}
+                            onClick={() => void handlePagar(l)}>
+                            {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                          </Button>
+                        )}
+                        {l.status === 'Pendente' && !l.vendaId && (
+                          <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
+                            <Pencil size={14} />
+                          </Button>
+                        )}
+                        {isAdmin && !l.vendaId && (
+                          <Button size="sm" variant="ghost"
+                            disabled={excluindo === l.id}
+                            onClick={() => void handleExcluir(l)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Excluir esta parcela">
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
+                        {isAdmin && !l.vendaId && getLancamentosGrupo(lancamentos, l).length > 1 && (
+                          <Button size="sm" variant="ghost"
+                            disabled={!!excluindo}
+                            onClick={() => void handleExcluirGrupo(l)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
+                            title="Excluir todo o parcelamento">
+                            <Layers2 size={14} />
+                            <span className="text-xs">Grupo</span>
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Novo Lançamento</DialogTitle></DialogHeader>
-          <LancamentoForm onSubmit={handleCreate} onCancel={() => setModalAberto(false)} />
+          <LancamentoForm
+            allowParcelamento
+            onSubmit={handleCreate}
+            onAllCreated={handleAllCreated}
+            onCancel={() => setModalAberto(false)}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={!!editandoLanc} onOpenChange={open => { if (!open) setEditandoLanc(null) }}>

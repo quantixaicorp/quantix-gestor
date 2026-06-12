@@ -120,49 +120,65 @@ export default function Categorias() {
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
+      ) : categorias.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhuma categoria encontrada</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Nome</th>
-                <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {categorias.map(cat => (
-                <tr key={cat.id} className="border-b">
-                  <td className="px-4 py-3 font-medium">{cat.nome}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{cat.tipo}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={excluindo === cat.id}
-                        onClick={() => void handleExcluir(cat)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        {excluindo === cat.id ? '...' : <Trash2 size={14} />}
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {categorias.map(cat => (
+              <div key={cat.id} className="rounded-lg border bg-card p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{cat.nome}</p>
+                  <p className="text-sm text-muted-foreground">{cat.tipo}</p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
+                    <Pencil size={14} />
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={excluindo === cat.id}
+                    onClick={() => void handleExcluir(cat)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    {excluindo === cat.id ? '...' : <Trash2 size={14} />}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Nome</th>
+                  <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-              {categorias.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhuma categoria encontrada
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {categorias.map(cat => (
+                  <tr key={cat.id} className="border-b">
+                    <td className="px-4 py-3 font-medium">{cat.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{cat.tipo}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 justify-end">
+                        <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
+                          <Pencil size={14} />
+                        </Button>
+                        <Button size="sm" variant="ghost" disabled={excluindo === cat.id}
+                          onClick={() => void handleExcluir(cat)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                          {excluindo === cat.id ? '...' : <Trash2 size={14} />}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Dialog open={modalAberto} onOpenChange={open => { if (!open) fecharModal() }}>

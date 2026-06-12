@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { KpiRow } from '@/components/ui/KpiRow'
 import { useContratos } from '@/hooks/useContratos'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -34,11 +35,10 @@ export default function Contratos() {
   const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('pt-BR')
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <FileText className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold">Contratos</h1>
-        <div className="ml-auto flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">Contratos</h1>
+        <div className="flex items-center gap-2">
           <select
             value={filtroStatus}
             onChange={e => setFiltroStatus(e.target.value)}
@@ -54,6 +54,13 @@ export default function Contratos() {
           </Button>
         </div>
       </div>
+
+      <KpiRow items={[
+        { label: 'Total', value: String(contratos.length) },
+        { label: 'Ativos', value: String(contratos.filter(c => c.status === 'Ativo').length), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Vencendo (30 dias)', value: String(vencendo.length), color: vencendo.length > 0 ? 'text-yellow-600 dark:text-yellow-400' : '' },
+        { label: 'Valor total ativo', value: contratos.filter(c => c.status === 'Ativo').reduce((s, c) => s + c.valor, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
+      ]} />
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -80,42 +87,68 @@ export default function Contratos() {
         </div>
       )}
 
-      <div className="rounded-xl border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 border-b">
-            <tr>
-              {['Nº', 'Cliente', 'Título', 'Tipo', 'Valor', 'Status', 'Início'].map(h => (
-                <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</td></tr>
-            )}
-            {!loading && contratos.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum contrato encontrado</td></tr>
-            )}
+      {loading ? (
+        <p className="text-muted-foreground">Carregando...</p>
+      ) : contratos.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhum contrato encontrado</p>
+      ) : (
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
             {contratos.map(c => (
-              <tr key={c.id}
-                className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+              <div key={c.id}
+                className="rounded-lg border bg-card p-4 space-y-2 cursor-pointer hover:bg-accent/50 transition-colors"
                 onClick={() => navigate(`/contratos/${c.id}`)}>
-                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{String(c.numero).padStart(3, '0')}</td>
-                <td className="px-4 py-3 font-medium">{c.clienteNome}</td>
-                <td className="px-4 py-3">{c.titulo}</td>
-                <td className="px-4 py-3 text-muted-foreground">{TIPO_LABEL[c.tipoCobranca]}</td>
-                <td className="px-4 py-3 font-medium">{fmtVal(c.valor)}</td>
-                <td className="px-4 py-3">
-                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{c.titulo}</p>
+                    <p className="text-sm text-muted-foreground truncate">{c.clienteNome}</p>
+                  </div>
+                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium shrink-0', STATUS_STYLES[c.status])}>
                     {c.status}
                   </span>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dataInicio)}</td>
-              </tr>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{TIPO_LABEL[c.tipoCobranca]} · {fmtDate(c.dataInicio)}</span>
+                  <span className="font-semibold">{fmtVal(c.valor)}</span>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 border-b">
+                <tr>
+                  {['Nº', 'Cliente', 'Título', 'Tipo', 'Valor', 'Status', 'Início'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {contratos.map(c => (
+                  <tr key={c.id}
+                    className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/contratos/${c.id}`)}>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{String(c.numero).padStart(3, '0')}</td>
+                    <td className="px-4 py-3 font-medium">{c.clienteNome}</td>
+                    <td className="px-4 py-3">{c.titulo}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{TIPO_LABEL[c.tipoCobranca]}</td>
+                    <td className="px-4 py-3 font-medium">{fmtVal(c.valor)}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dataInicio)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   )
 }

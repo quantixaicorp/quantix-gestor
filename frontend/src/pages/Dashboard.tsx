@@ -61,7 +61,7 @@ export default function Dashboard() {
 
       <div className="rounded-xl border bg-card p-4 space-y-3">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vendas</p>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <KpiCard titulo="Vendido hoje" valor={fmt(kpis.totalVendidoHoje)} icon={ShoppingCart} cor="green" />
           <KpiCard titulo="Vendido no mês" valor={fmt(kpis.totalVendidoMes)} icon={TrendingUp} />
         </div>
@@ -69,7 +69,7 @@ export default function Dashboard() {
 
       <div className="rounded-xl border bg-card p-4 space-y-3">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Financeiro — mês atual</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KpiCard titulo="Saldo do mês" valor={fmt(saldoMes)} icon={Wallet}
             cor={saldoMes >= 0 ? 'green' : 'red'} />
           <KpiCard titulo="A receber (pendente)" valor={fmt(kpis.contasReceberPendentes)} icon={ArrowUpCircle} cor="green" />
@@ -88,7 +88,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <GraficoVendas dados={data.vendasUltimos7Dias ?? []} />
         <GraficoFluxo dados={data.fluxoMes ?? []} />
       </div>

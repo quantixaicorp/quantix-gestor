@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using GestorAI.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,14 +20,20 @@ public static class AdminEndpoints
         // One-time data migration: assigns all Guid.Empty tenant records to the given companyId.
         // Protected by a secret key. Remove this endpoint after running once in production.
         app.MapPost("/admin/fix-tenant", async (
+            HttpContext ctx,
             string companyId,
-            string key,
             AppDbContext db,
             IConfiguration config,
             CancellationToken ct) =>
         {
+            // Fail-closed: sem segredo configurado (via variável de ambiente
+            // AdminFixKey), o endpoint fica inerte. A chave é recebida no
+            // cabeçalho X-Admin-Key para não vazar em logs/histórico de URL.
             var secret = config["AdminFixKey"];
-            if (string.IsNullOrWhiteSpace(secret) || key != secret)
+            var key = ctx.Request.Headers["X-Admin-Key"].ToString();
+            if (string.IsNullOrWhiteSpace(secret)
+                || !CryptographicOperations.FixedTimeEquals(
+                       Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(secret)))
                 return Results.Unauthorized();
 
             if (!Guid.TryParse(companyId, out var id))

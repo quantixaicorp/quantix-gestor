@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/services/api'
 import Sidebar from './Sidebar'
+import BottomNav from './BottomNav'
 import { cn } from '@/lib/utils'
 
 export interface EmpresaInfo {
@@ -66,18 +67,27 @@ export default function AppLayout() {
     catch { return false }
   })
 
-  const [mobileOpen, setMobileOpen] = useState(false)
+  // Tablet (md–lg): sidebar always collapsed/icon-only
+  const [isTablet, setIsTablet] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024
+  )
+
+  const [, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    const check = () => {
+      const w = window.innerWidth
+      setIsTablet(w >= 768 && w < 1024)
+      if (w >= 768) setMobileOpen(false)
+    }
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     try { localStorage.setItem('sidebar-collapsed', String(collapsed)) }
     catch { /* ignore */ }
   }, [collapsed])
-
-  useEffect(() => {
-    const handler = () => { if (window.innerWidth >= 1024) setMobileOpen(false) }
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
 
   useEffect(() => {
     api.get<{ logoUrl: string | null; nomeFantasia: string | null; corPrimaria: string | null }>(
@@ -93,6 +103,9 @@ export default function AppLayout() {
 
   const sidebarStyle = useMemo(() => buildSidebarStyle(empresa?.corPrimaria), [empresa?.corPrimaria])
 
+  // Tablet forces sidebar collapsed; desktop respects user pref
+  const effectiveCollapsed = isTablet || collapsed
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -105,22 +118,22 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile top bar — same dynamic color as sidebar */}
+      {/* Tablet top bar — hamburger for sidebar expand on md–lg */}
       <header
-        style={sidebarStyle}
-        className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center gap-3 px-4 bg-sidebar border-b border-sidebar-border"
+        style={{ ...sidebarStyle, marginLeft: effectiveCollapsed ? '4rem' : '16rem' } as React.CSSProperties}
+        className="hidden md:flex lg:hidden fixed top-0 left-0 right-0 z-30 h-14 items-center gap-3 px-4 bg-sidebar border-b border-sidebar-border"
       >
         <button
-          onClick={() => setMobileOpen(true)}
+          onClick={() => setCollapsed(v => !v)}
           className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-          aria-label="Abrir menu"
+          aria-label="Expandir menu"
         >
           <Menu className="h-5 w-5" />
         </button>
       </header>
 
-      {/* GestorAI badge — always visible, top-right */}
-      <div className="fixed top-1 lg:top-2 right-3 z-50 flex items-center gap-2 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-sm rounded-xl px-2.5 py-1.5 pointer-events-none select-none">
+      {/* GestorAI badge — bottom-right on desktop, top-right on mobile/tablet */}
+      <div className="fixed top-1 right-3 md:top-auto md:bottom-4 md:right-4 z-50 flex items-center gap-2 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-sm rounded-xl px-2.5 py-1.5 pointer-events-none select-none">
         <img src="/logo-gestorai-icon.png" alt="GestorAI" className="h-8 w-8 object-contain" />
         <div className="flex flex-col leading-tight">
           <span className="text-xs font-bold text-gray-900 dark:text-white tracking-wide">GestorAI</span>
@@ -128,29 +141,31 @@ export default function AppLayout() {
         </div>
       </div>
 
-      {/* Backdrop for mobile drawer */}
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
+      {/* Sidebar — hidden on mobile, always visible on md+ */}
       <Sidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((v) => !v)}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
+        collapsed={effectiveCollapsed}
+        onToggle={() => !isTablet && setCollapsed(v => !v)}
+        mobileOpen={false}
+        onMobileClose={() => {}}
         empresaConfig={empresa}
         sidebarStyle={sidebarStyle}
       />
 
+      {/* Bottom navigation — mobile only */}
+      <BottomNav sidebarStyle={sidebarStyle} empresaConfig={empresa} />
+
       <main
         className={cn(
           'min-h-screen transition-[margin-left] duration-300',
-          'pl-4 md:pl-6 pr-36 md:pr-40',
-          'pt-[72px] pb-4 md:pb-6 lg:pt-6',
-          collapsed ? 'lg:ml-16' : 'lg:ml-64',
+          'px-4 md:px-6',
+          // Mobile: padding top for nothing (no top bar), padding bottom for bottom nav
+          'pt-4 pb-20',
+          // Tablet: padding top for tablet top bar
+          'md:pt-[72px] md:pb-6',
+          // Desktop: padding top for nothing (no top bar)
+          'lg:pt-6 lg:pb-6',
+          // Sidebar margin
+          effectiveCollapsed ? 'md:ml-16' : 'md:ml-64',
         )}
       >
         <Outlet />

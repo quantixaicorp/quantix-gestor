@@ -200,10 +200,12 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       className={cn(
         'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border flex flex-col',
         'transition-[width,transform] duration-300 overflow-hidden',
-        'w-64',
+        // Mobile: hidden (BottomNav handles navigation)
+        'hidden md:flex',
+        // Tablet md–lg: always icon-only (w-16)
+        'md:w-16',
+        // Desktop lg+: respects collapsed state
         collapsed ? 'lg:w-16' : 'lg:w-64',
-        mobileOpen ? 'translate-x-0' : '-translate-x-full',
-        'lg:translate-x-0',
       )}
     >
       {/* Company logo header */}

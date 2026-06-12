@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-import http.server, json, os, subprocess, threading
+import hmac, http.server, json, os, subprocess, sys, threading
 
-TOKEN  = "c84a12e9f3b507d6e1a28c4f90d37b58e2461785a3c9d012b6f48e7059a1c3d4"
+TOKEN  = os.environ.get("GESTORAI_WEBHOOK_TOKEN")
+if not TOKEN:
+    sys.exit("GESTORAI_WEBHOOK_TOKEN não definido — abortando.")
 DEPLOY = "/opt/gestorai-deploy/deploy.sh"
 PORT   = 9989
 lock   = threading.Lock()
@@ -13,7 +15,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path != "/deploy":
             self.send_response(404); self.end_headers(); return
 
-        if self.headers.get("X-Deploy-Token") != TOKEN:
+        if not hmac.compare_digest(self.headers.get("X-Deploy-Token", ""), TOKEN):
             self.send_response(403); self.end_headers(); return
 
         length = int(self.headers.get("Content-Length", 0))

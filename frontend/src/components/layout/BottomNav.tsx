@@ -17,7 +17,7 @@ import type { EmpresaInfo } from './AppLayout'
 
 const PRIMARY = [
   { icon: LayoutDashboard, label: 'Início',     path: '/' },
-  { icon: ShoppingCart,    label: 'Vendas',     path: '/vendas' },
+  { icon: ShoppingCart,    label: 'Nova Venda', path: '/vendas/nova' },
   { icon: Calendar,        label: 'Agenda',     path: '/agenda' },
   { icon: Wallet,          label: 'Financeiro', path: '/financeiro' },
 ]

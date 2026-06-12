@@ -11,6 +11,7 @@ import ServicoEditForm from '@/components/estoque/ServicoEditForm'
 import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
 import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from '@/types/estoque'
+import { KpiRow } from '@/components/ui/KpiRow'
 
 export default function Servicos() {
   const { categorias, listCategorias, createCategoria, createProduto } = useEstoque()
@@ -80,6 +81,15 @@ export default function Servicos() {
         </Button>
       </div>
 
+      <KpiRow items={[
+        { label: 'Total', value: String(servicos.length) },
+        { label: 'Ativos', value: String(servicos.filter(s => s.ativo).length), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Inativos', value: String(servicos.filter(s => !s.ativo).length), color: 'text-muted-foreground' },
+        { label: 'Duração média', value: servicos.filter(s => s.duracaoMinutos).length
+          ? `${Math.round(servicos.filter(s => s.duracaoMinutos).reduce((a, s) => a + (s.duracaoMinutos ?? 0), 0) / servicos.filter(s => s.duracaoMinutos).length)} min`
+          : '—' },
+      ]} />
+
       <Input
         placeholder="Buscar serviço por nome..."
         value={busca}
@@ -89,58 +99,86 @@ export default function Servicos() {
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nenhum serviço encontrado</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">Nome</th>
-                <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                <th className="px-4 py-3 text-right font-medium">Preço</th>
-                <th className="px-4 py-3 text-right font-medium">Duração</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(s => (
-                <tr key={s.id} className="border-b last:border-b-0">
-                  <td className="px-4 py-3 font-medium">{s.nome}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{s.categoriaNome}</td>
-                  <td className="px-4 py-3 text-right">
-                    {s.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">
-                    {s.duracaoMinutos ? `${s.duracaoMinutos} min` : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={s.ativo ? 'secondary' : 'outline'}>
-                      {s.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => setEditando(s)}>
-                        <Pencil size={14} />
-                      </Button>
-                      <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(s.id, s.nome)}>
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {filtrados.map(s => (
+              <div key={s.id} className="rounded-lg border bg-card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{s.nome}</p>
+                    <p className="text-sm text-muted-foreground">{s.categoriaNome}</p>
+                  </div>
+                  <Badge variant={s.ativo ? 'secondary' : 'outline'} className="shrink-0">
+                    {s.ativo ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{s.duracaoMinutos ? `${s.duracaoMinutos} min` : '—'}</span>
+                  <span className="font-semibold">{s.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                </div>
+                <div className="flex gap-1 pt-1">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditando(s)}>
+                    <Pencil size={13} className="mr-1" /> Editar
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(s.id, s.nome)}>
+                    <Trash2 size={13} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Nome</th>
+                  <th className="px-4 py-3 text-left font-medium">Categoria</th>
+                  <th className="px-4 py-3 text-right font-medium">Preço</th>
+                  <th className="px-4 py-3 text-right font-medium">Duração</th>
+                  <th className="px-4 py-3 text-left font-medium">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-              {filtrados.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum serviço encontrado
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtrados.map(s => (
+                  <tr key={s.id} className="border-b last:border-b-0">
+                    <td className="px-4 py-3 font-medium">{s.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{s.categoriaNome}</td>
+                    <td className="px-4 py-3 text-right">
+                      {s.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">
+                      {s.duracaoMinutos ? `${s.duracaoMinutos} min` : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={s.ativo ? 'secondary' : 'outline'}>
+                        {s.ativo ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-end">
+                        <Button size="sm" variant="outline" onClick={() => setEditando(s)}>
+                          <Pencil size={14} />
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(s.id, s.nome)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Dialog open={modalCriar} onOpenChange={setModalCriar}>

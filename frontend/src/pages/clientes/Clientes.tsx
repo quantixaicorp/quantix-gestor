@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ClienteForm from '@/components/clientes/ClienteForm'
 import type { CreateClienteRequest, UpdateClienteRequest, ClienteResponse } from '@/types/clientes'
+import { KpiRow } from '@/components/ui/KpiRow'
 
 export default function Clientes() {
   const { clientes, loading, list, create, update, remove } = useClientes()
@@ -61,6 +62,16 @@ export default function Clientes() {
           <Plus size={16} className="mr-2" /> Novo Cliente
         </Button>
       </div>
+
+      <KpiRow items={[
+        { label: 'Total de clientes', value: String(clientes.length) },
+        { label: 'Novos este mês', value: String(clientes.filter(c => {
+          const d = new Date(c.dataCadastro); const n = new Date()
+          return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear()
+        }).length) },
+        { label: 'Com e-mail', value: String(clientes.filter(c => c.email).length) },
+        { label: 'Com WhatsApp', value: String(clientes.filter(c => c.whatsapp).length) },
+      ]} />
 
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

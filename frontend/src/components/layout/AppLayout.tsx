@@ -120,9 +120,12 @@ export default function AppLayout() {
       </header>
 
       {/* GestorAI badge — always visible, top-right */}
-      <div className="fixed top-2 right-3 z-50 flex items-center gap-2 bg-black/15 dark:bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 pointer-events-none select-none">
-        <img src="/logo-gestorai-icon.png" alt="GestorAI" className="h-9 w-9 object-contain opacity-85" />
-        <span className="text-xs font-semibold text-foreground/60 tracking-wide">GestorAI</span>
+      <div className="fixed top-1 lg:top-2 right-3 z-50 flex items-center gap-2 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-sm rounded-xl px-2.5 py-1.5 pointer-events-none select-none">
+        <img src="/logo-gestorai-icon.png" alt="GestorAI" className="h-8 w-8 object-contain" />
+        <div className="flex flex-col leading-tight">
+          <span className="text-xs font-bold text-gray-900 dark:text-white tracking-wide">GestorAI</span>
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 tracking-wide">by QuantixAI</span>
+        </div>
       </div>
 
       {/* Backdrop for mobile drawer */}
@@ -145,7 +148,7 @@ export default function AppLayout() {
       <main
         className={cn(
           'min-h-screen transition-[margin-left] duration-300',
-          'px-4 md:px-6',
+          'pl-4 md:pl-6 pr-36 md:pr-40',
           'pt-[72px] pb-4 md:pb-6 lg:pt-6',
           collapsed ? 'lg:ml-16' : 'lg:ml-64',
         )}

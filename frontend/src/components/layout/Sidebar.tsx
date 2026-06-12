@@ -211,18 +211,18 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         {!showLabels ? (
           logoSrc
             ? <img src={logoSrc} alt={empresa?.nomeFantasia || 'Empresa'}
-                className="rounded-lg mx-auto object-cover"
-                style={{ width: '40px', height: '40px' }} />
-            : <div className="w-10 h-10 rounded-lg bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-base">
+                className="rounded-full mx-auto object-cover"
+                style={{ width: '48px', height: '48px' }} />
+            : <div className="w-12 h-12 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-lg">
                 {initial}
               </div>
         ) : (
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex items-center gap-3 w-full">
             {logoSrc
               ? <img src={logoSrc} alt={empresa?.nomeFantasia || 'Empresa'}
-                  className="rounded-lg object-cover shrink-0"
-                  style={{ width: '36px', height: '36px' }} />
-              : <div className="w-9 h-9 rounded-lg bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-sm shrink-0">
+                  className="rounded-full object-cover shrink-0"
+                  style={{ width: '48px', height: '48px' }} />
+              : <div className="w-12 h-12 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-lg shrink-0">
                   {initial}
                 </div>
             }

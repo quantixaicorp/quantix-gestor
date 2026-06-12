@@ -10,6 +10,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
 import type { CreateLancamentoRequest, LancamentoResponse, LancamentoResumo, UpdateLancamentoRequest } from '@/types/financeiro'
 import { KpiRow } from '@/components/ui/KpiRow'
+import { useCategoriasLancamento } from '@/hooks/useCategoriasLancamento'
 
 function parseGrupoParcelamento(descricao: string): { base: string; total: number } | null {
   const m = descricao.match(/^(.+)\s(\d+)\/(\d+)$/)
@@ -40,6 +41,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 export default function Lancamentos() {
   const { lancamentos, loading, list, create, pagar, remove, update, fetchResumo } = useFinanceiro()
   const { isAdmin } = useAuth()
+  const { list: listCategorias } = useCategoriasLancamento()
   const [modalAberto, setModalAberto] = useState(false)
   const [pagando, setPagando] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState<string | null>(null)
@@ -48,12 +50,14 @@ export default function Lancamentos() {
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
+  const [todasCategorias, setTodasCategorias] = useState<string[]>([])
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => {
     void list()
     void fetchResumo().then(setResumo).catch(() => {})
-  }, [list, fetchResumo])
+    void listCategorias().then(cats => setTodasCategorias(cats.map(c => c.nome).sort())).catch(() => {})
+  }, [list, fetchResumo, listCategorias])
 
   async function handleCreate(data: CreateLancamentoRequest) {
     await create(data)
@@ -126,8 +130,6 @@ export default function Lancamentos() {
     } finally { setPagando(null) }
   }
 
-  const categoriasUnicas = [...new Set(lancamentos.map(l => l.categoria))].sort()
-
   const lancamentosFiltrados = lancamentos.filter(l =>
     (!filtroTipo || l.tipo === filtroTipo) &&
     (!filtroCategoria || l.categoria === filtroCategoria) &&
@@ -170,7 +172,7 @@ export default function Lancamentos() {
           <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
             className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
             <option value="">Todas as categorias</option>
-            {categoriasUnicas.map(c => <option key={c} value={c}>{c}</option>)}
+            {todasCategorias.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           {(filtroTipo || filtroCategoria || filtroStatus) && (
             <button onClick={() => { setFiltroTipo(''); setFiltroCategoria(''); setFiltroStatus('') }}

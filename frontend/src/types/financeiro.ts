@@ -10,6 +10,8 @@ export interface LancamentoResponse {
   vendaId: string | null
   observacao: string | null
   vencido: boolean
+  parcelamentoId: string | null
+  numeroParcela: number | null
 }
 
 export interface CreateLancamentoRequest {

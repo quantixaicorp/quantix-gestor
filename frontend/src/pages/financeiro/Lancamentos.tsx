@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Plus, Trash2, Pencil, Layers2 } from 'lucide-react'
+import { useMemo, useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight, ChevronDown, Plus, Trash2, Pencil, ExternalLink } from 'lucide-react'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -8,26 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import LancamentoForm from '@/components/financeiro/LancamentoForm'
 import { useConfirm } from '@/hooks/useConfirm'
 import { toast } from '@/hooks/useToast'
+import { api } from '@/services/api'
 import type { CreateLancamentoRequest, LancamentoResponse, LancamentoResumo, UpdateLancamentoRequest } from '@/types/financeiro'
+import type { ParcelamentoResponse } from '@/types/parcelamentos'
 import { KpiRow } from '@/components/ui/KpiRow'
 import { useCategoriasLancamento } from '@/hooks/useCategoriasLancamento'
 
-function parseGrupoParcelamento(descricao: string): { base: string; total: number } | null {
-  const m = descricao.match(/^(.+)\s(\d+)\/(\d+)$/)
-  if (!m) return null
-  const total = parseInt(m[3])
-  return total >= 2 ? { base: m[1], total } : null
-}
-
-function getLancamentosGrupo(todos: LancamentoResponse[], l: LancamentoResponse): LancamentoResponse[] {
-  const g = parseGrupoParcelamento(l.descricao)
-  if (!g) return []
-  return todos.filter(item => {
-    if (item.vendaId) return false
-    const ig = parseGrupoParcelamento(item.descricao)
-    return ig && ig.base === g.base && ig.total === g.total && item.tipo === l.tipo
-  })
-}
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 const tipoVariant = (tipo: string) => tipo === 'Receita' ? 'secondary' : 'destructive'
 const statusVariant = (s: string, vencido: boolean) =>
@@ -38,10 +26,42 @@ const statusVariant = (s: string, vencido: boolean) =>
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 
+// Extrai o título do grupo a partir da descrição da primeira parcela.
+// "Compra #42 - Parcela 2/3" → "Compra #42"
+function grupoDescricao(parcelas: LancamentoResponse[]): string {
+  const desc = [...parcelas].sort((a, b) =>
+    (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))[0]?.descricao ?? ''
+  const m = desc.match(/^(.+)\s[-–]\s(?:Parcela\s)?\d+\/\d+$/)
+  return m ? m[1] : desc
+}
+
+function grupoStats(parcelas: LancamentoResponse[]) {
+  const total = parcelas.reduce((s, p) => s + p.valor, 0)
+  const pagas = parcelas.filter(p => p.status === 'Pago').length
+  const pendentes = parcelas.filter(p => p.status === 'Pendente').length
+  const vencidas = parcelas.filter(p => p.vencido && p.status === 'Pendente').length
+  const n = parcelas.length
+  return { total, pagas, pendentes, vencidas, n }
+}
+
+function grupoStatusVariant(stats: ReturnType<typeof grupoStats>): 'secondary' | 'destructive' | 'outline' {
+  if (stats.pagas === stats.n) return 'secondary'
+  if (stats.vencidas > 0) return 'destructive'
+  return 'outline'
+}
+
+// ── component ─────────────────────────────────────────────────────────────────
+
+type RenderItem =
+  | { kind: 'individual'; lancamento: LancamentoResponse }
+  | { kind: 'group'; parcelamentoId: string; parcelas: LancamentoResponse[] }
+
 export default function Lancamentos() {
   const { lancamentos, loading, list, create, pagar, remove, update, fetchResumo } = useFinanceiro()
   const { isAdmin } = useAuth()
+  const navigate = useNavigate()
   const { list: listCategorias } = useCategoriasLancamento()
+
   const [modalAberto, setModalAberto] = useState(false)
   const [pagando, setPagando] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState<string | null>(null)
@@ -51,6 +71,9 @@ export default function Lancamentos() {
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
   const [todasCategorias, setTodasCategorias] = useState<string[]>([])
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  // cache parcelamento → compraId para o link "Ver compra"
+  const [parcelamentosCache, setParcelamentosCache] = useState<Record<string, ParcelamentoResponse>>({})
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => {
@@ -58,6 +81,65 @@ export default function Lancamentos() {
     void fetchResumo().then(setResumo).catch(() => {})
     void listCategorias().then(cats => setTodasCategorias(cats.map(c => c.nome).sort())).catch(() => {})
   }, [list, fetchResumo, listCategorias])
+
+  // ── agrupamento ──────────────────────────────────────────────────────────
+
+  // Mapeia parcelamentoId → todas as parcelas (sem filtro de status)
+  const allGroups = useMemo(() => {
+    const map = new Map<string, LancamentoResponse[]>()
+    for (const l of lancamentos) {
+      if (!l.parcelamentoId) continue
+      const arr = map.get(l.parcelamentoId) ?? []
+      arr.push(l)
+      map.set(l.parcelamentoId, arr)
+    }
+    return map
+  }, [lancamentos])
+
+  // Itens de render: grupos e individuais, respeitando filtros
+  const renderItems = useMemo<RenderItem[]>(() => {
+    const seenGroups = new Set<string>()
+    const items: RenderItem[] = []
+
+    for (const l of lancamentos) {
+      const matchesFiltro = (x: LancamentoResponse) =>
+        (!filtroTipo || x.tipo === filtroTipo) &&
+        (!filtroCategoria || x.categoria === filtroCategoria) &&
+        (!filtroStatus || x.status === filtroStatus)
+
+      if (l.parcelamentoId) {
+        if (seenGroups.has(l.parcelamentoId)) continue
+        const parcelas = allGroups.get(l.parcelamentoId) ?? []
+        // Mostra o grupo se ao menos uma parcela bate no filtro
+        if (parcelas.some(matchesFiltro)) {
+          seenGroups.add(l.parcelamentoId)
+          items.push({ kind: 'group', parcelamentoId: l.parcelamentoId, parcelas })
+        }
+      } else if (matchesFiltro(l)) {
+        items.push({ kind: 'individual', lancamento: l })
+      }
+    }
+
+    return items
+  }, [lancamentos, allGroups, filtroTipo, filtroCategoria, filtroStatus])
+
+  // ── toggle grupo + lazy fetch compraId ───────────────────────────────────
+
+  const toggleGroup = useCallback(async (pid: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      next.has(pid) ? next.delete(pid) : next.add(pid)
+      return next
+    })
+    if (!parcelamentosCache[pid]) {
+      try {
+        const p = await api.get<ParcelamentoResponse>(`/api/parcelamentos/${pid}`)
+        setParcelamentosCache(prev => ({ ...prev, [pid]: p }))
+      } catch { /* ignora — sem link "Ver compra" */ }
+    }
+  }, [parcelamentosCache])
+
+  // ── ações ─────────────────────────────────────────────────────────────────
 
   async function handleCreate(data: CreateLancamentoRequest) {
     await create(data)
@@ -96,20 +178,17 @@ export default function Lancamentos() {
     } finally { setExcluindo(null) }
   }
 
-  async function handleExcluirGrupo(l: LancamentoResponse) {
-    const grupo = getLancamentosGrupo(lancamentos, l)
-    if (grupo.length === 0) return
-    const g = parseGrupoParcelamento(l.descricao)!
+  async function handleExcluirGrupo(parcelas: LancamentoResponse[], descricao: string) {
     const ok = await confirm({
-      title: `Excluir ${grupo.length} parcelas?`,
-      description: `Todas as parcelas de "${g.base}" serão removidas permanentemente.`,
+      title: `Excluir ${parcelas.length} parcelas?`,
+      description: `Todas as parcelas de "${descricao}" serão removidas permanentemente.`,
       variant: 'destructive',
     })
     if (!ok) return
-    setExcluindo(l.id)
+    setExcluindo(parcelas[0].id)
     try {
-      for (const item of grupo) await remove(item.id)
-      toast.success(`${grupo.length} parcelas excluídas`)
+      for (const item of parcelas) await remove(item.id)
+      toast.success(`${parcelas.length} parcelas excluídas`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
     } finally { setExcluindo(null) }
@@ -130,11 +209,34 @@ export default function Lancamentos() {
     } finally { setPagando(null) }
   }
 
-  const lancamentosFiltrados = lancamentos.filter(l =>
-    (!filtroTipo || l.tipo === filtroTipo) &&
-    (!filtroCategoria || l.categoria === filtroCategoria) &&
-    (!filtroStatus || l.status === filtroStatus)
-  )
+  // ── render helpers ────────────────────────────────────────────────────────
+
+  function renderAcoesParcela(l: LancamentoResponse) {
+    return (
+      <div className="flex items-center gap-1 justify-end">
+        {l.status === 'Pendente' && (
+          <Button size="sm" variant="outline" disabled={pagando === l.id}
+            onClick={() => void handlePagar(l)}>
+            {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+          </Button>
+        )}
+        {l.status === 'Pendente' && !l.vendaId && (
+          <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
+            <Pencil size={14} />
+          </Button>
+        )}
+        {isAdmin && !l.vendaId && (
+          <Button size="sm" variant="ghost" disabled={excluindo === l.id}
+            onClick={() => void handleExcluir(l)}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10">
+            <Trash2 size={14} />
+          </Button>
+        )}
+      </div>
+    )
+  }
+
+  // ── render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-4">
@@ -183,70 +285,153 @@ export default function Lancamentos() {
         </div>
       </div>
 
-      {loading ? <p className="text-muted-foreground">Carregando...</p> : lancamentosFiltrados.length === 0 ? (
+      {loading ? (
+        <p className="text-muted-foreground">Carregando...</p>
+      ) : renderItems.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Nenhum lançamento encontrado</p>
       ) : (
         <>
-          {/* Mobile: card list */}
+          {/* ── Mobile ── */}
           <div className="md:hidden space-y-2">
-            {lancamentosFiltrados.map(l => (
-              <div key={l.id} className="rounded-lg border bg-card p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{l.descricao}</p>
-                    <p className="text-xs text-muted-foreground">{l.categoria}</p>
+            {renderItems.map(item => {
+              if (item.kind === 'individual') {
+                const l = item.lancamento
+                return (
+                  <div key={l.id} className="rounded-lg border bg-card p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{l.descricao}</p>
+                        <p className="text-xs text-muted-foreground">{l.categoria}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge>
+                        <Badge variant={statusVariant(l.status, l.vencido)}>
+                          {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</span>
+                      <span className={`font-semibold ${l.tipo === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                        {fmt(l.valor)}
+                      </span>
+                    </div>
+                    {(l.status === 'Pendente' || (isAdmin && !l.vendaId)) && (
+                      <div className="flex gap-1 pt-1 flex-wrap">
+                        {l.status === 'Pendente' && (
+                          <Button size="sm" variant="outline" className="flex-1"
+                            disabled={pagando === l.id}
+                            onClick={() => void handlePagar(l)}>
+                            {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                          </Button>
+                        )}
+                        {l.status === 'Pendente' && !l.vendaId && (
+                          <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
+                            <Pencil size={13} />
+                          </Button>
+                        )}
+                        {isAdmin && !l.vendaId && (
+                          <Button size="sm" variant="ghost" disabled={excluindo === l.id}
+                            onClick={() => void handleExcluir(l)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 size={13} />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge>
-                    <Badge variant={statusVariant(l.status, l.vencido)}>
-                      {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
+                )
+              }
+
+              // grupo
+              const { parcelamentoId, parcelas } = item
+              const expanded = expandedGroups.has(parcelamentoId)
+              const desc = grupoDescricao(parcelas)
+              const stats = grupoStats(parcelas)
+              const cached = parcelamentosCache[parcelamentoId]
+
+              return (
+                <div key={parcelamentoId} className="rounded-lg border bg-card overflow-hidden">
+                  {/* cabeçalho do grupo */}
+                  <button
+                    className="w-full flex items-center gap-2 p-4 text-left hover:bg-muted/30"
+                    onClick={() => void toggleGroup(parcelamentoId)}>
+                    {expanded ? <ChevronDown size={16} className="shrink-0 text-muted-foreground" /> : <ChevronRight size={16} className="shrink-0 text-muted-foreground" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{desc}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {stats.pagas}/{stats.n} pagas · {fmt(stats.total)}
+                      </p>
+                    </div>
+                    <Badge variant={grupoStatusVariant(stats)} className="shrink-0">
+                      {stats.pagas === stats.n ? 'Quitado' : stats.vencidas > 0 ? 'Vencido' : `${stats.n - stats.pagas} pendente${stats.n - stats.pagas > 1 ? 's' : ''}`}
                     </Badge>
-                  </div>
+                  </button>
+
+                  {/* parcelas expandidas */}
+                  {expanded && (
+                    <div className="border-t divide-y">
+                      {[...parcelas]
+                        .sort((a, b) => (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))
+                        .map(l => (
+                          <div key={l.id} className="p-3 pl-6 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{l.descricao}</p>
+                                <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-sm font-semibold text-destructive">{fmt(l.valor)}</span>
+                                <Badge variant={statusVariant(l.status, l.vencido)}>
+                                  {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              {l.status === 'Pendente' && (
+                                <Button size="sm" variant="outline" disabled={pagando === l.id}
+                                  onClick={() => void handlePagar(l)}>
+                                  {pagando === l.id ? '...' : 'Pagar'}
+                                </Button>
+                              )}
+                              {l.status === 'Pendente' && !l.vendaId && (
+                                <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
+                                  <Pencil size={13} />
+                                </Button>
+                              )}
+                              {isAdmin && !l.vendaId && (
+                                <Button size="sm" variant="ghost" disabled={excluindo === l.id}
+                                  onClick={() => void handleExcluir(l)}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                  <Trash2 size={13} />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      <div className="flex items-center justify-between p-3 pl-6 bg-muted/20">
+                        {cached?.compraId ? (
+                          <Button size="sm" variant="ghost" className="gap-1 text-xs"
+                            onClick={() => navigate(`/compras/${cached.compraId}`)}>
+                            <ExternalLink size={12} /> Ver compra
+                          </Button>
+                        ) : <span />}
+                        {isAdmin && (
+                          <Button size="sm" variant="ghost"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 text-xs"
+                            onClick={() => void handleExcluirGrupo(parcelas, desc)}>
+                            <Trash2 size={12} /> Excluir todas
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</span>
-                  <span className={`font-semibold ${l.tipo === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
-                    {fmt(l.valor)}
-                  </span>
-                </div>
-                {(l.status === 'Pendente' || (isAdmin && !l.vendaId)) && (
-                  <div className="flex gap-1 pt-1 flex-wrap">
-                    {l.status === 'Pendente' && (
-                      <Button size="sm" variant="outline" className="flex-1"
-                        disabled={pagando === l.id}
-                        onClick={() => void handlePagar(l)}>
-                        {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
-                      </Button>
-                    )}
-                    {l.status === 'Pendente' && !l.vendaId && (
-                      <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
-                        <Pencil size={13} />
-                      </Button>
-                    )}
-                    {isAdmin && !l.vendaId && (
-                      <Button size="sm" variant="ghost" disabled={excluindo === l.id}
-                        onClick={() => void handleExcluir(l)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        title="Excluir esta parcela">
-                        <Trash2 size={13} />
-                      </Button>
-                    )}
-                    {isAdmin && !l.vendaId && getLancamentosGrupo(lancamentos, l).length > 1 && (
-                      <Button size="sm" variant="ghost" disabled={!!excluindo}
-                        onClick={() => void handleExcluirGrupo(l)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
-                        title="Excluir todo o parcelamento">
-                        <Layers2 size={13} />
-                        <span className="text-[11px]">Grupo</span>
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
 
-          {/* Desktop: table */}
+          {/* ── Desktop ── */}
           <div className="hidden md:block overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
               <thead>
@@ -261,57 +446,105 @@ export default function Lancamentos() {
                 </tr>
               </thead>
               <tbody>
-                {lancamentosFiltrados.map(l => (
-                  <tr key={l.id} className="border-b">
-                    <td className="px-4 py-3 font-medium">{l.descricao}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{l.categoria}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
-                    <td className="px-4 py-3 text-right font-medium">{fmt(l.valor)}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={statusVariant(l.status, l.vencido)}>
-                        {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        {l.status === 'Pendente' && (
-                          <Button size="sm" variant="outline"
-                            disabled={pagando === l.id}
-                            onClick={() => void handlePagar(l)}>
-                            {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
-                          </Button>
-                        )}
-                        {l.status === 'Pendente' && !l.vendaId && (
-                          <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
-                            <Pencil size={14} />
-                          </Button>
-                        )}
-                        {isAdmin && !l.vendaId && (
-                          <Button size="sm" variant="ghost"
-                            disabled={excluindo === l.id}
-                            onClick={() => void handleExcluir(l)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            title="Excluir esta parcela">
-                            <Trash2 size={14} />
-                          </Button>
-                        )}
-                        {isAdmin && !l.vendaId && getLancamentosGrupo(lancamentos, l).length > 1 && (
-                          <Button size="sm" variant="ghost"
-                            disabled={!!excluindo}
-                            onClick={() => void handleExcluirGrupo(l)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
-                            title="Excluir todo o parcelamento">
-                            <Layers2 size={14} />
-                            <span className="text-xs">Grupo</span>
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {renderItems.map(item => {
+                  if (item.kind === 'individual') {
+                    const l = item.lancamento
+                    return (
+                      <tr key={l.id} className="border-b hover:bg-muted/20">
+                        <td className="px-4 py-3 font-medium">{l.descricao}</td>
+                        <td className="px-4 py-3"><Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge></td>
+                        <td className="px-4 py-3 text-muted-foreground">{l.categoria}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
+                        <td className="px-4 py-3 text-right font-medium">{fmt(l.valor)}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={statusVariant(l.status, l.vencido)}>
+                            {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">{renderAcoesParcela(l)}</td>
+                      </tr>
+                    )
+                  }
+
+                  // grupo
+                  const { parcelamentoId, parcelas } = item
+                  const expanded = expandedGroups.has(parcelamentoId)
+                  const desc = grupoDescricao(parcelas)
+                  const stats = grupoStats(parcelas)
+                  const cached = parcelamentosCache[parcelamentoId]
+
+                  return (
+                    <>
+                      {/* linha do cabeçalho do grupo */}
+                      <tr key={parcelamentoId}
+                        className="border-b bg-muted/10 hover:bg-muted/30 cursor-pointer"
+                        onClick={() => void toggleGroup(parcelamentoId)}>
+                        <td className="px-4 py-3" colSpan={2}>
+                          <div className="flex items-center gap-2 font-medium">
+                            {expanded
+                              ? <ChevronDown size={15} className="text-muted-foreground shrink-0" />
+                              : <ChevronRight size={15} className="text-muted-foreground shrink-0" />}
+                            {desc}
+                            <span className="text-xs text-muted-foreground font-normal">
+                              {stats.pagas}/{stats.n} pagas
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">Parcelamento</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">
+                          {fmtDate(parcelas[0].dataVencimento)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium">{fmt(stats.total)}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={grupoStatusVariant(stats)}>
+                            {stats.pagas === stats.n ? 'Quitado' : stats.vencidas > 0 ? 'Vencido' : `${stats.n - stats.pagas}/${stats.n} pend.`}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
+                            {cached?.compraId && (
+                              <Button size="sm" variant="ghost" className="gap-1 text-xs h-7"
+                                onClick={() => navigate(`/compras/${cached.compraId}`)}>
+                                <ExternalLink size={12} /> Ver compra
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <Button size="sm" variant="ghost"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7"
+                                title="Excluir todas as parcelas"
+                                onClick={() => void handleExcluirGrupo(parcelas, desc)}>
+                                <Trash2 size={13} />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* linhas das parcelas (expandido) */}
+                      {expanded && [...parcelas]
+                        .sort((a, b) => (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))
+                        .map(l => (
+                          <tr key={l.id} className="border-b bg-muted/5 hover:bg-muted/20">
+                            <td className="py-2.5" colSpan={2}>
+                              <div className="flex items-center gap-2 pl-10 pr-4">
+                                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                                <span className="font-medium text-sm">{l.descricao}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{l.categoria}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
+                            <td className="px-4 py-2.5 text-right font-medium">{fmt(l.valor)}</td>
+                            <td className="px-4 py-2.5">
+                              <Badge variant={statusVariant(l.status, l.vencido)}>
+                                {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-2.5">{renderAcoesParcela(l)}</td>
+                          </tr>
+                        ))}
+                    </>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -329,6 +562,7 @@ export default function Lancamentos() {
           />
         </DialogContent>
       </Dialog>
+
       <Dialog open={!!editandoLanc} onOpenChange={open => { if (!open) setEditandoLanc(null) }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Editar Lançamento</DialogTitle></DialogHeader>
@@ -336,7 +570,7 @@ export default function Lancamentos() {
             <LancamentoForm
               key={editandoLanc.id}
               defaultValues={{
-                tipo: editandoLanc.tipo as 'Receita' | 'Despesa',
+                tipo: editandoLanc.tipo,
                 descricao: editandoLanc.descricao,
                 valor: editandoLanc.valor.toString(),
                 dataVencimento: editandoLanc.dataVencimento.slice(0, 10),
@@ -349,6 +583,7 @@ export default function Lancamentos() {
           )}
         </DialogContent>
       </Dialog>
+
       {ConfirmDialogNode}
     </div>
   )

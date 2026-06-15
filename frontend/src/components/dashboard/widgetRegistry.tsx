@@ -294,7 +294,7 @@ export function renderWidget(
   }
 }
 
-const WIDGET_CATEGORY: Partial<Record<WidgetId, string>> = {
+export const WIDGET_CATEGORY: Partial<Record<WidgetId, string>> = {
   'kpi-saldo-mes': 'Financeiro', 'kpi-receitas-mes': 'Financeiro', 'kpi-despesas-mes': 'Financeiro',
   'kpi-contas-receber': 'Financeiro', 'kpi-contas-vencidas': 'Financeiro',
   'kpi-contas-pagar-proximas': 'Financeiro', 'kpi-inadimplencia': 'Financeiro',

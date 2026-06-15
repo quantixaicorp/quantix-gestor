@@ -2,6 +2,7 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Financeiro;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Compras;
 using GestorAI.API.Services.Financeiro;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
@@ -20,7 +21,8 @@ public class LancamentoServiceTests
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
             tenantContext);
-        return (db, new LancamentoService(db, tenantContext));
+        var parcelamentoService = new ParcelamentoService(db, tenantContext);
+        return (db, new LancamentoService(db, tenantContext, parcelamentoService));
     }
 
     [Fact]

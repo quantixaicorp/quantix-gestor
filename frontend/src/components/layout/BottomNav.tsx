@@ -15,16 +15,36 @@ import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
 import type { EmpresaInfo } from './AppLayout'
 
-const PRIMARY = [
+interface PrimaryItem {
+  icon: React.ElementType
+  label: string
+  path: string
+  moduleSlug?: string
+}
+
+interface MenuGroupItem {
+  icon: React.ElementType
+  label: string
+  path: string
+}
+
+interface MenuGroup {
+  label: string
+  moduleSlug?: string
+  items: MenuGroupItem[]
+}
+
+const PRIMARY: PrimaryItem[] = [
   { icon: LayoutDashboard, label: 'Início',     path: '/' },
-  { icon: ShoppingCart,    label: 'Nova Venda', path: '/vendas/nova' },
-  { icon: Calendar,        label: 'Agenda',     path: '/agenda' },
-  { icon: Wallet,          label: 'Financeiro', path: '/financeiro' },
+  { icon: ShoppingCart,    label: 'Nova Venda', path: '/vendas/nova',  moduleSlug: 'vendas' },
+  { icon: Calendar,        label: 'Agenda',     path: '/agenda',       moduleSlug: 'agenda' },
+  { icon: Wallet,          label: 'Financeiro', path: '/financeiro',   moduleSlug: 'financeiro' },
 ]
 
-const MENU_GROUPS = [
+const MENU_GROUPS: MenuGroup[] = [
   {
     label: 'Vendas',
+    moduleSlug: 'vendas',
     items: [
       { icon: ShoppingCart,  label: 'Nova Venda',  path: '/vendas/nova' },
       { icon: ClipboardList, label: 'Histórico',   path: '/vendas' },
@@ -33,6 +53,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'Agenda',
+    moduleSlug: 'agenda',
     items: [
       { icon: CalendarDays, label: 'Agenda Geral',  path: '/agenda' },
       { icon: Calendar,     label: 'Agendamentos',  path: '/agendamentos' },
@@ -42,6 +63,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'Estoque',
+    moduleSlug: 'estoque',
     items: [
       { icon: Package,         label: 'Produtos',      path: '/estoque' },
       { icon: ArrowDownToLine, label: 'Movimentações', path: '/estoque/movimentacoes' },
@@ -49,6 +71,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'Financeiro',
+    moduleSlug: 'financeiro',
     items: [
       { icon: TrendingDown, label: 'Contas a Pagar',   path: '/financeiro/pagar' },
       { icon: TrendingUp,   label: 'Contas a Receber', path: '/financeiro/receber' },
@@ -57,6 +80,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'Clientes / Relatórios',
+    moduleSlug: 'clientes',
     items: [
       { icon: Users,    label: 'Clientes',   path: '/clientes' },
       { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
@@ -64,13 +88,21 @@ const MENU_GROUPS = [
   },
   {
     label: 'Compras / Fiscal',
+    moduleSlug: 'compras',
     items: [
-      { icon: Truck,   label: 'Fornecedores',   path: '/fornecedores' },
-      { icon: Receipt, label: 'Notas Fiscais',  path: '/fiscal' },
+      { icon: Truck,   label: 'Fornecedores',  path: '/fornecedores' },
+    ],
+  },
+  {
+    label: 'Fiscal',
+    moduleSlug: 'fiscal',
+    items: [
+      { icon: Receipt, label: 'Notas Fiscais', path: '/fiscal' },
     ],
   },
   {
     label: 'Contratos',
+    moduleSlug: 'contratos',
     items: [
       { icon: FileText,    label: 'Contratos', path: '/contratos' },
       { icon: FileText,    label: 'Templates', path: '/contratos/templates' },
@@ -79,11 +111,12 @@ const MENU_GROUPS = [
   },
   {
     label: 'Configurações',
+    moduleSlug: 'configuracoes',
     items: [
-      { icon: Building2, label: 'Empresa',             path: '/configuracoes/empresa' },
-      { icon: Plug,      label: 'Integrações',         path: '/configuracoes/integracoes' },
-      { icon: Bot,       label: 'Automação',           path: '/configuracoes/automacao' },
-      { icon: CreditCard, label: 'Planos',             path: '/planos' },
+      { icon: Building2, label: 'Empresa',      path: '/configuracoes/empresa' },
+      { icon: Plug,      label: 'Integrações',  path: '/configuracoes/integracoes' },
+      { icon: Bot,       label: 'Automação',    path: '/configuracoes/automacao' },
+      { icon: CreditCard, label: 'Planos',      path: '/planos' },
     ],
   },
 ]
@@ -96,10 +129,17 @@ interface Props {
 export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, enabledModules, modulesLoaded } = useAuth()
   const { resolved, toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+
+  // Show everything when: still loading, OR no modules configured (empty = no restrictions).
+  const isVisible = (slug?: string) =>
+    !modulesLoaded || enabledModules.size === 0 || !slug || enabledModules.has(slug)
+
+  const visiblePrimary = PRIMARY.filter(item => isVisible(item.moduleSlug))
+  const visibleGroups = MENU_GROUPS.filter(g => isVisible(g.moduleSlug))
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
@@ -126,7 +166,7 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
         className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-sidebar border-t border-sidebar-border"
       >
         <div className="flex items-center justify-around h-16 px-2">
-          {PRIMARY.map(({ icon: Icon, label, path }) => (
+          {visiblePrimary.map(({ icon: Icon, label, path }) => (
             <Link
               key={path}
               to={path}
@@ -157,13 +197,11 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
       {/* Full-menu bottom sheet */}
       {menuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setMenuOpen(false)}
           />
 
-          {/* Sheet */}
           <div className="relative bg-background rounded-t-2xl max-h-[82vh] flex flex-col shadow-2xl">
             {/* Handle + header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b shrink-0">
@@ -203,7 +241,7 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
 
             {/* Scrollable menu */}
             <div className="overflow-y-auto flex-1 px-3 py-2">
-              {MENU_GROUPS.map(group => {
+              {visibleGroups.map(group => {
                 const isOpen = openGroups[group.label] !== false
                 return (
                   <div key={group.label} className="mb-1">

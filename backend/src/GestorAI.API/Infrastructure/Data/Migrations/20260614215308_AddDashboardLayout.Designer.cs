@@ -3,17 +3,20 @@ using System;
 using GestorAI.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace GestorAI.API.Migrations
+namespace GestorAI.API.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260614215308_AddDashboardLayout")]
+    partial class AddDashboardLayout
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1607,36 +1610,6 @@ namespace GestorAI.API.Migrations
                         .HasName("pk_profissionais");
 
                     b.ToTable("profissionais", "gestor");
-                });
-
-            modelBuilder.Entity("GestorAI.API.Domain.Entities.RelatorioLayout", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("atualizado_em");
-
-                    b.Property<Guid>("EmpresaId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("empresa_id");
-
-                    b.Property<string>("TabsJson")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("tabs_json");
-
-                    b.HasKey("Id")
-                        .HasName("pk_relatorio_layouts");
-
-                    b.HasIndex("EmpresaId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_relatorio_layouts_empresa_id");
-
-                    b.ToTable("relatorio_layouts", "gestor");
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Venda", b =>

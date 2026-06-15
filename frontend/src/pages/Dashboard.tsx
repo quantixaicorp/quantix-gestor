@@ -1,25 +1,63 @@
 import { useEffect } from 'react'
-import {
-  TrendingUp, ShoppingCart, PackageX,
-  AlertTriangle, ArrowUpCircle, Wallet,
-} from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useDashboard } from '@/hooks/useDashboard'
+import { useDashboardLayout } from '@/hooks/useDashboardLayout'
+import { useModuleDashboard } from '@/hooks/useModuleDashboard'
+import { useDashboardExtras } from '@/hooks/useDashboardExtras'
 import { useAuth } from '@/contexts/AuthContext'
 import { useConfiguracaoEmpresa } from '@/hooks/useConfiguracaoEmpresa'
-import KpiCard from '@/components/dashboard/KpiCard'
-import GraficoVendas from '@/components/dashboard/GraficoVendas'
-import GraficoFluxo from '@/components/dashboard/GraficoFluxo'
-import TopProdutos from '@/components/dashboard/TopProdutos'
+import { groupWidgets, renderWidget } from '@/components/dashboard/widgetRegistry'
+import type { WidgetId } from '@/types/dashboard'
+import type { DashboardResponse, ModulosDashboardResponse, DashboardExtrasResponse } from '@/types/dashboard'
 
-const fmt = (v: number | null | undefined) => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+function KpiGrid({ ids, data, modulos, extras }: {
+  ids: WidgetId[]
+  data: DashboardResponse
+  modulos: ModulosDashboardResponse | null
+  extras: DashboardExtrasResponse | null
+}) {
+  if (!ids.length) return null
+  const cols =
+    ids.length === 1 ? 'grid-cols-1 max-w-xs' :
+    ids.length === 2 ? 'grid-cols-2' :
+    ids.length <= 4 ? 'grid-cols-2 sm:grid-cols-4' :
+    'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+  return (
+    <div className={`grid gap-3 ${cols}`}>
+      {ids.map(id => (
+        <div key={id}>{renderWidget(id, data, modulos, extras)}</div>
+      ))}
+    </div>
+  )
+}
+
+function ChartGrid({ ids, data, modulos, extras }: {
+  ids: WidgetId[]
+  data: DashboardResponse
+  modulos: ModulosDashboardResponse | null
+  extras: DashboardExtrasResponse | null
+}) {
+  if (!ids.length) return null
+  return (
+    <div className={`grid gap-4 ${ids.length === 1 ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+      {ids.map(id => (
+        <div key={id}>{renderWidget(id, data, modulos, extras)}</div>
+      ))}
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const { data, loading, error, load } = useDashboard()
+  const { widgets, load: loadLayout } = useDashboardLayout()
+  const { data: modulos, load: loadModulos } = useModuleDashboard()
+  const { data: extras, load: loadExtras } = useDashboardExtras()
   const { userName } = useAuth()
   const { config, obter } = useConfiguracaoEmpresa()
 
   useEffect(() => { void load() }, [load])
+  useEffect(() => { void loadLayout() }, [loadLayout])
+  useEffect(() => { void loadModulos() }, [loadModulos])
+  useEffect(() => { void loadExtras() }, [loadExtras])
   useEffect(() => { void obter() }, [obter])
 
   if (loading) {
@@ -40,11 +78,11 @@ export default function Dashboard() {
     )
   }
 
-  const { kpis } = data
-  const saldoMes = kpis.totalReceitasMes - kpis.totalDespesasMes
+  const sections = groupWidgets(widgets)
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold">
@@ -59,41 +97,28 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="rounded-xl border bg-card p-4 space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vendas</p>
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard titulo="Vendido hoje" valor={fmt(kpis.totalVendidoHoje)} icon={ShoppingCart} cor="green" />
-          <KpiCard titulo="Vendido no mês" valor={fmt(kpis.totalVendidoMes)} icon={TrendingUp} />
-        </div>
-      </div>
+      {/* Seções */}
+      {sections.map((section) => {
+        const hasContent = section.kpis.length || section.charts.length || section.singles.length
+        if (!hasContent) return null
 
-      <div className="rounded-xl border bg-card p-4 space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Financeiro — mês atual</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <KpiCard titulo="Saldo do mês" valor={fmt(saldoMes)} icon={Wallet}
-            cor={saldoMes >= 0 ? 'green' : 'red'} />
-          <KpiCard titulo="A receber (pendente)" valor={fmt(kpis.contasReceberPendentes)} icon={ArrowUpCircle} cor="green" />
-          <KpiCard titulo="Contas vencidas" valor={fmt(kpis.contasPagarVencidas)} icon={AlertTriangle}
-            cor={kpis.contasPagarVencidas > 0 ? 'red' : 'default'} />
-        </div>
-      </div>
+        return (
+          <div key={section.label} className="rounded-xl border bg-muted/20 p-3 sm:p-5 space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              {section.label}
+            </p>
 
-      {kpis.produtosEstoqueBaixo > 0 && (
-        <div className="flex items-center gap-2 rounded-md border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-950/20">
-          <PackageX size={18} className="text-yellow-600 shrink-0" />
-          <p className="text-sm text-yellow-700 dark:text-yellow-400">
-            <strong>{kpis.produtosEstoqueBaixo} produto(s)</strong> com estoque abaixo do mínimo.{' '}
-            <Link to="/estoque" className="underline font-medium">Ver estoque →</Link>
-          </p>
-        </div>
-      )}
+            <KpiGrid ids={section.kpis} data={data} modulos={modulos} extras={extras} />
+            <ChartGrid ids={section.charts} data={data} modulos={modulos} extras={extras} />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <GraficoVendas dados={data.vendasUltimos7Dias ?? []} />
-        <GraficoFluxo dados={data.fluxoMes ?? []} />
-      </div>
-
-      <TopProdutos dados={data.topProdutos ?? []} />
+            {section.singles.map(id => {
+              const rendered = renderWidget(id, data, modulos, extras)
+              if (!rendered) return null
+              return <div key={id}>{rendered}</div>
+            })}
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -36,6 +36,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<AssinaturaCliente> AssinaturasCliente => Set<AssinaturaCliente>();
     public DbSet<NichoTemplate> NichoTemplates => Set<NichoTemplate>();
     public DbSet<NichoTemplateItem> NichoTemplateItens => Set<NichoTemplateItem>();
+    public DbSet<DashboardLayout> DashboardLayouts => Set<DashboardLayout>();
+    public DbSet<RelatorioLayout> RelatorioLayouts => Set<RelatorioLayout>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -140,5 +142,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .HasForeignKey(i => i.NichoTemplateId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<DashboardLayout>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<DashboardLayout>()
+            .HasIndex(d => d.EmpresaId)
+            .IsUnique();
+
+        modelBuilder.Entity<RelatorioLayout>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<RelatorioLayout>()
+            .HasIndex(r => r.EmpresaId)
+            .IsUnique();
     }
 }

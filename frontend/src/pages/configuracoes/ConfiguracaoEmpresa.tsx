@@ -6,41 +6,62 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/useToast'
 import type { ConfiguracaoEmpresaResponse } from '@/types/fiscal'
 import { useDashboardLayout } from '@/hooks/useDashboardLayout'
-import { ALL_WIDGETS } from '@/components/dashboard/widgetRegistry'
+import { ALL_WIDGETS, WIDGET_CATEGORY } from '@/components/dashboard/widgetRegistry'
 import type { WidgetId } from '@/types/dashboard'
 import { useRelatorioLayout } from '@/hooks/useRelatorioLayout'
 import type { RelatorioTabId } from '@/types/relatorios'
+import { cn } from '@/lib/utils'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
 const ALL_TABS: { id: RelatorioTabId; label: string; description: string }[] = [
-  { id: 'visao-geral', label: 'Visão Geral', description: 'KPIs gerais: faturamento, ticket médio, margem, inadimplência' },
-  { id: 'vendas', label: 'Vendas', description: 'Tendência de vendas, top produtos, forma de pagamento' },
+  { id: 'visao-geral', label: 'Visão Geral', description: 'KPIs gerais, faturamento, ticket médio, margem' },
+  { id: 'vendas', label: 'Vendas', description: 'Tendência, top produtos, forma de pagamento' },
   { id: 'financeiro', label: 'Financeiro', description: 'Fluxo de caixa e despesas por categoria' },
-  { id: 'estoque', label: 'Estoque', description: 'Valor em estoque, giro e produtos sem movimentação' },
-  { id: 'clientes', label: 'Clientes', description: 'Ranking de clientes por faturamento e taxa de atividade' },
-  { id: 'agendamentos', label: 'Agendamentos', description: 'Taxa de conclusão, ocupação e ranking por profissional' },
-  { id: 'contratos', label: 'Contratos', description: 'MRR, contratos ativos e próximos do vencimento' },
-  { id: 'cobrancas', label: 'Cobranças', description: 'Inadimplência, aging e cobranças vencidas' },
-  { id: 'orcamentos', label: 'Orçamentos', description: 'Pipeline, taxa de conversão e status dos orçamentos' },
-  { id: 'assinaturas', label: 'Assinaturas', description: 'MRR, churn e evolução mensal das assinaturas' },
-  { id: 'curva-abc', label: 'Curva ABC', description: 'Classificação A/B/C de produtos e clientes por faturamento' },
+  { id: 'estoque', label: 'Estoque', description: 'Valor em estoque, giro e sem movimentação' },
+  { id: 'clientes', label: 'Clientes', description: 'Ranking por faturamento e atividade' },
+  { id: 'agendamentos', label: 'Agendamentos', description: 'Conclusão, ocupação e por profissional' },
+  { id: 'contratos', label: 'Contratos', description: 'MRR, contratos ativos e vencendo' },
+  { id: 'cobrancas', label: 'Cobranças', description: 'Inadimplência, aging e vencidas' },
+  { id: 'orcamentos', label: 'Orçamentos', description: 'Pipeline, conversão e status' },
+  { id: 'assinaturas', label: 'Assinaturas', description: 'MRR, churn e evolução mensal' },
+  { id: 'curva-abc', label: 'Curva ABC', description: 'Classificação A/B/C de produtos e clientes' },
   { id: 'dre', label: 'DRE', description: 'Demonstração do Resultado do Exercício' },
+]
+
+const WIDGET_CATEGORIES_ORDER = [
+  'Vendas', 'Financeiro', 'Clientes', 'Estoque',
+  'Agendamentos', 'Contratos', 'Cobranças', 'Orçamentos', 'Assinaturas',
 ]
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
-function Section({ title, children, onSave, saving }: {
-  title: string
-  children: React.ReactNode
-  onSave: () => void
-  saving: boolean
-}) {
+const REGIMES = [
+  { value: 1, label: '1 — Simples Nacional' },
+  { value: 2, label: '2 — Simples Nacional — Excesso' },
+  { value: 3, label: '3 — Regime Normal' },
+]
+const AMBIENTES = [
+  { value: 1, label: '1 — Produção' },
+  { value: 2, label: '2 — Homologação (testes)' },
+]
+
+type SettingsPage = 'empresa' | 'visual' | 'dashboard' | 'relatorios' | 'fiscal'
+const NAV: { id: SettingsPage; label: string }[] = [
+  { id: 'empresa', label: 'Empresa' },
+  { id: 'visual', label: 'Visual' },
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'relatorios', label: 'Relatórios' },
+  { id: 'fiscal', label: 'Fiscal' },
+]
+
+function Panel({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4">
-      <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{title}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+        {action}
+      </div>
       {children}
-      <Button onClick={onSave} disabled={saving} size="sm">
-        {saving ? 'Salvando...' : 'Salvar'}
-      </Button>
     </div>
   )
 }
@@ -54,20 +75,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const REGIMES = [
-  { value: 1, label: '1 — Simples Nacional' },
-  { value: 2, label: '2 — Simples Nacional — Excesso' },
-  { value: 3, label: '3 — Regime Normal' },
-]
-const AMBIENTES = [
-  { value: 1, label: '1 — Produção' },
-  { value: 2, label: '2 — Homologação (testes)' },
-]
-
 export default function ConfiguracaoEmpresa() {
+  const [page, setPage] = useState<SettingsPage>('empresa')
+
   const { widgets, load: loadLayout, save: saveLayout } = useDashboardLayout()
   const [savingLayout, setSavingLayout] = useState(false)
   const [localWidgets, setLocalWidgets] = useState<WidgetId[]>([])
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({})
 
   const { tabs, load: loadRelatorioLayout, save: saveRelatorioLayout } = useRelatorioLayout()
   const [savingTabLayout, setSavingTabLayout] = useState(false)
@@ -76,27 +90,22 @@ export default function ConfiguracaoEmpresa() {
   const [loading, setLoading] = useState(true)
   const [temToken, setTemToken] = useState(false)
 
-  // Identificação
   const [ident, setIdent] = useState({ razaoSocial: '', nomeFantasia: '', cnpj: '', inscricaoEstadual: '', inscricaoMunicipal: '', telefone: '', email: '' })
   const [savingIdent, setSavingIdent] = useState(false)
 
-  // Endereço
   const [end, setEnd] = useState({ logradouro: '', numero: '', complemento: '', bairro: '', codigoMunicipio: '', municipio: '', uf: '', cep: '' })
   const [savingEnd, setSavingEnd] = useState(false)
 
-  // Identidade Visual
   const [visual, setVisual] = useState({ slug: '', nomeExibicao: '', corPrimaria: '#2563eb', descricaoPublica: '', logoUrl: '' })
   const [savingVisual, setSavingVisual] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  // NF-e
   const [nfe, setNfe] = useState({ regimeTributario: 1, ambiente: 2, serieNfe: 1, serieNfce: 1 })
   const [focusNfeToken, setFocusNfeToken] = useState('')
   const [savingNfe, setSavingNfe] = useState(false)
 
   useEffect(() => { void loadLayout() }, [loadLayout])
   useEffect(() => { setLocalWidgets(widgets) }, [widgets])
-
   useEffect(() => { void loadRelatorioLayout() }, [loadRelatorioLayout])
   useEffect(() => { setLocalTabs(tabs) }, [tabs])
 
@@ -115,19 +124,15 @@ export default function ConfiguracaoEmpresa() {
 
   async function saveIdent() {
     setSavingIdent(true)
-    try {
-      await api.put('/api/configuracao-empresa', { ...ident })
-      toast.success('Identificação salva!')
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
+    try { await api.put('/api/configuracao-empresa', { ...ident }); toast.success('Identificação salva!') }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setSavingIdent(false) }
   }
 
   async function saveEnd() {
     setSavingEnd(true)
-    try {
-      await api.put('/api/configuracao-empresa', { ...end })
-      toast.success('Endereço salvo!')
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
+    try { await api.put('/api/configuracao-empresa', { ...end }); toast.success('Endereço salvo!') }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setSavingEnd(false) }
   }
 
@@ -174,9 +179,7 @@ export default function ConfiguracaoEmpresa() {
   }
 
   function toggleWidget(id: WidgetId) {
-    setLocalWidgets(prev =>
-      prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]
-    )
+    setLocalWidgets(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id])
   }
 
   function moveWidget(id: WidgetId, dir: -1 | 1) {
@@ -192,9 +195,7 @@ export default function ConfiguracaoEmpresa() {
   }
 
   function toggleTab(id: RelatorioTabId) {
-    setLocalTabs(prev =>
-      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-    )
+    setLocalTabs(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
   }
 
   function moveTab(id: RelatorioTabId, dir: -1 | 1) {
@@ -209,28 +210,18 @@ export default function ConfiguracaoEmpresa() {
     })
   }
 
-  async function saveTabLayoutConfig() {
-    setSavingTabLayout(true)
-    try {
-      await saveRelatorioLayout(localTabs)
-      toast.success('Abas de relatórios salvas!')
-    } catch {
-      toast.error('Erro ao salvar abas')
-    } finally {
-      setSavingTabLayout(false)
-    }
-  }
-
   async function saveLayoutConfig() {
     setSavingLayout(true)
-    try {
-      await saveLayout(localWidgets)
-      toast.success('Layout do dashboard salvo!')
-    } catch {
-      toast.error('Erro ao salvar layout')
-    } finally {
-      setSavingLayout(false)
-    }
+    try { await saveLayout(localWidgets); toast.success('Layout do dashboard salvo!') }
+    catch { toast.error('Erro ao salvar layout') }
+    finally { setSavingLayout(false) }
+  }
+
+  async function saveTabLayoutConfig() {
+    setSavingTabLayout(true)
+    try { await saveRelatorioLayout(localTabs); toast.success('Abas de relatórios salvas!') }
+    catch { toast.error('Erro ao salvar abas') }
+    finally { setSavingTabLayout(false) }
   }
 
   if (loading) return <div className="flex h-48 items-center justify-center text-muted-foreground">Carregando...</div>
@@ -239,249 +230,338 @@ export default function ConfiguracaoEmpresa() {
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-2xl font-bold">Configuração da Empresa</h1>
 
-      {/* Identificação */}
-      <Section title="Identificação" onSave={() => void saveIdent()} saving={savingIdent}>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Razão Social"><Input value={ident.razaoSocial} onChange={e => setIdent(v => ({ ...v, razaoSocial: e.target.value }))} /></Field>
-          <Field label="Nome Fantasia"><Input value={ident.nomeFantasia} onChange={e => setIdent(v => ({ ...v, nomeFantasia: e.target.value }))} /></Field>
-          <Field label="CNPJ"><Input value={ident.cnpj} placeholder="00.000.000/0000-00" onChange={e => setIdent(v => ({ ...v, cnpj: e.target.value }))} /></Field>
-          <Field label="Inscrição Estadual"><Input value={ident.inscricaoEstadual} onChange={e => setIdent(v => ({ ...v, inscricaoEstadual: e.target.value }))} /></Field>
-          <Field label="Inscrição Municipal"><Input value={ident.inscricaoMunicipal} onChange={e => setIdent(v => ({ ...v, inscricaoMunicipal: e.target.value }))} /></Field>
-          <Field label="Telefone"><Input value={ident.telefone} placeholder="(11) 99999-0000" onChange={e => setIdent(v => ({ ...v, telefone: e.target.value }))} /></Field>
-          <Field label="E-mail"><Input type="email" value={ident.email} placeholder="contato@empresa.com" onChange={e => setIdent(v => ({ ...v, email: e.target.value }))} /></Field>
-        </div>
-      </Section>
-
-      {/* Endereço */}
-      <Section title="Endereço" onSave={() => void saveEnd()} saving={savingEnd}>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2"><Field label="Logradouro"><Input value={end.logradouro} onChange={e => setEnd(v => ({ ...v, logradouro: e.target.value }))} /></Field></div>
-          <Field label="Número"><Input value={end.numero} onChange={e => setEnd(v => ({ ...v, numero: e.target.value }))} /></Field>
-          <Field label="Complemento"><Input value={end.complemento} onChange={e => setEnd(v => ({ ...v, complemento: e.target.value }))} /></Field>
-          <Field label="Bairro"><Input value={end.bairro} onChange={e => setEnd(v => ({ ...v, bairro: e.target.value }))} /></Field>
-          <Field label="Código Município (IBGE)"><Input value={end.codigoMunicipio} onChange={e => setEnd(v => ({ ...v, codigoMunicipio: e.target.value }))} /></Field>
-          <Field label="Município"><Input value={end.municipio} onChange={e => setEnd(v => ({ ...v, municipio: e.target.value }))} /></Field>
-          <Field label="UF"><Input value={end.uf} maxLength={2} className="uppercase" onChange={e => setEnd(v => ({ ...v, uf: e.target.value.toUpperCase() }))} /></Field>
-          <Field label="CEP"><Input value={end.cep} placeholder="00000-000" onChange={e => setEnd(v => ({ ...v, cep: e.target.value }))} /></Field>
-        </div>
-      </Section>
-
-      {/* Identidade Visual */}
-      <Section title="Identidade Visual" onSave={() => void saveVisual()} saving={savingVisual}>
-        <Field label="Logo">
-          <div className="flex items-center gap-4">
-            {visual.logoUrl && (
-              <img src={visual.logoUrl.startsWith('http') ? visual.logoUrl : `${API_BASE}${visual.logoUrl}`}
-                alt="Logo" className="h-16 w-16 rounded-full object-cover border" />
+      {/* ── Navegação ─────────────────────────────────────────── */}
+      <div className="flex gap-1 rounded-lg border bg-muted/30 p-1 w-fit flex-wrap">
+        {NAV.map(n => (
+          <button
+            key={n.id}
+            onClick={() => setPage(n.id)}
+            className={cn(
+              'px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+              page === n.id
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
-            <label className="cursor-pointer">
-              <span className="inline-flex items-center px-3 py-1.5 rounded-md border text-sm hover:bg-muted transition-colors">
-                {uploading ? 'Enviando...' : 'Escolher arquivo'}
-              </span>
-              <input type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
-                onChange={e => void handleLogoUpload(e)} disabled={uploading} />
-            </label>
-            <p className="text-xs text-muted-foreground">jpg, png ou webp • máx 2MB</p>
+          >
+            {n.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Empresa ───────────────────────────────────────────── */}
+      {page === 'empresa' && (
+        <div className="space-y-4">
+          <Panel title="Identificação" action={
+            <Button onClick={() => void saveIdent()} disabled={savingIdent} size="sm">
+              {savingIdent ? 'Salvando...' : 'Salvar'}
+            </Button>
+          }>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Razão Social"><Input value={ident.razaoSocial} onChange={e => setIdent(v => ({ ...v, razaoSocial: e.target.value }))} /></Field>
+              <Field label="Nome Fantasia"><Input value={ident.nomeFantasia} onChange={e => setIdent(v => ({ ...v, nomeFantasia: e.target.value }))} /></Field>
+              <Field label="CNPJ"><Input value={ident.cnpj} placeholder="00.000.000/0000-00" onChange={e => setIdent(v => ({ ...v, cnpj: e.target.value }))} /></Field>
+              <Field label="Inscrição Estadual"><Input value={ident.inscricaoEstadual} onChange={e => setIdent(v => ({ ...v, inscricaoEstadual: e.target.value }))} /></Field>
+              <Field label="Inscrição Municipal"><Input value={ident.inscricaoMunicipal} onChange={e => setIdent(v => ({ ...v, inscricaoMunicipal: e.target.value }))} /></Field>
+              <Field label="Telefone"><Input value={ident.telefone} placeholder="(11) 99999-0000" onChange={e => setIdent(v => ({ ...v, telefone: e.target.value }))} /></Field>
+              <div className="col-span-2">
+                <Field label="E-mail"><Input type="email" value={ident.email} placeholder="contato@empresa.com" onChange={e => setIdent(v => ({ ...v, email: e.target.value }))} /></Field>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel title="Endereço" action={
+            <Button onClick={() => void saveEnd()} disabled={savingEnd} size="sm">
+              {savingEnd ? 'Salvando...' : 'Salvar'}
+            </Button>
+          }>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2"><Field label="Logradouro"><Input value={end.logradouro} onChange={e => setEnd(v => ({ ...v, logradouro: e.target.value }))} /></Field></div>
+              <Field label="Número"><Input value={end.numero} onChange={e => setEnd(v => ({ ...v, numero: e.target.value }))} /></Field>
+              <Field label="Complemento"><Input value={end.complemento} onChange={e => setEnd(v => ({ ...v, complemento: e.target.value }))} /></Field>
+              <Field label="Bairro"><Input value={end.bairro} onChange={e => setEnd(v => ({ ...v, bairro: e.target.value }))} /></Field>
+              <Field label="CEP"><Input value={end.cep} placeholder="00000-000" onChange={e => setEnd(v => ({ ...v, cep: e.target.value }))} /></Field>
+              <Field label="Município"><Input value={end.municipio} onChange={e => setEnd(v => ({ ...v, municipio: e.target.value }))} /></Field>
+              <Field label="UF"><Input value={end.uf} maxLength={2} className="uppercase" onChange={e => setEnd(v => ({ ...v, uf: e.target.value.toUpperCase() }))} /></Field>
+              <div className="col-span-2">
+                <Field label="Código Município (IBGE)"><Input value={end.codigoMunicipio} onChange={e => setEnd(v => ({ ...v, codigoMunicipio: e.target.value }))} /></Field>
+              </div>
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* ── Visual ────────────────────────────────────────────── */}
+      {page === 'visual' && (
+        <Panel title="Identidade Visual" action={
+          <Button onClick={() => void saveVisual()} disabled={savingVisual} size="sm">
+            {savingVisual ? 'Salvando...' : 'Salvar'}
+          </Button>
+        }>
+          <Field label="Logo">
+            <div className="flex items-center gap-4">
+              {visual.logoUrl && (
+                <img src={visual.logoUrl.startsWith('http') ? visual.logoUrl : `${API_BASE}${visual.logoUrl}`}
+                  alt="Logo" className="h-16 w-16 rounded-full object-cover border" />
+              )}
+              <label className="cursor-pointer">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-md border text-sm hover:bg-muted transition-colors">
+                  {uploading ? 'Enviando...' : 'Escolher arquivo'}
+                </span>
+                <input type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
+                  onChange={e => void handleLogoUpload(e)} disabled={uploading} />
+              </label>
+              <p className="text-xs text-muted-foreground">jpg, png ou webp • máx 2MB</p>
+            </div>
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Nome de exibição público">
+              <Input value={visual.nomeExibicao} onChange={e => setVisual(v => ({ ...v, nomeExibicao: e.target.value }))} placeholder="Ex: Barbearia do João" />
+            </Field>
+            <Field label="Cor primária">
+              <div className="flex items-center gap-2">
+                <input type="color" value={visual.corPrimaria}
+                  onChange={e => setVisual(v => ({ ...v, corPrimaria: e.target.value }))}
+                  className="h-9 w-12 rounded border cursor-pointer shrink-0" />
+                <Input value={visual.corPrimaria} placeholder="#2563eb" className="max-w-28"
+                  onChange={e => setVisual(v => ({ ...v, corPrimaria: e.target.value }))} />
+              </div>
+            </Field>
           </div>
-        </Field>
-        <Field label="Nome de exibição público">
-          <Input value={visual.nomeExibicao} onChange={e => setVisual(v => ({ ...v, nomeExibicao: e.target.value }))} placeholder="Ex: Barbearia do João" />
-        </Field>
-        <Field label="Cor primária">
-          <div className="flex items-center gap-3">
-            <input type="color" value={visual.corPrimaria}
-              onChange={e => setVisual(v => ({ ...v, corPrimaria: e.target.value }))}
-              className="h-9 w-16 rounded border cursor-pointer" />
-            <Input value={visual.corPrimaria} placeholder="#2563eb" className="max-w-28"
-              onChange={e => setVisual(v => ({ ...v, corPrimaria: e.target.value }))} />
-          </div>
-        </Field>
-        <Field label="Slug (URL pública)">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">/agendar/</span>
-            <Input value={visual.slug} placeholder="minha-empresa"
-              onChange={e => setVisual(v => ({ ...v, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} />
-          </div>
-        </Field>
-        <Field label="Descrição pública">
-          <Input value={visual.descricaoPublica} placeholder="Ex: Barbearia especializada em cortes modernos"
-            onChange={e => setVisual(v => ({ ...v, descricaoPublica: e.target.value }))} />
-        </Field>
-        {/* Preview */}
-        <div>
-          <p className="text-xs text-muted-foreground mb-2">Pré-visualização</p>
-          <div className="rounded-lg overflow-hidden" style={{ backgroundColor: visual.corPrimaria }}>
-            <div className="px-4 py-4 flex items-center gap-3">
-              {visual.logoUrl
-                ? <img src={visual.logoUrl.startsWith('http') ? visual.logoUrl : `${API_BASE}${visual.logoUrl}`}
-                    alt="Logo" className="h-10 w-10 rounded-full object-cover border-2 border-white/30" />
-                : <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-white text-lg font-bold">
-                    {(visual.nomeExibicao?.[0] ?? 'E').toUpperCase()}
-                  </div>
-              }
-              <div>
-                <p className="text-white font-bold text-base leading-tight">{visual.nomeExibicao || 'Nome da empresa'}</p>
-                {visual.descricaoPublica && <p className="text-white/80 text-xs">{visual.descricaoPublica}</p>}
+
+          <Field label="Slug (URL pública)">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">/agendar/</span>
+              <Input value={visual.slug} placeholder="minha-empresa"
+                onChange={e => setVisual(v => ({ ...v, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} />
+            </div>
+          </Field>
+
+          <Field label="Descrição pública">
+            <Input value={visual.descricaoPublica} placeholder="Ex: Barbearia especializada em cortes modernos"
+              onChange={e => setVisual(v => ({ ...v, descricaoPublica: e.target.value }))} />
+          </Field>
+
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Pré-visualização</p>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: visual.corPrimaria }}>
+              <div className="px-4 py-4 flex items-center gap-3">
+                {visual.logoUrl
+                  ? <img src={visual.logoUrl.startsWith('http') ? visual.logoUrl : `${API_BASE}${visual.logoUrl}`}
+                      alt="Logo" className="h-10 w-10 rounded-full object-cover border-2 border-white/30" />
+                  : <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+                      {(visual.nomeExibicao?.[0] ?? 'E').toUpperCase()}
+                    </div>
+                }
+                <div>
+                  <p className="text-white font-bold text-base leading-tight">{visual.nomeExibicao || 'Nome da empresa'}</p>
+                  {visual.descricaoPublica && <p className="text-white/80 text-xs">{visual.descricaoPublica}</p>}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Section>
+        </Panel>
+      )}
 
-      {/* Dashboard */}
-      <div className="rounded-xl border bg-card p-5 space-y-4">
-        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Widgets do Dashboard</p>
-        <p className="text-xs text-muted-foreground">Ative ou desative widgets e reordene arrastando com as setas.</p>
+      {/* ── Dashboard ─────────────────────────────────────────── */}
+      {page === 'dashboard' && (
+        <div className="space-y-4">
+          {/* Widgets ativos (ordenados) */}
+          <Panel title={`Widgets ativos — ${localWidgets.length} selecionados`} action={
+            <Button onClick={() => void saveLayoutConfig()} disabled={savingLayout} size="sm">
+              {savingLayout ? 'Salvando...' : 'Salvar ordem'}
+            </Button>
+          }>
+            {localWidgets.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">Nenhum widget ativo. Adicione widgets abaixo.</p>
+            ) : (
+              <div className="space-y-1">
+                {localWidgets.map((id, idx) => {
+                  const meta = ALL_WIDGETS.find(w => w.id === id)
+                  if (!meta) return null
+                  const cat = WIDGET_CATEGORY[id] ?? 'Geral'
+                  return (
+                    <div key={id} className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+                      <span className="text-xs text-muted-foreground w-5 text-center shrink-0">{idx + 1}</span>
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button onClick={() => moveWidget(id, -1)} disabled={idx === 0}
+                          className="text-muted-foreground hover:text-foreground disabled:opacity-25 leading-none text-xs" aria-label="subir">▲</button>
+                        <button onClick={() => moveWidget(id, 1)} disabled={idx === localWidgets.length - 1}
+                          className="text-muted-foreground hover:text-foreground disabled:opacity-25 leading-none text-xs" aria-label="descer">▼</button>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight truncate">{meta.label}</p>
+                      </div>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">{cat}</span>
+                      <button onClick={() => toggleWidget(id)} className="text-xs text-red-500 hover:text-red-700 shrink-0">✕</button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Panel>
 
-        {/* Active widgets (ordered) */}
-        {localWidgets.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Ativos (em ordem)</p>
-            {localWidgets.map((id, idx) => {
-              const meta = ALL_WIDGETS.find(w => w.id === id)
-              if (!meta) return null
+          {/* Widgets disponíveis por categoria */}
+          <div className="rounded-xl border bg-card p-5 space-y-3">
+            <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Adicionar widgets</p>
+            <p className="text-xs text-muted-foreground">Clique em uma categoria para expandir e adicionar widgets.</p>
+
+            {WIDGET_CATEGORIES_ORDER.map(cat => {
+              const catWidgets = ALL_WIDGETS.filter(w => (WIDGET_CATEGORY[w.id] ?? 'Geral') === cat)
+              const available = catWidgets.filter(w => !localWidgets.includes(w.id))
+              const activeCount = catWidgets.length - available.length
+              const isOpen = openCats[cat] ?? false
+
               return (
-                <div key={id} className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => moveWidget(id, -1)}
-                      disabled={idx === 0}
-                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
-                      aria-label="mover para cima"
-                    >▲</button>
-                    <button
-                      onClick={() => moveWidget(id, 1)}
-                      disabled={idx === localWidgets.length - 1}
-                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
-                      aria-label="mover para baixo"
-                    >▼</button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{meta.label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
-                  </div>
+                <div key={cat} className="rounded-lg border overflow-hidden">
                   <button
-                    onClick={() => toggleWidget(id)}
-                    className="text-xs text-red-500 hover:text-red-700 shrink-0"
-                  >Remover</button>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Inactive widgets */}
-        {ALL_WIDGETS.filter(w => !localWidgets.includes(w.id)).length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Disponíveis</p>
-            {ALL_WIDGETS.filter(w => !localWidgets.includes(w.id)).map(meta => (
-              <div key={meta.id} className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 opacity-60">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{meta.label}</p>
-                  <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
-                </div>
-                <button
-                  onClick={() => toggleWidget(meta.id)}
-                  className="text-xs text-primary hover:underline shrink-0"
-                >Adicionar</button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <Button onClick={() => void saveLayoutConfig()} disabled={savingLayout} size="sm">
-          {savingLayout ? 'Salvando...' : 'Salvar layout'}
-        </Button>
-      </div>
-
-      {/* Abas de Relatórios */}
-      <div className="rounded-xl border bg-card p-5 space-y-4">
-        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Abas de Relatórios</p>
-        <p className="text-xs text-muted-foreground">Ative, desative e reordene as abas que aparecem no módulo de Relatórios.</p>
-
-        {localTabs.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Ativas (em ordem)</p>
-            {localTabs.map((id, idx) => {
-              const meta = ALL_TABS.find(t => t.id === id)
-              if (!meta) return null
-              return (
-                <div key={id} className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
-                  <div className="flex flex-col gap-0.5">
-                    <button onClick={() => moveTab(id, -1)} disabled={idx === 0}
-                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
-                      aria-label="mover para cima">▲</button>
-                    <button onClick={() => moveTab(id, 1)} disabled={idx === localTabs.length - 1}
-                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
-                      aria-label="mover para baixo">▼</button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{meta.label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
-                  </div>
-                  <button onClick={() => toggleTab(id)} className="text-xs text-red-500 hover:text-red-700 shrink-0">
-                    Remover
+                    onClick={() => setOpenCats(p => ({ ...p, [cat]: !p[cat] }))}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-muted/20 hover:bg-muted/40 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      <span className="text-sm font-medium">{cat}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {activeCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                          {activeCount} ativo{activeCount > 1 ? 's' : ''}
+                        </span>
+                      )}
+                      <span>{available.length} disponíve{available.length === 1 ? 'l' : 'is'}</span>
+                    </div>
                   </button>
+
+                  {isOpen && (
+                    <div className="divide-y">
+                      {catWidgets.map(meta => {
+                        const active = localWidgets.includes(meta.id)
+                        return (
+                          <div key={meta.id} className={cn(
+                            'flex items-center gap-3 px-4 py-2.5',
+                            active ? 'bg-primary/5' : 'hover:bg-muted/20'
+                          )}>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn('text-sm font-medium leading-tight', active && 'text-primary')}>{meta.label}</p>
+                              <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
+                            </div>
+                            {active ? (
+                              <button onClick={() => toggleWidget(meta.id)}
+                                className="text-xs text-red-500 hover:text-red-700 shrink-0 px-2 py-1 rounded border border-red-200 hover:border-red-400 transition-colors">
+                                Remover
+                              </button>
+                            ) : (
+                              <button onClick={() => toggleWidget(meta.id)}
+                                className="text-xs text-primary hover:text-primary/80 shrink-0 px-2 py-1 rounded border border-primary/30 hover:border-primary transition-colors">
+                                Adicionar
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
-        )}
-
-        {ALL_TABS.filter(t => !localTabs.includes(t.id)).length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Disponíveis</p>
-            {ALL_TABS.filter(t => !localTabs.includes(t.id)).map(meta => (
-              <div key={meta.id} className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 opacity-60">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{meta.label}</p>
-                  <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
-                </div>
-                <button onClick={() => toggleTab(meta.id)} className="text-xs text-primary hover:underline shrink-0">
-                  Adicionar
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <Button onClick={() => void saveTabLayoutConfig()} disabled={savingTabLayout} size="sm">
-          {savingTabLayout ? 'Salvando...' : 'Salvar abas'}
-        </Button>
-      </div>
-
-      {/* NF-e */}
-      <Section title="Emissão de Notas Fiscais" onSave={() => void saveNfe()} saving={savingNfe}>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Regime Tributário">
-            <select value={nfe.regimeTributario}
-              onChange={e => setNfe(v => ({ ...v, regimeTributario: Number(e.target.value) }))}
-              className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
-              {REGIMES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Ambiente">
-            <select value={nfe.ambiente}
-              onChange={e => setNfe(v => ({ ...v, ambiente: Number(e.target.value) }))}
-              className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
-              {AMBIENTES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Série NF-e">
-            <Input type="number" min="1" value={nfe.serieNfe}
-              onChange={e => setNfe(v => ({ ...v, serieNfe: Number(e.target.value) }))} />
-          </Field>
-          <Field label="Série NFC-e">
-            <Input type="number" min="1" value={nfe.serieNfce}
-              onChange={e => setNfe(v => ({ ...v, serieNfce: Number(e.target.value) }))} />
-          </Field>
         </div>
-        <Field label={`Token Focus NF-e${temToken ? ' (configurado)' : ''}`}>
-          <Input type="password" value={focusNfeToken} onChange={e => setFocusNfeToken(e.target.value)}
-            placeholder={temToken ? 'Deixe em branco para manter o atual' : 'Cole o token da API Focus NFe'} />
-        </Field>
-      </Section>
+      )}
 
+      {/* ── Relatórios ────────────────────────────────────────── */}
+      {page === 'relatorios' && (
+        <div className="space-y-4">
+          {/* Abas ativas (ordenadas) */}
+          <Panel title={`Abas ativas — ${localTabs.length} de ${ALL_TABS.length}`} action={
+            <Button onClick={() => void saveTabLayoutConfig()} disabled={savingTabLayout} size="sm">
+              {savingTabLayout ? 'Salvando...' : 'Salvar ordem'}
+            </Button>
+          }>
+            {localTabs.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">Nenhuma aba ativa. Ative abas abaixo.</p>
+            ) : (
+              <div className="space-y-1">
+                {localTabs.map((id, idx) => {
+                  const meta = ALL_TABS.find(t => t.id === id)
+                  if (!meta) return null
+                  return (
+                    <div key={id} className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+                      <span className="text-xs text-muted-foreground w-5 text-center shrink-0">{idx + 1}</span>
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button onClick={() => moveTab(id, -1)} disabled={idx === 0}
+                          className="text-muted-foreground hover:text-foreground disabled:opacity-25 leading-none text-xs" aria-label="subir">▲</button>
+                        <button onClick={() => moveTab(id, 1)} disabled={idx === localTabs.length - 1}
+                          className="text-muted-foreground hover:text-foreground disabled:opacity-25 leading-none text-xs" aria-label="descer">▼</button>
+                      </div>
+                      <p className="flex-1 text-sm font-medium">{meta.label}</p>
+                      <button onClick={() => toggleTab(id)} className="text-xs text-red-500 hover:text-red-700 shrink-0">✕</button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Panel>
+
+          {/* Todas as abas disponíveis — grid */}
+          {ALL_TABS.filter(t => !localTabs.includes(t.id)).length > 0 && (
+            <div className="rounded-xl border bg-card p-5 space-y-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Abas disponíveis</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {ALL_TABS.filter(t => !localTabs.includes(t.id)).map(meta => (
+                  <div key={meta.id} className="flex items-start gap-3 rounded-lg border border-dashed p-3 hover:bg-muted/20 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{meta.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{meta.description}</p>
+                    </div>
+                    <button onClick={() => toggleTab(meta.id)}
+                      className="text-xs text-primary hover:text-primary/80 shrink-0 px-2 py-1 rounded border border-primary/30 hover:border-primary transition-colors mt-0.5">
+                      Ativar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Fiscal ────────────────────────────────────────────── */}
+      {page === 'fiscal' && (
+        <Panel title="Emissão de Notas Fiscais" action={
+          <Button onClick={() => void saveNfe()} disabled={savingNfe} size="sm">
+            {savingNfe ? 'Salvando...' : 'Salvar'}
+          </Button>
+        }>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Regime Tributário">
+              <select value={nfe.regimeTributario}
+                onChange={e => setNfe(v => ({ ...v, regimeTributario: Number(e.target.value) }))}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
+                {REGIMES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </Field>
+            <Field label="Ambiente">
+              <select value={nfe.ambiente}
+                onChange={e => setNfe(v => ({ ...v, ambiente: Number(e.target.value) }))}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
+                {AMBIENTES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+              </select>
+            </Field>
+            <Field label="Série NF-e">
+              <Input type="number" min="1" value={nfe.serieNfe}
+                onChange={e => setNfe(v => ({ ...v, serieNfe: Number(e.target.value) }))} />
+            </Field>
+            <Field label="Série NFC-e">
+              <Input type="number" min="1" value={nfe.serieNfce}
+                onChange={e => setNfe(v => ({ ...v, serieNfce: Number(e.target.value) }))} />
+            </Field>
+          </div>
+          <Field label={`Token Focus NF-e${temToken ? ' (já configurado)' : ''}`}>
+            <Input type="password" value={focusNfeToken} onChange={e => setFocusNfeToken(e.target.value)}
+              placeholder={temToken ? 'Deixe em branco para manter o atual' : 'Cole o token da API Focus NFe'} />
+          </Field>
+        </Panel>
+      )}
     </div>
   )
 }

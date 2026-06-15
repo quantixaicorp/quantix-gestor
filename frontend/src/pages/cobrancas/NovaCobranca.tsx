@@ -38,7 +38,7 @@ export default function NovaCobranca() {
   const inputClass = 'w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm'
 
   return (
-    <div className="flex flex-col gap-6 max-w-md">
+    <div className="space-y-4 max-w-md">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={() => navigate('/cobrancas')}>
           <ChevronLeft className="h-5 w-5" />
@@ -50,45 +50,47 @@ export default function NovaCobranca() {
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Cliente *</label>
-          <select value={clienteId} onChange={e => setClienteId(e.target.value)} required className={inputClass}>
-            <option value="">Selecione...</option>
-            {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Referência *</label>
-          <input value={referencia} onChange={e => setReferencia(e.target.value)} required
-            className={inputClass} placeholder="Ex: Mensalidade Jun/2026" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+      <div className="rounded-xl border bg-card p-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Valor (R$) *</label>
-            <input type="number" step="0.01" min="0" value={valor}
-              onChange={e => setValor(e.target.value)} required className={inputClass} />
+            <label className="block text-sm font-medium mb-1">Cliente *</label>
+            <select value={clienteId} onChange={e => setClienteId(e.target.value)} required className={inputClass}>
+              <option value="">Selecione...</option>
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Vencimento *</label>
-            <input type="date" value={dataVencimento}
-              onChange={e => setDataVencimento(e.target.value)} required className={inputClass} />
+            <label className="block text-sm font-medium mb-1">Referência *</label>
+            <input value={referencia} onChange={e => setReferencia(e.target.value)} required
+              className={inputClass} placeholder="Ex: Mensalidade Jun/2026" />
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Observações</label>
-          <textarea value={observacao} onChange={e => setObservacao(e.target.value)}
-            rows={2} className={inputClass} />
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Valor (R$) *</label>
+              <input type="number" step="0.01" min="0" value={valor}
+                onChange={e => setValor(e.target.value)} required className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Vencimento *</label>
+              <input type="date" value={dataVencimento}
+                onChange={e => setDataVencimento(e.target.value)} required className={inputClass} />
+            </div>
+          </div>
 
-        <div className="flex gap-2 pt-2">
-          <Button type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Criar Cobrança'}</Button>
-          <Button type="button" variant="outline" onClick={() => navigate('/cobrancas')}>Cancelar</Button>
-        </div>
-      </form>
+          <div>
+            <label className="block text-sm font-medium mb-1">Observações</label>
+            <textarea value={observacao} onChange={e => setObservacao(e.target.value)}
+              rows={2} className={inputClass} />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Criar Cobrança'}</Button>
+            <Button type="button" variant="outline" onClick={() => navigate('/cobrancas')}>Cancelar</Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

@@ -70,65 +70,71 @@ export default function NovoContrato() {
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className={labelClass}>Cliente *</label>
-          <select value={clienteId} onChange={e => setClienteId(e.target.value)} required className={inputClass}>
-            <option value="">Selecione...</option>
-            {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className={labelClass}>Título *</label>
-          <input value={titulo} onChange={e => setTitulo(e.target.value)} required className={inputClass} placeholder="Ex: Plano Mensal de Manutenção" />
-        </div>
-
-        <div>
-          <label className={labelClass}>Objeto do Contrato *</label>
-          <textarea value={objeto} onChange={e => setObjeto(e.target.value)} required rows={4} className={inputClass} placeholder="Descrição detalhada do que o contrato cobre..." />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identificação</p>
           <div>
-            <label className={labelClass}>Tipo de Cobrança</label>
-            <select value={tipoCobranca} onChange={e => setTipoCobranca(e.target.value as TipoCobranca)} className={inputClass}>
-              <option value="Recorrente">Recorrente</option>
-              <option value="ParceladoPrazoFixo">Parcelado (Prazo Fixo)</option>
+            <label className={labelClass}>Cliente *</label>
+            <select value={clienteId} onChange={e => setClienteId(e.target.value)} required className={inputClass}>
+              <option value="">Selecione...</option>
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select>
           </div>
           <div>
-            <label className={labelClass}>Periodicidade</label>
-            <select value={periodicidade} onChange={e => setPeriodicidade(e.target.value as Periodicidade)} className={inputClass}>
-              {['Mensal', 'Trimestral', 'Semestral', 'Anual'].map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+            <label className={labelClass}>Título *</label>
+            <input value={titulo} onChange={e => setTitulo(e.target.value)} required className={inputClass} placeholder="Ex: Plano Mensal de Manutenção" />
+          </div>
+          <div>
+            <label className={labelClass}>Objeto do Contrato *</label>
+            <textarea value={objeto} onChange={e => setObjeto(e.target.value)} required rows={4} className={inputClass} placeholder="Descrição detalhada do que o contrato cobre..." />
+          </div>
+          <div>
+            <label className={labelClass}>Observações</label>
+            <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={2} className={inputClass} />
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className={labelClass}>Valor (R$) *</label>
-            <input type="number" step="0.01" min="0" value={valor} onChange={e => setValor(e.target.value)} required className={inputClass} />
+        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cobrança</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Tipo de Cobrança</label>
+              <select value={tipoCobranca} onChange={e => setTipoCobranca(e.target.value as TipoCobranca)} className={inputClass}>
+                <option value="Recorrente">Recorrente</option>
+                <option value="ParceladoPrazoFixo">Parcelado (Prazo Fixo)</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Periodicidade</label>
+              <select value={periodicidade} onChange={e => setPeriodicidade(e.target.value as Periodicidade)} className={inputClass}>
+                {['Mensal', 'Trimestral', 'Semestral', 'Anual'].map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Data Início *</label>
-            <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} required className={inputClass} />
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>Valor (R$) *</label>
+              <input type="number" step="0.01" min="0" value={valor} onChange={e => setValor(e.target.value)} required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Data Início *</label>
+              <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Data Fim {tipoCobranca === 'ParceladoPrazoFixo' ? '*' : ''}</label>
+              <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
+                required={tipoCobranca === 'ParceladoPrazoFixo'} className={inputClass} />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Data Fim {tipoCobranca === 'ParceladoPrazoFixo' ? '*' : ''}</label>
-            <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
-              required={tipoCobranca === 'ParceladoPrazoFixo'} className={inputClass} />
+          <div className="w-32">
+            <label className={labelClass}>Dia Vencimento (1-28) *</label>
+            <input type="number" min={1} max={28} value={diaVencimento} onChange={e => setDiaVencimento(e.target.value)} required className={inputClass} />
           </div>
         </div>
 
-        <div className="w-32">
-          <label className={labelClass}>Dia Vencimento (1-28) *</label>
-          <input type="number" min={1} max={28} value={diaVencimento} onChange={e => setDiaVencimento(e.target.value)} required className={inputClass} />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className={labelClass + ' mb-0'}>Itens</label>
+        <div className="rounded-xl border bg-card p-6 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Itens</p>
             <Button type="button" variant="outline" size="sm" onClick={addItem}>
               <Plus className="h-3 w-3 mr-1" /> Adicionar
             </Button>
@@ -159,12 +165,7 @@ export default function NovoContrato() {
           </div>
         </div>
 
-        <div>
-          <label className={labelClass}>Observações</label>
-          <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={2} className={inputClass} />
-        </div>
-
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2">
           <Button type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Criar Contrato'}</Button>
           <Button type="button" variant="outline" onClick={() => navigate('/contratos')}>Cancelar</Button>
         </div>

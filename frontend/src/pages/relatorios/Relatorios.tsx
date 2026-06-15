@@ -1,21 +1,38 @@
 import { useState, useEffect } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 import { useRelatorios } from '@/hooks/useRelatorios'
+import { useRelatorioLayout } from '@/hooks/useRelatorioLayout'
 import { Button } from '@/components/ui/button'
 import FiltrosPeriodo from '@/components/relatorios/FiltrosPeriodo'
 import AbaVisaoGeral from '@/components/relatorios/AbaVisaoGeral'
 import AbaVendas from '@/components/relatorios/AbaVendas'
 import AbaFinanceiro from '@/components/relatorios/AbaFinanceiro'
 import AbaEstoque from '@/components/relatorios/AbaEstoque'
+import AbaClientes from '@/components/relatorios/AbaClientes'
+import AbaAgendamentos from '@/components/relatorios/AbaAgendamentos'
+import AbaContratos from '@/components/relatorios/AbaContratos'
+import AbaCobrancas from '@/components/relatorios/AbaCobrancas'
+import AbaOrcamentos from '@/components/relatorios/AbaOrcamentos'
+import AbaAssinaturas from '@/components/relatorios/AbaAssinaturas'
+import AbaCurvaABC from '@/components/relatorios/AbaCurvaABC'
+import AbaDRE from '@/components/relatorios/AbaDRE'
 import { cn } from '@/lib/utils'
+import type { RelatorioTabId } from '@/types/relatorios'
 
-type Aba = 'visao-geral' | 'vendas' | 'financeiro' | 'estoque'
-const ABAS: { id: Aba; label: string }[] = [
-  { id: 'visao-geral', label: 'Visão Geral' },
-  { id: 'vendas', label: 'Vendas' },
-  { id: 'financeiro', label: 'Financeiro' },
-  { id: 'estoque', label: 'Estoque' },
-]
+const TAB_META: Record<RelatorioTabId, string> = {
+  'visao-geral': 'Visão Geral',
+  'vendas': 'Vendas',
+  'financeiro': 'Financeiro',
+  'estoque': 'Estoque',
+  'clientes': 'Clientes',
+  'agendamentos': 'Agendamentos',
+  'contratos': 'Contratos',
+  'cobrancas': 'Cobranças',
+  'orcamentos': 'Orçamentos',
+  'assinaturas': 'Assinaturas',
+  'curva-abc': 'Curva ABC',
+  'dre': 'DRE',
+}
 
 function exportarCSV(nome: string, linhas: string[][]) {
   const csv = linhas.map(l => l.join(';')).join('\n')
@@ -27,80 +44,181 @@ function exportarCSV(nome: string, linhas: string[][]) {
 }
 
 export default function Relatorios() {
-  const { kpis, vendas, financeiro, estoque, loading, loadKpis } = useRelatorios()
-  const [aba, setAba] = useState<Aba>('visao-geral')
-  const [periodo, setPeriodo] = useState({ de: '', ate: '' })
+  const { data, loadingTab, setPeriodo, loadTab } = useRelatorios()
+  const { tabs, load: loadLayout } = useRelatorioLayout()
+  const [aba, setAba] = useState<RelatorioTabId | null>(null)
+  const [periodo, setPeriodoState] = useState({ de: '', ate: '' })
 
   const hoje = new Date().toISOString().split('T')[0]
   const inicioMes = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
 
+  useEffect(() => { void loadLayout() }, [loadLayout])
+
+  // Quando o layout carrega, ativa a primeira aba e carrega os dados
   useEffect(() => {
-    void loadKpis(inicioMes, hoje)
-    setPeriodo({ de: inicioMes, ate: hoje })
-  }, [])
+    if (tabs.length > 0 && aba === null) {
+      const primeiraAba = tabs[0]
+      setAba(primeiraAba)
+      setPeriodo(inicioMes, hoje)
+      setPeriodoState({ de: inicioMes, ate: hoje })
+      void loadTab(primeiraAba)
+    }
+  }, [tabs])
 
   function handlePeriodo(de: string, ate: string) {
-    setPeriodo({ de, ate })
-    void loadKpis(de, ate)
+    setPeriodoState({ de, ate })
+    setPeriodo(de, ate)
+    if (aba) void loadTab(aba)
+  }
+
+  function handleAba(nova: RelatorioTabId) {
+    setAba(nova)
+    void loadTab(nova)
   }
 
   function handleExportar() {
-    if (aba === 'vendas' && vendas) {
+    if (!aba) return
+    if (aba === 'vendas' && data.vendas) {
       exportarCSV(`relatorio-vendas-${periodo.de}-${periodo.ate}`, [
         ['Data', 'Total', 'Quantidade'],
-        ...vendas.tendencia.map(d => [d.data, d.total.toString(), d.quantidade.toString()]),
+        ...data.vendas.tendencia.map(d => [d.data, d.total.toString(), d.quantidade.toString()]),
       ])
-    } else if (aba === 'financeiro' && financeiro) {
+    } else if (aba === 'financeiro' && data.financeiro) {
       exportarCSV(`relatorio-financeiro-${periodo.de}-${periodo.ate}`, [
         ['Data', 'Receitas', 'Despesas', 'Saldo'],
-        ...financeiro.fluxoPorDia.map(d => [d.data, d.receitas.toString(), d.despesas.toString(), d.saldo.toString()]),
+        ...data.financeiro.fluxoPorDia.map(d => [d.data, d.receitas.toString(), d.despesas.toString(), d.saldo.toString()]),
+      ])
+    } else if (aba === 'clientes' && data.clientes) {
+      exportarCSV(`relatorio-clientes-${periodo.de}-${periodo.ate}`, [
+        ['#', 'Cliente', 'WhatsApp', 'Compras', 'Total'],
+        ...data.clientes.topClientes.map((c, i) => [
+          String(i + 1), c.nome, c.whatsapp, c.compras.toString(), c.totalGasto.toString(),
+        ]),
+      ])
+    } else if (aba === 'agendamentos' && data.agendamentos) {
+      exportarCSV(`relatorio-agendamentos-${periodo.de}-${periodo.ate}`, [
+        ['Profissional', 'Total', 'Concluídos', 'Taxa de Conclusão'],
+        ...data.agendamentos.porProfissional.map(p => [
+          p.profissional, p.total.toString(), p.concluidos.toString(), `${p.taxaConclusao.toFixed(1)}%`,
+        ]),
+      ])
+    } else if (aba === 'contratos' && data.contratos) {
+      exportarCSV(`relatorio-contratos`, [
+        ['Título', 'Cliente', 'Valor', 'Periodicidade', 'Vencimento', 'Status'],
+        ...data.contratos.contratos.map(c => [
+          c.titulo, c.clienteNome, c.valor.toString(), c.periodicidade, c.dataFim ?? '—', c.status,
+        ]),
+      ])
+    } else if (aba === 'cobrancas' && data.cobrancas) {
+      exportarCSV(`relatorio-cobrancas`, [
+        ['Referência', 'Cliente', 'Valor', 'Vencimento', 'Status', 'Dias Atraso'],
+        ...data.cobrancas.cobrancas.map(c => [
+          c.referencia, c.clienteNome, c.valor.toString(), c.dataVencimento, c.status, c.diasAtraso.toString(),
+        ]),
+      ])
+    } else if (aba === 'orcamentos' && data.orcamentos) {
+      exportarCSV(`relatorio-orcamentos-${periodo.de}-${periodo.ate}`, [
+        ['#', 'Título', 'Cliente', 'Total', 'Status', 'Criado em'],
+        ...data.orcamentos.orcamentos.map(o => [
+          String(o.numero), o.titulo, o.clienteNome, o.valorTotal.toString(), o.status, o.criadoEm,
+        ]),
+      ])
+    } else if (aba === 'assinaturas' && data.assinaturas) {
+      exportarCSV(`relatorio-assinaturas-${periodo.de}-${periodo.ate}`, [
+        ['Cliente', 'Plano', 'Valor', 'Periodicidade', 'Início', 'Renovação', 'Status'],
+        ...data.assinaturas.assinaturas.map(a => [
+          a.clienteNome, a.plano, a.valor.toString(), a.periodicidade, a.dataInicio, a.dataRenovacao, a.status,
+        ]),
+      ])
+    } else if (aba === 'curva-abc' && data['curva-abc']) {
+      exportarCSV(`curva-abc-${periodo.de}-${periodo.ate}`, [
+        ['Posição', 'Produto', 'Qtd Vendida', 'Total', '% Individual', '% Acumulado', 'Classe'],
+        ...data['curva-abc'].produtos.itens.map((i, idx) => [
+          String(idx + 1), i.nome, i.quantidade.toString(),
+          i.total.toString(), i.percentual.toFixed(2), i.percentualAcumulado.toFixed(2), i.classe,
+        ]),
+      ])
+    } else if (aba === 'dre' && data.dre) {
+      const d = data.dre
+      exportarCSV(`dre-${periodo.de}-${periodo.ate}`, [
+        ['Descrição', 'Valor'],
+        ['Receita Bruta Vendas', d.receitaBrutaVendas.toString()],
+        ['Outras Receitas', d.outrasReceitas.toString()],
+        ['Descontos Concedidos', `-${d.totalDescontos}`],
+        ['Receita Líquida', d.receitaLiquida.toString()],
+        ['CMV', `-${d.cmv}`],
+        ['Lucro Bruto', d.lucroBruto.toString()],
+        ['Margem Bruta (%)', d.margemBruta.toString()],
+        ...d.despesasOperacionais.map(x => [x.descricao, `-${x.valor}`]),
+        ['Total Despesas Operacionais', `-${d.totalDespesasOperacionais}`],
+        ['Resultado Operacional', d.resultadoOperacional.toString()],
+        ['Margem Operacional (%)', d.margemOperacional.toString()],
       ])
     } else {
       window.print()
     }
   }
 
+  const isLoading = loadingTab === aba
+
   return (
     <div className="space-y-4 print:space-y-2">
       <div className="flex items-center justify-between print:hidden">
         <h1 className="text-2xl font-bold">Relatórios</h1>
-        <Button variant="outline" onClick={handleExportar}>
+        <Button variant="outline" onClick={handleExportar} disabled={isLoading}>
           <Download size={16} className="mr-2" />
-          Exportar {aba === 'vendas' || aba === 'financeiro' ? 'CSV' : 'PDF'}
+          Exportar CSV
         </Button>
       </div>
 
-      <div className="print:hidden">
+      <div className="rounded-xl border bg-card p-4 space-y-3 print:hidden">
         <FiltrosPeriodo onChange={handlePeriodo} />
-      </div>
-
-      <div className="flex gap-1 border-b print:hidden">
-        {ABAS.map(a => (
-          <button key={a.id}
-            onClick={() => setAba(a.id)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-              aba === a.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}>
-            {a.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <p className="text-muted-foreground">Carregando relatórios...</p>
+        <div className="flex gap-1 border-b overflow-x-auto">
+          {tabs.map(id => (
+            <button
+              key={id}
+              onClick={() => handleAba(id)}
+              className={cn(
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                aba === id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {TAB_META[id] ?? id}
+              {loadingTab === id && (
+                <Loader2 size={12} className="inline ml-1.5 animate-spin" />
+              )}
+            </button>
+          ))}
         </div>
-      ) : (
-        <>
-          {aba === 'visao-geral' && kpis && <AbaVisaoGeral kpis={kpis} />}
-          {aba === 'vendas' && vendas && <AbaVendas dados={vendas} />}
-          {aba === 'financeiro' && financeiro && <AbaFinanceiro dados={financeiro} />}
-          {aba === 'estoque' && estoque && <AbaEstoque dados={estoque} />}
-        </>
-      )}
+      </div>
+
+      <div className="min-h-48">
+        {isLoading ? (
+          <div className="flex h-48 items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 size={18} className="animate-spin" />
+            <span>Carregando...</span>
+          </div>
+        ) : (
+          <>
+            {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} />}
+            {aba === 'vendas' && data.vendas && <AbaVendas dados={data.vendas} />}
+            {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} />}
+            {aba === 'estoque' && data.estoque && <AbaEstoque dados={data.estoque} />}
+            {aba === 'clientes' && data.clientes && <AbaClientes dados={data.clientes} />}
+            {aba === 'agendamentos' && data.agendamentos && <AbaAgendamentos dados={data.agendamentos} />}
+            {aba === 'contratos' && data.contratos && <AbaContratos dados={data.contratos} />}
+            {aba === 'cobrancas' && data.cobrancas && <AbaCobrancas dados={data.cobrancas} />}
+            {aba === 'orcamentos' && data.orcamentos && <AbaOrcamentos dados={data.orcamentos} />}
+            {aba === 'assinaturas' && data.assinaturas && <AbaAssinaturas dados={data.assinaturas} />}
+            {aba === 'curva-abc' && data['curva-abc'] && (
+              <AbaCurvaABC produtos={data['curva-abc'].produtos} clientes={data['curva-abc'].clientes} />
+            )}
+            {aba === 'dre' && data.dre && <AbaDRE dados={data.dre} />}
+          </>
+        )}
+      </div>
     </div>
   )
 }

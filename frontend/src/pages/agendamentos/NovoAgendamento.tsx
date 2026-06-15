@@ -100,9 +100,10 @@ export default function NovoAgendamento() {
   }
 
   return (
-    <div className="max-w-lg space-y-5">
+    <div className="max-w-lg space-y-4">
       <h1 className="text-2xl font-bold">Novo Agendamento</h1>
 
+      <div className="rounded-xl border bg-card p-6 space-y-5">
       <div className="space-y-2">
         <Label>Profissional *</Label>
         <select
@@ -201,6 +202,7 @@ export default function NovoAgendamento() {
           {saving ? '...' : 'Agendar'}
         </Button>
         <Button variant="ghost" onClick={() => navigate('/agendamentos')}>Cancelar</Button>
+      </div>
       </div>
     </div>
   )

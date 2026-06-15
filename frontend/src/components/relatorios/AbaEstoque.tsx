@@ -1,74 +1,82 @@
+import { Package, PackageX, TrendingDown } from 'lucide-react'
+import KpiCard from '@/components/dashboard/KpiCard'
 import type { RelatorioEstoqueResponse } from '@/types/relatorios'
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const fmtN = (v: number) => v.toLocaleString('pt-BR')
 
 interface Props { dados: RelatorioEstoqueResponse }
 
 export default function AbaEstoque({ dados }: Props) {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Valor total em estoque', valor: fmt(dados.valorTotalEstoque), destaque: false },
-          { label: 'Produtos ativos', valor: dados.produtosAtivos.toString(), destaque: false },
-          { label: 'Com estoque baixo', valor: dados.produtosEstoqueBaixo.toString(), destaque: dados.produtosEstoqueBaixo > 0 },
-        ].map(item => (
-          <div key={item.label} className="rounded-lg border bg-card p-4">
-            <p className="text-sm text-muted-foreground">{item.label}</p>
-            <p className={`text-xl font-bold ${item.destaque ? 'text-red-600' : ''}`}>{item.valor}</p>
-          </div>
-        ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <KpiCard titulo="Valor em estoque" valor={fmt(dados.valorTotalEstoque)} icon={Package} />
+        <KpiCard titulo="Produtos ativos" valor={fmtN(dados.produtosAtivos)} icon={Package} />
+        <KpiCard titulo="Com estoque baixo" valor={fmtN(dados.produtosEstoqueBaixo)} icon={PackageX}
+          cor={dados.produtosEstoqueBaixo > 0 ? 'red' : 'default'} />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm font-medium mb-3">Giro de estoque (período)</p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 text-left font-medium text-muted-foreground">Produto</th>
-                <th className="py-2 text-right font-medium text-muted-foreground">Saídas</th>
-                <th className="py-2 text-right font-medium text-muted-foreground">Entradas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dados.giroProdutos.map((p, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-2">{p.nome}</td>
-                  <td className="py-2 text-right">{p.saidas}</td>
-                  <td className="py-2 text-right">{p.entradas}</td>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="px-4 py-3 border-b bg-muted/30">
+            <p className="text-sm font-semibold">Giro de Estoque no Período</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Produto</th>
+                  <th className="text-right px-4 py-2 font-medium text-muted-foreground">Saídas</th>
+                  <th className="text-right px-4 py-2 font-medium text-muted-foreground hidden sm:table-cell">Entradas</th>
                 </tr>
-              ))}
-              {dados.giroProdutos.length === 0 && (
-                <tr><td colSpan={3} className="py-6 text-center text-muted-foreground">Sem movimentações no período</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {dados.giroProdutos.map((p, i) => (
+                  <tr key={i} className="border-t hover:bg-muted/30">
+                    <td className="px-4 py-2">{p.nome}</td>
+                    <td className="px-4 py-2 text-right font-medium">{fmtN(p.saidas)}</td>
+                    <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmtN(p.entradas)}</td>
+                  </tr>
+                ))}
+                {!dados.giroProdutos.length && (
+                  <tr><td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">Sem movimentações no período</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm font-medium mb-3">Produtos sem movimentação</p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 text-left font-medium text-muted-foreground">Produto</th>
-                <th className="py-2 text-right font-medium text-muted-foreground">Estoque</th>
-                <th className="py-2 text-right font-medium text-muted-foreground">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dados.semMovimentacao.map((p, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-2">{p.nome}</td>
-                  <td className="py-2 text-right">{p.estoqueAtual}</td>
-                  <td className="py-2 text-right">{fmt(p.valorEmEstoque)}</td>
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="px-4 py-3 border-b bg-muted/30">
+            <p className="text-sm font-semibold flex items-center gap-1.5">
+              <TrendingDown size={14} className="text-muted-foreground" />
+              Sem Movimentação
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Produto</th>
+                  <th className="text-right px-4 py-2 font-medium text-muted-foreground">Qtd</th>
+                  <th className="text-right px-4 py-2 font-medium text-muted-foreground hidden sm:table-cell">Valor</th>
                 </tr>
-              ))}
-              {dados.semMovimentacao.length === 0 && (
-                <tr><td colSpan={3} className="py-6 text-center text-muted-foreground">Todos os produtos tiveram movimentação</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {dados.semMovimentacao.map((p, i) => (
+                  <tr key={i} className="border-t hover:bg-muted/30">
+                    <td className="px-4 py-2">{p.nome}</td>
+                    <td className="px-4 py-2 text-right">{fmtN(p.estoqueAtual)}</td>
+                    <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmt(p.valorEmEstoque)}</td>
+                  </tr>
+                ))}
+                {!dados.semMovimentacao.length && (
+                  <tr><td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">Todos os produtos tiveram movimentação</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

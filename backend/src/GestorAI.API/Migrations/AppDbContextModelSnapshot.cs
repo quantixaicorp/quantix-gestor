@@ -813,6 +813,36 @@ namespace GestorAI.API.Migrations
                     b.ToTable("ContratoTemplateItens", "gestor");
                 });
 
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.DashboardLayout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("WidgetsJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("widgets_json");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dashboard_layouts");
+
+                    b.HasIndex("EmpresaId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dashboard_layouts_empresa_id");
+
+                    b.ToTable("dashboard_layouts", "gestor");
+                });
+
             modelBuilder.Entity("GestorAI.API.Domain.Entities.DisponibilidadeSemanal", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1577,6 +1607,36 @@ namespace GestorAI.API.Migrations
                         .HasName("pk_profissionais");
 
                     b.ToTable("profissionais", "gestor");
+                });
+
+            modelBuilder.Entity("GestorAI.API.Domain.Entities.RelatorioLayout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("TabsJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tabs_json");
+
+                    b.HasKey("Id")
+                        .HasName("pk_relatorio_layouts");
+
+                    b.HasIndex("EmpresaId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_relatorio_layouts_empresa_id");
+
+                    b.ToTable("relatorio_layouts", "gestor");
                 });
 
             modelBuilder.Entity("GestorAI.API.Domain.Entities.Venda", b =>

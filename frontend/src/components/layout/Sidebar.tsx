@@ -47,6 +47,7 @@ interface MenuItem {
 
 interface MenuGroup {
   label: string
+  moduleSlug?: string  // undefined = always visible (e.g. Dashboard)
   items: MenuItem[]
 }
 
@@ -59,6 +60,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Vendas',
+    moduleSlug: 'vendas',
     items: [
       { icon: ShoppingCart,  label: 'Nova Venda',  path: '/vendas/nova' },
       { icon: ClipboardList, label: 'Histórico',   path: '/vendas' },
@@ -67,6 +69,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Agenda',
+    moduleSlug: 'agenda',
     items: [
       { icon: CalendarDays, label: 'Agenda Geral',   path: '/agenda' },
       { icon: Calendar,     label: 'Agendamentos',   path: '/agendamentos' },
@@ -76,6 +79,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Estoque',
+    moduleSlug: 'estoque',
     items: [
       { icon: Package,         label: 'Produtos',       path: '/estoque' },
       { icon: ArrowDownToLine, label: 'Movimentações',  path: '/estoque/movimentacoes' },
@@ -83,6 +87,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Financeiro',
+    moduleSlug: 'financeiro',
     items: [
       { icon: Wallet,       label: 'Lançamentos',      path: '/financeiro' },
       { icon: TrendingDown, label: 'Contas a Pagar',   path: '/financeiro/pagar' },
@@ -92,6 +97,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Clientes / Relatórios',
+    moduleSlug: 'clientes',
     items: [
       { icon: Users,    label: 'Clientes',   path: '/clientes' },
       { icon: BarChart3, label: 'Relatórios', path: '/relatorios' },
@@ -99,18 +105,21 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Compras',
+    moduleSlug: 'compras',
     items: [
       { icon: Truck, label: 'Fornecedores', path: '/fornecedores' },
     ],
   },
   {
     label: 'Fiscal',
+    moduleSlug: 'fiscal',
     items: [
       { icon: Receipt, label: 'Notas Fiscais', path: '/fiscal' },
     ],
   },
   {
     label: 'Contratos',
+    moduleSlug: 'contratos',
     items: [
       { icon: FileText,    label: 'Contratos', path: '/contratos' },
       { icon: FileText,    label: 'Templates', path: '/contratos/templates' },
@@ -119,14 +128,16 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Configurações',
+    moduleSlug: 'configuracoes',
     items: [
-      { icon: Building2, label: 'Empresa', path: '/configuracoes/empresa' },
-      { icon: LinkIcon, label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
-      { icon: Plug, label: 'Integrações', path: '/configuracoes/integracoes' },
+      { icon: Building2, label: 'Empresa',              path: '/configuracoes/empresa' },
+      { icon: LinkIcon,  label: 'Agendamento Online',   path: '/configuracoes/agendamento-publico' },
+      { icon: Plug,      label: 'Integrações',          path: '/configuracoes/integracoes' },
     ],
   },
   {
     label: 'Automação',
+    moduleSlug: 'automacao',
     items: [
       { icon: Bot, label: 'Configurações', path: '/configuracoes/automacao' },
       { icon: Bot, label: 'Log de envios',  path: '/automacao/log' },
@@ -134,6 +145,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Assinaturas',
+    moduleSlug: 'assinaturas',
     items: [
       { icon: CreditCard, label: 'Planos', path: '/planos' },
     ],
@@ -152,9 +164,15 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose, empresaConfig, sidebarStyle }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, enabledModules, modulesLoaded } = useAuth()
   const { resolved, toggleTheme } = useTheme()
   const empresa = empresaConfig
+
+  // Show all groups when: still loading, OR no modules configured (empty = no restrictions).
+  // Only filter when the company has at least one module configured.
+  const visibleGroups = (!modulesLoaded || enabledModules.size === 0)
+    ? menuGroups
+    : menuGroups.filter(g => !g.moduleSlug || enabledModules.has(g.moduleSlug))
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
@@ -187,7 +205,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   const isMobileDrawer = mobileOpen
   const showLabels = isMobileDrawer || !collapsed
 
-
   const logoSrc = empresa?.logoUrl
     ? (empresa.logoUrl.startsWith('http') ? empresa.logoUrl : `${API_BASE}${empresa.logoUrl}`)
     : null
@@ -200,11 +217,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       className={cn(
         'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border flex flex-col',
         'transition-[width,transform] duration-300 overflow-hidden',
-        // Mobile: hidden (BottomNav handles navigation)
         'hidden md:flex',
-        // Tablet md–lg: always icon-only (w-16)
         'md:w-16',
-        // Desktop lg+: respects collapsed state
         collapsed ? 'lg:w-16' : 'lg:w-64',
       )}
     >
@@ -260,7 +274,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {menuGroups.map((group, gi) => {
+        {visibleGroups.map((group, gi) => {
           const isOpen = !showLabels || openGroups[group.label] !== false
           return (
             <div key={group.label} className={cn(gi > 0 && 'mt-1')}>
@@ -312,7 +326,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
 
       {/* GestorAI brand + Logout */}
       <div className="shrink-0 border-t border-sidebar-border p-2 space-y-1">
-        {/* Brand badge */}
         <div className={cn(
           'flex items-center gap-2 px-2 py-1.5 rounded-lg',
           !showLabels && 'justify-center px-0'

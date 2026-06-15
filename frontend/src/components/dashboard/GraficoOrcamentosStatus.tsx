@@ -28,7 +28,7 @@ export default function GraficoOrcamentosStatus({ dados }: Props) {
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis dataKey="status" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip formatter={(v: unknown, name: unknown) => [name === 'count' ? v : fmt(v), name === 'count' ? 'Qtd' : 'Valor']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+          <Tooltip formatter={(v: unknown, name: unknown) => [name === 'count' ? String(v as number) : fmt(v), name === 'count' ? 'Qtd' : 'Valor']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
           <Bar dataKey="count" name="count" radius={[4, 4, 0, 0]}>
             {dados.map((d, i) => <Cell key={i} fill={STATUS_COLOR[d.status] ?? `hsl(${i * 50} 70% 50%)`} />)}
           </Bar>

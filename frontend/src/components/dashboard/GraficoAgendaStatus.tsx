@@ -27,7 +27,7 @@ export default function GraficoAgendaStatus({ dados }: Props) {
           <Pie data={data} cx="50%" cy="50%" outerRadius={75} dataKey="value">
             {data.map((d, i) => <Cell key={i} fill={STATUS_COLOR[d.name] ?? `hsl(${i * 60} 70% 50%)`} />)}
           </Pie>
-          <Tooltip formatter={(v: unknown) => [v, 'Qtd']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+          <Tooltip formatter={(v: unknown) => [String(v as number), 'Qtd']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
           <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
         </PieChart>
       </ResponsiveContainer>

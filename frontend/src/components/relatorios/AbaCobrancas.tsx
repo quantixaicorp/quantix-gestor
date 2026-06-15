@@ -1,4 +1,4 @@
-import { CreditCard, AlertTriangle, Percent, DollarSign } from 'lucide-react'
+import { CreditCard, AlertTriangle, Percent } from 'lucide-react'
 import KpiCard from '@/components/dashboard/KpiCard'
 import type { RelatorioCobrancasResponse } from '@/types/relatorios'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -29,7 +29,7 @@ export default function AbaCobrancas({ dados }: Props) {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis type="number" tick={{ fontSize: 11 }} />
               <YAxis dataKey="faixa" type="category" tick={{ fontSize: 11 }} width={90} />
-              <Tooltip formatter={(v: unknown, name: unknown) => [name === 'count' ? v : fmt(v as number), name === 'count' ? 'Qtd' : 'Total']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+              <Tooltip formatter={(v: unknown, name: unknown) => [name === 'count' ? String(v as number) : fmt(v as number), name === 'count' ? 'Qtd' : 'Total']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
               <Bar dataKey="count" name="count" fill="hsl(0 72% 51%)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>

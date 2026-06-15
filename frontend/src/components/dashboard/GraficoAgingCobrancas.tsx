@@ -21,7 +21,7 @@ export default function GraficoAgingCobrancas({ dados }: Props) {
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `${v}`} />
           <YAxis dataKey="faixa" type="category" tick={{ fontSize: 11 }} width={90} />
-          <Tooltip formatter={(v: unknown, name: unknown) => [name === 'count' ? v : fmt(v), name === 'count' ? 'Qtd' : 'Total']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+          <Tooltip formatter={(v: unknown, name: unknown) => [name === 'count' ? String(v as number) : fmt(v), name === 'count' ? 'Qtd' : 'Total']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
           <Bar dataKey="count" name="count" fill={COLORS[0]} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>

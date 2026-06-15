@@ -16,4 +16,7 @@ public class Lancamento : ITenantEntity
     public Guid? VendaId { get; set; }
     public string? Observacao { get; set; }
     public Venda? Venda { get; set; }
+    public Guid? ParcelamentoId { get; set; }
+    public int? NumeroParcela { get; set; }
+    public Parcelamento? Parcelamento { get; set; }
 }

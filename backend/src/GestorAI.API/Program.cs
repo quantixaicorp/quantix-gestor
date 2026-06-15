@@ -168,6 +168,7 @@ app.MapContratoTemplates();
 app.MapCobrancas();
 app.MapAutomacao();
 app.MapWebhooks();
+app.MapDeployHook();
 app.MapPublicBooking();
 app.MapPlanosAssinatura();
 app.MapAssinaturas();

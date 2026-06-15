@@ -1,3 +1,5 @@
+using GestorAI.API.Domain.Enums;
+
 namespace GestorAI.API.Domain.Entities;
 
 public class Fornecedor : ITenantEntity
@@ -15,4 +17,9 @@ public class Fornecedor : ITenantEntity
     public string? Contato { get; set; }
     public string? Observacoes { get; set; }
     public DateTime DataCadastro { get; set; } = DateTime.UtcNow;
+    public string? RazaoSocial { get; set; }
+    public string? NomeFantasia { get; set; }
+    public string? InscricaoEstadual { get; set; }
+    public string? Whatsapp { get; set; }
+    public StatusFornecedor Status { get; set; } = StatusFornecedor.Ativo;
 }

@@ -1,4 +1,5 @@
 using GestorAI.API.Domain.Entities;
+using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Fornecedores;
 using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Shared.Exceptions;
@@ -44,6 +45,10 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
             Cep = req.Cep,
             Contato = req.Contato,
             Observacoes = req.Observacoes,
+            RazaoSocial = req.RazaoSocial,
+            NomeFantasia = req.NomeFantasia,
+            InscricaoEstadual = req.InscricaoEstadual,
+            Whatsapp = req.Whatsapp,
         };
         db.Fornecedores.Add(fornecedor);
         await db.SaveChangesAsync(ct);
@@ -65,6 +70,12 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
         fornecedor.Cep = req.Cep;
         fornecedor.Contato = req.Contato;
         fornecedor.Observacoes = req.Observacoes;
+        fornecedor.RazaoSocial = req.RazaoSocial;
+        fornecedor.NomeFantasia = req.NomeFantasia;
+        fornecedor.InscricaoEstadual = req.InscricaoEstadual;
+        fornecedor.Whatsapp = req.Whatsapp;
+        if (Enum.TryParse<StatusFornecedor>(req.Status, out var status))
+            fornecedor.Status = status;
 
         await db.SaveChangesAsync(ct);
         return ToResponse(fornecedor);
@@ -81,5 +92,7 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
     private static FornecedorResponse ToResponse(Fornecedor f) =>
         new(f.Id, f.Nome, f.CnpjCpf, f.Telefone, f.Email,
             f.Logradouro, f.Cidade, f.Uf, f.Cep,
-            f.Contato, f.Observacoes, f.DataCadastro);
+            f.Contato, f.Observacoes, f.DataCadastro,
+            f.RazaoSocial, f.NomeFantasia, f.InscricaoEstadual,
+            f.Whatsapp, f.Status.ToString());
 }

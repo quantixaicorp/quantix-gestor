@@ -1,4 +1,3 @@
-// backend/src/GestorAI.API/Infrastructure/Data/AppDbContext.cs
 using GestorAI.API.Domain.Entities;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +37,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<NichoTemplateItem> NichoTemplateItens => Set<NichoTemplateItem>();
     public DbSet<DashboardLayout> DashboardLayouts => Set<DashboardLayout>();
     public DbSet<RelatorioLayout> RelatorioLayouts => Set<RelatorioLayout>();
+    public DbSet<Parcelamento> Parcelamentos => Set<Parcelamento>();
+    public DbSet<Compra> Compras => Set<Compra>();
+    public DbSet<ItemCompra> ItensCompra => Set<ItemCompra>();
+    public DbSet<PedidoCompra> PedidosCompra => Set<PedidoCompra>();
+    public DbSet<ItemPedidoCompra> ItensPedidoCompra => Set<ItemPedidoCompra>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -151,5 +155,57 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
         modelBuilder.Entity<RelatorioLayout>()
             .HasIndex(r => r.EmpresaId)
             .IsUnique();
+
+        // Compras
+        modelBuilder.Entity<Parcelamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<Compra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<ItemCompra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<PedidoCompra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<ItemPedidoCompra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+
+        modelBuilder.Entity<ItemCompra>().ToTable("ItensCompra");
+        modelBuilder.Entity<ItemPedidoCompra>().ToTable("ItensPedidoCompra");
+
+        modelBuilder.Entity<Lancamento>()
+            .HasOne(l => l.Parcelamento)
+            .WithMany(p => p.Parcelas)
+            .HasForeignKey(l => l.ParcelamentoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Compra>()
+            .HasOne(c => c.Fornecedor)
+            .WithMany()
+            .HasForeignKey(c => c.FornecedorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Compra>()
+            .HasOne(c => c.PedidoCompra)
+            .WithMany()
+            .HasForeignKey(c => c.PedidoCompraId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Compra>()
+            .HasMany(c => c.Itens)
+            .WithOne(i => i.Compra)
+            .HasForeignKey(i => i.CompraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Parcelamento>()
+            .HasOne(p => p.Compra)
+            .WithOne(c => c.Parcelamento)
+            .HasForeignKey<Parcelamento>(p => p.CompraId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PedidoCompra>()
+            .HasOne(p => p.Fornecedor)
+            .WithMany()
+            .HasForeignKey(p => p.FornecedorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PedidoCompra>()
+            .HasMany(p => p.Itens)
+            .WithOne(i => i.PedidoCompra)
+            .HasForeignKey(i => i.PedidoCompraId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -8,11 +8,15 @@ import type { CreateFornecedorRequest } from '@/types/fornecedores'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório').max(200),
+  razaoSocial: z.string().max(200).optional().or(z.literal('')),
+  nomeFantasia: z.string().max(200).optional().or(z.literal('')),
   cnpjCpf: z.string()
     .refine(v => !v || /^\d{11}$|^\d{14}$/.test(v), 'Informe 11 dígitos (CPF) ou 14 dígitos (CNPJ)')
     .optional()
     .or(z.literal('')),
+  inscricaoEstadual: z.string().max(30).optional().or(z.literal('')),
   telefone: z.string().max(20).optional().or(z.literal('')),
+  whatsapp: z.string().max(20).optional().or(z.literal('')),
   email: z.string().email('E-mail inválido').optional().or(z.literal('')),
   contato: z.string().max(200).optional().or(z.literal('')),
   logradouro: z.string().max(300).optional().or(z.literal('')),
@@ -37,8 +41,19 @@ export default function FornecedorForm({ defaultValues, onSubmit, onCancel }: Pr
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-2">
         <Label>Nome *</Label>
-        <Input {...register('nome')} placeholder="Razão social ou nome" />
+        <Input {...register('nome')} placeholder="Nome de exibição" />
         {errors.nome && <p className="text-xs text-destructive">{errors.nome.message}</p>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-2">
+          <Label>Razão Social</Label>
+          <Input {...register('razaoSocial')} placeholder="Razão social" />
+        </div>
+        <div className="grid gap-2">
+          <Label>Nome Fantasia</Label>
+          <Input {...register('nomeFantasia')} placeholder="Nome fantasia" />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -48,8 +63,19 @@ export default function FornecedorForm({ defaultValues, onSubmit, onCancel }: Pr
           {errors.cnpjCpf && <p className="text-xs text-destructive">{errors.cnpjCpf.message}</p>}
         </div>
         <div className="grid gap-2">
+          <Label>Inscrição Estadual</Label>
+          <Input {...register('inscricaoEstadual')} placeholder="IE" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-2">
           <Label>Telefone</Label>
           <Input {...register('telefone')} placeholder="11999990000" />
+        </div>
+        <div className="grid gap-2">
+          <Label>WhatsApp</Label>
+          <Input {...register('whatsapp')} placeholder="11999990000" />
         </div>
       </div>
 

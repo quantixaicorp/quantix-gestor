@@ -2,13 +2,14 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Financeiro;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Compras;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.Financeiro;
 
-public class LancamentoService(AppDbContext db, TenantContext tenantContext)
+public class LancamentoService(AppDbContext db, TenantContext tenantContext, ParcelamentoService parcelamentoService)
 {
     public async Task<List<LancamentoResponse>> ListAsync(
         string? tipo, string? status, DateTime? vencimentoAte, CancellationToken ct)
@@ -81,6 +82,11 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
 
         lancamento.Status = StatusLancamento.Pago;
         lancamento.DataPagamento = req.DataPagamento;
+
+        await db.SaveChangesAsync(ct);
+
+        if (lancamento.ParcelamentoId.HasValue)
+            await parcelamentoService.RecalcularStatusAsync(lancamento.ParcelamentoId.Value, ct);
 
         await db.SaveChangesAsync(ct);
         if (tx is not null) await tx.CommitAsync(ct);
@@ -201,5 +207,6 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext)
         l.Id, l.Tipo.ToString(), l.Descricao, l.Valor,
         l.DataVencimento, l.DataPagamento, l.Status.ToString(),
         l.Categoria, l.VendaId, l.Observacao,
-        l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < hoje);
+        l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < hoje,
+        l.ParcelamentoId, l.NumeroParcela);
 }

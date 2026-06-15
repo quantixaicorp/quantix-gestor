@@ -12,7 +12,12 @@ public record FornecedorResponse(
     string? Cep,
     string? Contato,
     string? Observacoes,
-    DateTime DataCadastro);
+    DateTime DataCadastro,
+    string? RazaoSocial = null,
+    string? NomeFantasia = null,
+    string? InscricaoEstadual = null,
+    string? Whatsapp = null,
+    string Status = "Ativo");
 
 public record CreateFornecedorRequest(
     string Nome,
@@ -24,7 +29,11 @@ public record CreateFornecedorRequest(
     string? Uf,
     string? Cep,
     string? Contato,
-    string? Observacoes);
+    string? Observacoes,
+    string? RazaoSocial = null,
+    string? NomeFantasia = null,
+    string? InscricaoEstadual = null,
+    string? Whatsapp = null);
 
 public record UpdateFornecedorRequest(
     string Nome,
@@ -36,4 +45,9 @@ public record UpdateFornecedorRequest(
     string? Uf,
     string? Cep,
     string? Contato,
-    string? Observacoes);
+    string? Observacoes,
+    string? RazaoSocial = null,
+    string? NomeFantasia = null,
+    string? InscricaoEstadual = null,
+    string? Whatsapp = null,
+    string Status = "Ativo");

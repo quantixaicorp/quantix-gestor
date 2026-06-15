@@ -11,7 +11,9 @@ public record LancamentoResponse(
     string Categoria,
     Guid? VendaId,
     string? Observacao,
-    bool Vencido);
+    bool Vencido,
+    Guid? ParcelamentoId = null,
+    int? NumeroParcela = null);
 
 public record CreateLancamentoRequest(
     string Tipo,

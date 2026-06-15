@@ -40,16 +40,18 @@ export default function FiltrosPeriodo({ onChange }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      {PERIODOS.map(p => (
-        <Button key={p.label} size="sm" variant="outline" onClick={() => aplicar(p.dias)}>
-          {p.label}
-        </Button>
-      ))}
-      <div className="flex items-center gap-2 ml-2">
-        <Input type="date" value={de} onChange={e => setDe(e.target.value)} className="h-8 w-36" />
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="flex flex-wrap gap-2">
+        {PERIODOS.map(p => (
+          <Button key={p.label} size="sm" variant="outline" onClick={() => aplicar(p.dias)}>
+            {p.label}
+          </Button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input type="date" value={de} onChange={e => setDe(e.target.value)} className="h-8 w-full max-w-[9rem]" />
         <span className="text-muted-foreground text-sm">até</span>
-        <Input type="date" value={ate} onChange={e => setAte(e.target.value)} className="h-8 w-36" />
+        <Input type="date" value={ate} onChange={e => setAte(e.target.value)} className="h-8 w-full max-w-[9rem]" />
         <Button size="sm" onClick={() => onChange(de, ate)}>Filtrar</Button>
       </div>
     </div>

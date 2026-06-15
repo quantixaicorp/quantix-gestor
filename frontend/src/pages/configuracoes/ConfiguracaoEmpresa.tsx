@@ -5,6 +5,26 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/useToast'
 import type { ConfiguracaoEmpresaResponse } from '@/types/fiscal'
+import { useDashboardLayout } from '@/hooks/useDashboardLayout'
+import { ALL_WIDGETS } from '@/components/dashboard/widgetRegistry'
+import type { WidgetId } from '@/types/dashboard'
+import { useRelatorioLayout } from '@/hooks/useRelatorioLayout'
+import type { RelatorioTabId } from '@/types/relatorios'
+
+const ALL_TABS: { id: RelatorioTabId; label: string; description: string }[] = [
+  { id: 'visao-geral', label: 'Visão Geral', description: 'KPIs gerais: faturamento, ticket médio, margem, inadimplência' },
+  { id: 'vendas', label: 'Vendas', description: 'Tendência de vendas, top produtos, forma de pagamento' },
+  { id: 'financeiro', label: 'Financeiro', description: 'Fluxo de caixa e despesas por categoria' },
+  { id: 'estoque', label: 'Estoque', description: 'Valor em estoque, giro e produtos sem movimentação' },
+  { id: 'clientes', label: 'Clientes', description: 'Ranking de clientes por faturamento e taxa de atividade' },
+  { id: 'agendamentos', label: 'Agendamentos', description: 'Taxa de conclusão, ocupação e ranking por profissional' },
+  { id: 'contratos', label: 'Contratos', description: 'MRR, contratos ativos e próximos do vencimento' },
+  { id: 'cobrancas', label: 'Cobranças', description: 'Inadimplência, aging e cobranças vencidas' },
+  { id: 'orcamentos', label: 'Orçamentos', description: 'Pipeline, taxa de conversão e status dos orçamentos' },
+  { id: 'assinaturas', label: 'Assinaturas', description: 'MRR, churn e evolução mensal das assinaturas' },
+  { id: 'curva-abc', label: 'Curva ABC', description: 'Classificação A/B/C de produtos e clientes por faturamento' },
+  { id: 'dre', label: 'DRE', description: 'Demonstração do Resultado do Exercício' },
+]
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
@@ -45,6 +65,14 @@ const AMBIENTES = [
 ]
 
 export default function ConfiguracaoEmpresa() {
+  const { widgets, load: loadLayout, save: saveLayout } = useDashboardLayout()
+  const [savingLayout, setSavingLayout] = useState(false)
+  const [localWidgets, setLocalWidgets] = useState<WidgetId[]>([])
+
+  const { tabs, load: loadRelatorioLayout, save: saveRelatorioLayout } = useRelatorioLayout()
+  const [savingTabLayout, setSavingTabLayout] = useState(false)
+  const [localTabs, setLocalTabs] = useState<RelatorioTabId[]>([])
+
   const [loading, setLoading] = useState(true)
   const [temToken, setTemToken] = useState(false)
 
@@ -65,6 +93,12 @@ export default function ConfiguracaoEmpresa() {
   const [nfe, setNfe] = useState({ regimeTributario: 1, ambiente: 2, serieNfe: 1, serieNfce: 1 })
   const [focusNfeToken, setFocusNfeToken] = useState('')
   const [savingNfe, setSavingNfe] = useState(false)
+
+  useEffect(() => { void loadLayout() }, [loadLayout])
+  useEffect(() => { setLocalWidgets(widgets) }, [widgets])
+
+  useEffect(() => { void loadRelatorioLayout() }, [loadRelatorioLayout])
+  useEffect(() => { setLocalTabs(tabs) }, [tabs])
 
   useEffect(() => {
     api.get<ConfiguracaoEmpresaResponse>('/api/configuracao-empresa')
@@ -137,6 +171,66 @@ export default function ConfiguracaoEmpresa() {
       toast.success('Logo atualizada!')
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro ao enviar logo') }
     finally { setUploading(false) }
+  }
+
+  function toggleWidget(id: WidgetId) {
+    setLocalWidgets(prev =>
+      prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]
+    )
+  }
+
+  function moveWidget(id: WidgetId, dir: -1 | 1) {
+    setLocalWidgets(prev => {
+      const idx = prev.indexOf(id)
+      if (idx < 0) return prev
+      const next = [...prev]
+      const swap = idx + dir
+      if (swap < 0 || swap >= next.length) return prev
+      ;[next[idx], next[swap]] = [next[swap], next[idx]]
+      return next
+    })
+  }
+
+  function toggleTab(id: RelatorioTabId) {
+    setLocalTabs(prev =>
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    )
+  }
+
+  function moveTab(id: RelatorioTabId, dir: -1 | 1) {
+    setLocalTabs(prev => {
+      const idx = prev.indexOf(id)
+      if (idx < 0) return prev
+      const next = [...prev]
+      const swap = idx + dir
+      if (swap < 0 || swap >= next.length) return prev
+      ;[next[idx], next[swap]] = [next[swap], next[idx]]
+      return next
+    })
+  }
+
+  async function saveTabLayoutConfig() {
+    setSavingTabLayout(true)
+    try {
+      await saveRelatorioLayout(localTabs)
+      toast.success('Abas de relatórios salvas!')
+    } catch {
+      toast.error('Erro ao salvar abas')
+    } finally {
+      setSavingTabLayout(false)
+    }
+  }
+
+  async function saveLayoutConfig() {
+    setSavingLayout(true)
+    try {
+      await saveLayout(localWidgets)
+      toast.success('Layout do dashboard salvo!')
+    } catch {
+      toast.error('Erro ao salvar layout')
+    } finally {
+      setSavingLayout(false)
+    }
   }
 
   if (loading) return <div className="flex h-48 items-center justify-center text-muted-foreground">Carregando...</div>
@@ -233,6 +327,128 @@ export default function ConfiguracaoEmpresa() {
           </div>
         </div>
       </Section>
+
+      {/* Dashboard */}
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Widgets do Dashboard</p>
+        <p className="text-xs text-muted-foreground">Ative ou desative widgets e reordene arrastando com as setas.</p>
+
+        {/* Active widgets (ordered) */}
+        {localWidgets.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Ativos (em ordem)</p>
+            {localWidgets.map((id, idx) => {
+              const meta = ALL_WIDGETS.find(w => w.id === id)
+              if (!meta) return null
+              return (
+                <div key={id} className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveWidget(id, -1)}
+                      disabled={idx === 0}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
+                      aria-label="mover para cima"
+                    >▲</button>
+                    <button
+                      onClick={() => moveWidget(id, 1)}
+                      disabled={idx === localWidgets.length - 1}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
+                      aria-label="mover para baixo"
+                    >▼</button>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{meta.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleWidget(id)}
+                    className="text-xs text-red-500 hover:text-red-700 shrink-0"
+                  >Remover</button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Inactive widgets */}
+        {ALL_WIDGETS.filter(w => !localWidgets.includes(w.id)).length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Disponíveis</p>
+            {ALL_WIDGETS.filter(w => !localWidgets.includes(w.id)).map(meta => (
+              <div key={meta.id} className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 opacity-60">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{meta.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
+                </div>
+                <button
+                  onClick={() => toggleWidget(meta.id)}
+                  className="text-xs text-primary hover:underline shrink-0"
+                >Adicionar</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button onClick={() => void saveLayoutConfig()} disabled={savingLayout} size="sm">
+          {savingLayout ? 'Salvando...' : 'Salvar layout'}
+        </Button>
+      </div>
+
+      {/* Abas de Relatórios */}
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Abas de Relatórios</p>
+        <p className="text-xs text-muted-foreground">Ative, desative e reordene as abas que aparecem no módulo de Relatórios.</p>
+
+        {localTabs.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Ativas (em ordem)</p>
+            {localTabs.map((id, idx) => {
+              const meta = ALL_TABS.find(t => t.id === id)
+              if (!meta) return null
+              return (
+                <div key={id} className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                  <div className="flex flex-col gap-0.5">
+                    <button onClick={() => moveTab(id, -1)} disabled={idx === 0}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
+                      aria-label="mover para cima">▲</button>
+                    <button onClick={() => moveTab(id, 1)} disabled={idx === localTabs.length - 1}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none text-xs"
+                      aria-label="mover para baixo">▼</button>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{meta.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
+                  </div>
+                  <button onClick={() => toggleTab(id)} className="text-xs text-red-500 hover:text-red-700 shrink-0">
+                    Remover
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {ALL_TABS.filter(t => !localTabs.includes(t.id)).length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Disponíveis</p>
+            {ALL_TABS.filter(t => !localTabs.includes(t.id)).map(meta => (
+              <div key={meta.id} className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 opacity-60">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{meta.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{meta.description}</p>
+                </div>
+                <button onClick={() => toggleTab(meta.id)} className="text-xs text-primary hover:underline shrink-0">
+                  Adicionar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button onClick={() => void saveTabLayoutConfig()} disabled={savingTabLayout} size="sm">
+          {savingTabLayout ? 'Salvando...' : 'Salvar abas'}
+        </Button>
+      </div>
 
       {/* NF-e */}
       <Section title="Emissão de Notas Fiscais" onSave={() => void saveNfe()} saving={savingNfe}>

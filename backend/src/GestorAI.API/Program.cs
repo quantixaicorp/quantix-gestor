@@ -35,7 +35,10 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt =>
-    opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+{
+    opt.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"),
@@ -96,8 +99,12 @@ builder.Services.AddScoped<LancamentoService>();
 builder.Services.AddScoped<CategoriaLancamentoService>();
 // Services — Dashboard
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<DashboardLayoutService>();
+builder.Services.AddScoped<ModuleDashboardService>();
+builder.Services.AddScoped<DashboardExtrasService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<OrcamentoService>();
+builder.Services.AddScoped<RelatorioLayoutService>();
 // Services — Agendamentos
 builder.Services.AddScoped<ProfissionalService>();
 builder.Services.AddScoped<AgendamentoService>();

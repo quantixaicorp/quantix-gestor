@@ -3,7 +3,13 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 const ADMIN_URL = import.meta.env.VITE_ADMIN_URL ?? 'http://localhost:5001'
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID ?? 'gestorai'
 
-interface JwtPayload { roles?: string | string[]; is_superadmin?: string; name?: string; sub?: string }
+interface JwtPayload {
+  roles?: string | string[]
+  is_superadmin?: string
+  name?: string
+  sub?: string
+  modules?: string | string[]
+}
 
 function parseJwt(token: string): JwtPayload | null {
   try {
@@ -17,6 +23,8 @@ interface AuthContextValue {
   isAdmin: boolean
   isLoading: boolean
   userName: string | null
+  enabledModules: Set<string>
+  modulesLoaded: boolean
   login: () => Promise<void>
   logout: () => void
   handleCallback: (code: string) => Promise<void>
@@ -43,20 +51,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userName, setUserName] = useState<string | null>(null)
+  const [enabledModules, setEnabledModules] = useState<Set<string>>(new Set())
+  const [modulesLoaded, setModulesLoaded] = useState(false)
 
   function applyToken(token: string | null) {
-    if (!token) { setIsAuthenticated(false); setIsAdmin(false); setUserName(null); return }
+    if (!token) {
+      setIsAuthenticated(false)
+      setIsAdmin(false)
+      setUserName(null)
+      setEnabledModules(new Set())
+      setModulesLoaded(true)
+      return
+    }
     const payload = parseJwt(token)
     const roles = payload?.roles
     const hasAdmin = payload?.is_superadmin === 'true' ||
       (Array.isArray(roles) ? roles.includes('admin') : roles === 'admin')
+
+    // Read modules from JWT immediately — no async call needed for initial render.
+    // fetchModules() will override with fresh DB data afterwards.
+    const modulesClaim = payload?.modules
+    const moduleSlugs = Array.isArray(modulesClaim)
+      ? modulesClaim
+      : modulesClaim ? [modulesClaim] : []
+
     setIsAuthenticated(true)
     setIsAdmin(hasAdmin)
     setUserName(payload?.name ?? null)
+    setEnabledModules(new Set(moduleSlugs))
+    setModulesLoaded(true)
+  }
+
+  async function fetchModules(token: string) {
+    try {
+      const res = await fetch(`${ADMIN_URL}/api/me/modules`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        // Backend returns PascalCase by default (no global camelCase policy configured)
+        const data = await res.json() as { Modules?: string[]; modules?: string[] }
+        const slugs = data.Modules ?? data.modules ?? []
+        setEnabledModules(new Set(slugs))
+      }
+    } catch { /* non-critical — sidebar shows everything on error */ }
+    finally { setModulesLoaded(true) }
   }
 
   useEffect(() => {
-    applyToken(localStorage.getItem('ga_token'))
+    const token = localStorage.getItem('ga_token')
+    applyToken(token)          // sets enabledModules from JWT instantly
+    if (token) void fetchModules(token)  // overrides with fresh DB data
     setIsLoading(false)
   }, [])
 
@@ -100,17 +144,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('ga_refresh_token', tokens.refresh_token)
     localStorage.removeItem('pkce_verifier')
     applyToken(tokens.access_token)
+    await fetchModules(tokens.access_token)
   }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem('ga_token')
     localStorage.removeItem('ga_refresh_token')
     setIsAuthenticated(false)
+    setEnabledModules(new Set())
+    setModulesLoaded(false)
     window.location.href = `${ADMIN_URL}/Account/Logout`
   }, [])
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isAdmin, isLoading, userName, login, logout, handleCallback }}>
+    <AuthContext.Provider value={{
+      isAuthenticated, isAdmin, isLoading, userName,
+      enabledModules, modulesLoaded,
+      login, logout, handleCallback,
+    }}>
       {children}
     </AuthContext.Provider>
   )

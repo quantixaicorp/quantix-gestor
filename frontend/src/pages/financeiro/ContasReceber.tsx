@@ -1,11 +1,17 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useFinanceiro } from '@/hooks/useFinanceiro'
 import { useCategoriasLancamento } from '@/hooks/useCategoriasLancamento'
 import { Badge } from '@/components/ui/badge'
 import { KpiRow } from '@/components/ui/KpiRow'
+import type { LancamentoResponse } from '@/types/financeiro'
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
+const fmtDate = (d: string) => new Date(d + (d.length === 10 ? 'T12:00:00Z' : '')).toLocaleDateString('pt-BR')
+
+type RenderItem =
+  | { kind: 'individual'; lancamento: LancamentoResponse }
+  | { kind: 'group'; parcelamentoId: string; parcelas: LancamentoResponse[] }
 
 export default function ContasReceber() {
   const { lancamentos, loading, list } = useFinanceiro()
@@ -14,6 +20,7 @@ export default function ContasReceber() {
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [filtroDe, setFiltroDe] = useState('')
   const [filtroAte, setFiltroAte] = useState('')
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   const reload = useCallback(() => {
     void list({ tipo: 'Receita', status: 'Pendente' })
@@ -24,18 +31,67 @@ export default function ContasReceber() {
     void listCategorias('Receita').then(cs => setCategorias(cs.map(c => c.nome).sort())).catch(() => {})
   }, [reload, listCategorias])
 
-  const filtered = lancamentos.filter(l => {
+  const toggleGroup = useCallback((pid: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      next.has(pid) ? next.delete(pid) : next.add(pid)
+      return next
+    })
+  }, [])
+
+  const allGroups = useMemo(() => {
+    const map = new Map<string, LancamentoResponse[]>()
+    for (const l of lancamentos) {
+      if (!l.parcelamentoId) continue
+      const arr = map.get(l.parcelamentoId) ?? []
+      arr.push(l)
+      map.set(l.parcelamentoId, arr)
+    }
+    return map
+  }, [lancamentos])
+
+  const matchesFiltro = useCallback((l: LancamentoResponse) => {
     if (filtroCategoria && l.categoria !== filtroCategoria) return false
     if (filtroDe && l.dataVencimento < filtroDe) return false
     if (filtroAte && l.dataVencimento > filtroAte + 'T23:59:59') return false
     return true
-  })
+  }, [filtroCategoria, filtroDe, filtroAte])
 
-  const vencidas = filtered.filter(l => l.vencido)
-  const aVencer = filtered.filter(l => !l.vencido)
-  const total = filtered.reduce((s, l) => s + l.valor, 0)
-  const totalVencido = vencidas.reduce((s, l) => s + l.valor, 0)
-  const totalAVencer = aVencer.reduce((s, l) => s + l.valor, 0)
+  const renderItems = useMemo<RenderItem[]>(() => {
+    const seenGroups = new Set<string>()
+    const items: RenderItem[] = []
+    for (const l of lancamentos) {
+      if (l.parcelamentoId) {
+        if (seenGroups.has(l.parcelamentoId)) continue
+        const parcelas = allGroups.get(l.parcelamentoId) ?? []
+        if (parcelas.some(matchesFiltro)) {
+          seenGroups.add(l.parcelamentoId)
+          items.push({ kind: 'group', parcelamentoId: l.parcelamentoId, parcelas })
+        }
+      } else if (matchesFiltro(l)) {
+        items.push({ kind: 'individual', lancamento: l })
+      }
+    }
+    return items
+  }, [lancamentos, allGroups, matchesFiltro])
+
+  const allFiltered = useMemo(() => lancamentos.filter(matchesFiltro), [lancamentos, matchesFiltro])
+  const total = allFiltered.reduce((s, l) => s + l.valor, 0)
+  const totalVencido = allFiltered.filter(l => l.vencido).reduce((s, l) => s + l.valor, 0)
+  const totalAVencer = allFiltered.filter(l => !l.vencido).reduce((s, l) => s + l.valor, 0)
+
+  function grupoDescricao(parcelas: LancamentoResponse[]) {
+    const d = parcelas[0]?.descricao ?? ''
+    return d.replace(/\s*-?\s*[Pp]arcela\s+\d+\/\d+$/, '').replace(/\s+\d+\/\d+$/, '').trim()
+  }
+
+  function grupoStats(parcelas: LancamentoResponse[]) {
+    const pagas = parcelas.filter(p => p.status === 'Pago').length
+    const pendentes = parcelas.filter(p => p.status === 'Pendente')
+    const vencidas = pendentes.filter(p => p.vencido).length
+    const total = pendentes.reduce((s, p) => s + p.valor, 0)
+    return { n: parcelas.length, pagas, vencidas, total, pendentes: pendentes.length }
+  }
 
   return (
     <div className="space-y-4">
@@ -47,10 +103,9 @@ export default function ContasReceber() {
         { label: 'Total a receber', value: fmt(total), color: 'text-primary' },
         { label: 'Vencidas', value: fmt(totalVencido), color: 'text-destructive' },
         { label: 'A vencer', value: fmt(totalAVencer), color: 'text-green-600 dark:text-green-400' },
-        { label: 'Qtd contas', value: String(filtered.length), color: 'text-muted-foreground' },
+        { label: 'Qtd contas', value: String(allFiltered.length), color: 'text-muted-foreground' },
       ]} />
 
-      {/* Filtros */}
       <div className="rounded-xl border bg-card px-4 py-3">
         <div className="flex flex-wrap gap-2">
           <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
@@ -77,59 +132,81 @@ export default function ContasReceber() {
         </div>
       </div>
 
-      {loading ? <p className="text-muted-foreground">Carregando...</p> : filtered.length === 0 ? (
+      {loading ? <p className="text-muted-foreground">Carregando...</p> : renderItems.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Nenhuma conta a receber</p>
       ) : (
-        <>
-          {/* Mobile: card list */}
-          <div className="md:hidden space-y-2">
-            {filtered.map(l => (
-              <div key={l.id} className="rounded-lg border bg-card p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-medium truncate flex-1">{l.descricao}</p>
-                  <Badge variant={l.vencido ? 'destructive' : 'outline'} className="shrink-0">
-                    {l.vencido ? 'Vencida' : 'Pendente'}
-                  </Badge>
+        <div className="space-y-2">
+          {renderItems.map(item => {
+            if (item.kind === 'individual') {
+              const l = item.lancamento
+              return (
+                <div key={l.id} className="rounded-lg border bg-card p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium truncate flex-1">{l.descricao}</p>
+                    <Badge variant={l.vencido ? 'destructive' : 'outline'} className="shrink-0">
+                      {l.vencido ? 'Vencida' : 'Pendente'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{l.categoria}</span>
+                    <span className="font-semibold text-primary">{fmt(l.valor)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{l.categoria}</span>
-                  <span className="font-semibold text-primary">{fmt(l.valor)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
-              </div>
-            ))}
-          </div>
+              )
+            }
 
-          {/* Desktop: table */}
-          <div className="hidden md:block overflow-x-auto rounded-md border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium">Descrição</th>
-                  <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                  <th className="px-4 py-3 text-left font-medium">Vencimento</th>
-                  <th className="px-4 py-3 text-right font-medium">Valor</th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(l => (
-                  <tr key={l.id} className="border-b">
-                    <td className="px-4 py-3 font-medium">{l.descricao}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{l.categoria}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
-                    <td className="px-4 py-3 text-right font-medium">{fmt(l.valor)}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={l.vencido ? 'destructive' : 'outline'}>
-                        {l.vencido ? 'Vencida' : 'Pendente'}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+            const { parcelamentoId, parcelas } = item
+            const expanded = expandedGroups.has(parcelamentoId)
+            const desc = grupoDescricao(parcelas)
+            const stats = grupoStats(parcelas)
+            const temVencida = stats.vencidas > 0
+
+            return (
+              <div key={parcelamentoId} className={`rounded-lg border bg-card overflow-hidden ${temVencida ? 'border-destructive/40' : ''}`}>
+                <button
+                  className="w-full flex items-center gap-2 p-4 text-left hover:bg-muted/30"
+                  onClick={() => toggleGroup(parcelamentoId)}>
+                  {expanded
+                    ? <ChevronDown size={16} className="shrink-0 text-muted-foreground" />
+                    : <ChevronRight size={16} className="shrink-0 text-muted-foreground" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{desc}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.pagas}/{stats.n} recebidas · {fmt(stats.total)} pendente
+                    </p>
+                  </div>
+                  <Badge variant={temVencida ? 'destructive' : 'outline'} className="shrink-0">
+                    {temVencida ? `${stats.vencidas} vencida${stats.vencidas > 1 ? 's' : ''}` : `${stats.pendentes} pendente${stats.pendentes > 1 ? 's' : ''}`}
+                  </Badge>
+                </button>
+
+                {expanded && (
+                  <div className="border-t divide-y">
+                    {[...parcelas]
+                      .sort((a, b) => (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))
+                      .map(l => (
+                        <div key={l.id} className={`p-3 pl-6 space-y-1 ${l.vencido ? 'bg-destructive/5' : ''}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">{l.descricao}</p>
+                              <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-sm font-semibold text-primary">{fmt(l.valor)}</span>
+                              <Badge variant={l.status === 'Pago' ? 'default' : l.vencido ? 'destructive' : 'outline'}>
+                                {l.status === 'Pago' ? 'Recebido' : l.vencido ? 'Vencida' : 'Pendente'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )

@@ -88,10 +88,12 @@ const MENU_GROUPS: MenuGroup[] = [
     ],
   },
   {
-    label: 'Compras / Fiscal',
+    label: 'Compras',
     moduleSlug: 'compras',
     items: [
-      { icon: Truck,   label: 'Fornecedores',  path: '/fornecedores' },
+      { icon: Truck,         label: 'Fornecedores', path: '/fornecedores' },
+      { icon: ClipboardList, label: 'Pedidos',       path: '/compras/pedidos' },
+      { icon: ShoppingCart,  label: 'Compras',       path: '/compras' },
     ],
   },
   {

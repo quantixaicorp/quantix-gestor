@@ -16,6 +16,7 @@ import AbaOrcamentos from '@/components/relatorios/AbaOrcamentos'
 import AbaAssinaturas from '@/components/relatorios/AbaAssinaturas'
 import AbaCurvaABC from '@/components/relatorios/AbaCurvaABC'
 import AbaDRE from '@/components/relatorios/AbaDRE'
+import AbaCompras from '@/components/relatorios/AbaCompras'
 import { cn } from '@/lib/utils'
 import type { RelatorioTabId } from '@/types/relatorios'
 
@@ -32,6 +33,7 @@ const TAB_META: Record<RelatorioTabId, string> = {
   'assinaturas': 'Assinaturas',
   'curva-abc': 'Curva ABC',
   'dre': 'DRE',
+  'compras': 'Compras',
 }
 
 function exportarCSV(nome: string, linhas: string[][]) {
@@ -80,7 +82,7 @@ export default function Relatorios() {
 
   function handleAba(nova: RelatorioTabId) {
     setAba(nova)
-    void loadTab(nova)
+    if (nova !== 'compras') void loadTab(nova)
   }
 
   function handleExportar() {
@@ -166,7 +168,7 @@ export default function Relatorios() {
     }
   }
 
-  const isLoading = loadingTab === aba
+  const isLoading = aba !== 'compras' && loadingTab === aba
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -223,6 +225,7 @@ export default function Relatorios() {
               <AbaCurvaABC produtos={data['curva-abc'].produtos} clientes={data['curva-abc'].clientes} />
             )}
             {aba === 'dre' && data.dre && <AbaDRE dados={data.dre} />}
+            {aba === 'compras' && <AbaCompras />}
           </>
         )}
       </div>

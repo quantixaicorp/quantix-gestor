@@ -42,12 +42,25 @@ export default function DetalheAgendamento() {
   }
 
   async function handleConcluir() {
-    if (!id) return
-    const ok = await confirm({
-      title: 'Concluir agendamento?',
-      description: 'Uma Venda será criada automaticamente.',
-    })
-    if (!ok) return
+    if (!id || !agendamento) return
+
+    const agora = new Date()
+    const fimAgendado = new Date(agendamento.dataHoraFim)
+    if (agora < fimAgendado) {
+      const fimFmt = fmtDt(agendamento.dataHoraFim)
+      const ok = await confirm({
+        title: 'Finalizar antes do horário?',
+        description: `O atendimento termina às ${fimFmt}. Deseja concluir mesmo assim?`,
+      })
+      if (!ok) return
+    } else {
+      const ok = await confirm({
+        title: 'Concluir agendamento?',
+        description: 'Uma Venda será criada automaticamente.',
+      })
+      if (!ok) return
+    }
+
     setAcao('concluir')
     try {
       const result = await concluir(id)

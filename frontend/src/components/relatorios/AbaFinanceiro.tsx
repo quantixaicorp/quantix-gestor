@@ -1,16 +1,23 @@
+import { useState } from 'react'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts'
 import { ArrowUpCircle, ArrowDownCircle, Wallet } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import KpiCard from '@/components/dashboard/KpiCard'
 import type { RelatorioFinanceiroResponse } from '@/types/relatorios'
 
 const CORES = ['hsl(0 72% 51%)', 'hsl(38 92% 50%)', 'hsl(262 80% 50%)', 'hsl(142 76% 36%)', 'hsl(200 98% 39%)']
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 
-interface Props { dados: RelatorioFinanceiroResponse }
+interface Props {
+  dados: RelatorioFinanceiroResponse
+  tipoData: string
+  onChangeTipoData: (v: string) => void
+}
 
 function Panel({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -21,7 +28,10 @@ function Panel({ titulo, children }: { titulo: string; children: React.ReactNode
   )
 }
 
-export default function AbaFinanceiro({ dados }: Props) {
+export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Props) {
+  const [filtroTipo, setFiltroTipo] = useState('')
+  const [filtroCategoria, setFiltroCategoria] = useState('')
+  const categorias = [...new Set(dados.analitico.map(l => l.categoria))].sort()
   const fluxo = dados.fluxoPorDia.map(d => ({
     dia: new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     receitas: d.receitas,
@@ -29,8 +39,28 @@ export default function AbaFinanceiro({ dados }: Props) {
     saldo: d.saldo,
   }))
 
+  const analiticoFiltrado = dados.analitico.filter(l =>
+    (!filtroTipo || l.tipo === filtroTipo) &&
+    (!filtroCategoria || l.categoria === filtroCategoria)
+  )
+
   return (
     <div className="space-y-5">
+
+      {/* ── Filtro de tipo de data ─────────────────────────── */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-sm text-muted-foreground">Filtrar por:</span>
+        {(['pagamento', 'vencimento'] as const).map(v => (
+          <button key={v} onClick={() => onChangeTipoData(v)}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              tipoData === v
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'border-input text-muted-foreground hover:text-foreground'
+            }`}>
+            Data de {v === 'pagamento' ? 'pagamento' : 'vencimento'}
+          </button>
+        ))}
+      </div>
 
       {/* ── Resumo + Fluxo ─────────────────────────────────── */}
       <Panel titulo="Fluxo de Caixa">
@@ -100,6 +130,74 @@ export default function AbaFinanceiro({ dados }: Props) {
                 </tbody>
               </table>
             </div>
+          </div>
+        </Panel>
+      )}
+
+      {/* ── Tabela Analítica ───────────────────────────────── */}
+      {dados.analitico.length > 0 && (
+        <Panel titulo="Tabela Analítica">
+          <div className="flex flex-wrap gap-2 mb-3">
+            <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}
+              className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
+              <option value="">Todos os tipos</option>
+              <option value="Receita">Receita</option>
+              <option value="Despesa">Despesa</option>
+            </select>
+            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
+              className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
+              <option value="">Todas as categorias</option>
+              {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            {(filtroTipo || filtroCategoria) && (
+              <button onClick={() => { setFiltroTipo(''); setFiltroCategoria('') }}
+                className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground rounded-md border border-input">
+                Limpar
+              </button>
+            )}
+          </div>
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-3 py-2 text-left font-medium">Descrição</th>
+                  <th className="px-3 py-2 text-left font-medium">Tipo</th>
+                  <th className="px-3 py-2 text-left font-medium">Categoria</th>
+                  <th className="px-3 py-2 text-left font-medium">Vencimento</th>
+                  <th className="px-3 py-2 text-left font-medium">Pagamento</th>
+                  <th className="px-3 py-2 text-right font-medium">Valor</th>
+                  <th className="px-3 py-2 text-left font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analiticoFiltrado.map(l => (
+                  <tr key={l.id} className="border-b hover:bg-muted/20">
+                    <td className="px-3 py-2">{l.descricao}</td>
+                    <td className="px-3 py-2">
+                      <Badge variant={l.tipo === 'Receita' ? 'secondary' : 'destructive'} className="text-xs">{l.tipo}</Badge>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.categoria}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.dataPagamento ? fmtDate(l.dataPagamento) : '—'}</td>
+                    <td className="px-3 py-2 text-right font-medium">{fmt(l.valor)}</td>
+                    <td className="px-3 py-2">
+                      <Badge variant={l.status === 'Pago' ? 'secondary' : l.status === 'Cancelado' ? 'outline' : 'outline'} className="text-xs">
+                        {l.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-muted/30 font-medium">
+                  <td colSpan={5} className="px-3 py-2 text-sm">Total filtrado</td>
+                  <td className="px-3 py-2 text-right">
+                    {fmt(analiticoFiltrado.reduce((s, l) => s + (l.tipo === 'Receita' ? l.valor : -l.valor), 0))}
+                  </td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </Panel>
       )}

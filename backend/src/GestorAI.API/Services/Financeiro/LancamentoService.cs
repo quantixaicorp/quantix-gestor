@@ -66,6 +66,52 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
         return ToResponse(lancamento, DateTime.UtcNow.Date);
     }
 
+    public async Task<Guid> CreateParceladoAsync(CreateParceladoRequest req, CancellationToken ct)
+    {
+        if (!Enum.TryParse<TipoLancamento>(req.Tipo, out var tipo))
+            throw new AppException("Tipo inválido.");
+        if (req.Parcelas.Count < 2)
+            throw new AppException("Parcelamento deve ter ao menos 2 parcelas.");
+
+        var tx = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var n = req.Parcelas.Count;
+            var valorTotal = req.Parcelas.Sum(p => p.Valor);
+            var parcelamento = new Parcelamento
+            {
+                EmpresaId = tenantContext.EmpresaId,
+                Descricao = req.Descricao,
+                ValorTotal = valorTotal,
+                QtdParcelas = n,
+                Status = Domain.Enums.StatusParcelamento.EmAberto,
+            };
+            db.Parcelamentos.Add(parcelamento);
+
+            for (var i = 0; i < n; i++)
+            {
+                db.Lancamentos.Add(new Lancamento
+                {
+                    EmpresaId = tenantContext.EmpresaId,
+                    Tipo = tipo,
+                    Descricao = $"{req.Descricao} - Parcela {i + 1}/{n}",
+                    Valor = req.Parcelas[i].Valor,
+                    DataVencimento = req.Parcelas[i].DataVencimento,
+                    Status = StatusLancamento.Pendente,
+                    Categoria = req.Categoria,
+                    Observacao = req.Observacao,
+                    ParcelamentoId = parcelamento.Id,
+                    NumeroParcela = i + 1,
+                });
+            }
+
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+            return parcelamento.Id;
+        }
+        catch { await tx.RollbackAsync(ct); throw; }
+    }
+
     public async Task<LancamentoResponse> PagarAsync(
         Guid id, PagarLancamentoRequest req, CancellationToken ct)
     {

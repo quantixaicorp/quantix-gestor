@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingCart, Calendar, Wallet,
@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
+import { useConfiguracaoEmpresa } from '@/hooks/useConfiguracaoEmpresa'
 import type { EmpresaInfo } from './AppLayout'
 
 interface PrimaryItem {
@@ -131,8 +132,21 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
   const navigate = useNavigate()
   const { logout, enabledModules, modulesLoaded } = useAuth()
   const { resolved, toggleTheme } = useTheme()
+  const { obter } = useConfiguracaoEmpresa()
   const [menuOpen, setMenuOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const [isPrestador, setIsPrestador] = useState(false)
+
+  useEffect(() => {
+    void obter().then(c => setIsPrestador((c?.tipoNegocio || 'Lojista') === 'Prestador'))
+  }, [obter])
+
+  const vendaLabel = (path: string, original: string) => {
+    if (!isPrestador) return original
+    if (path === '/vendas/nova') return 'Nova OS'
+    if (path === '/vendas') return 'Histórico de Serviços'
+    return original
+  }
 
   // Show everything when: still loading, OR no modules configured (empty = no restrictions).
   const isVisible = (slug?: string) =>
@@ -178,7 +192,7 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
               )}
             >
               <Icon className="h-5 w-5 shrink-0" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{vendaLabel(path, label)}</span>
             </Link>
           ))}
           <button
@@ -274,7 +288,7 @@ export default function BottomNav({ sidebarStyle, empresaConfig }: Props) {
                               )}
                             >
                               <Icon className="h-5 w-5 shrink-0" />
-                              <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+                              <span className="text-[10px] font-medium leading-tight">{vendaLabel(item.path, item.label)}</span>
                             </button>
                           )
                         })}

@@ -48,6 +48,7 @@ export default function Relatorios() {
   const { tabs, load: loadLayout } = useRelatorioLayout()
   const [aba, setAba] = useState<RelatorioTabId | null>(null)
   const [periodo, setPeriodoState] = useState({ de: '', ate: '' })
+  const [tipoDataFinanceiro, setTipoDataFinanceiro] = useState('pagamento')
 
   const hoje = new Date().toISOString().split('T')[0]
   const inicioMes = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
@@ -67,8 +68,14 @@ export default function Relatorios() {
 
   function handlePeriodo(de: string, ate: string) {
     setPeriodoState({ de, ate })
-    setPeriodo(de, ate)
+    setPeriodo(de, ate, tipoDataFinanceiro)
     if (aba) void loadTab(aba)
+  }
+
+  function handleTipoDataFinanceiro(v: string) {
+    setTipoDataFinanceiro(v)
+    setPeriodo(periodo.de, periodo.ate, v)
+    void loadTab('financeiro')
   }
 
   function handleAba(nova: RelatorioTabId) {
@@ -204,7 +211,7 @@ export default function Relatorios() {
           <>
             {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} />}
             {aba === 'vendas' && data.vendas && <AbaVendas dados={data.vendas} />}
-            {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} />}
+            {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} tipoData={tipoDataFinanceiro} onChangeTipoData={handleTipoDataFinanceiro} />}
             {aba === 'estoque' && data.estoque && <AbaEstoque dados={data.estoque} />}
             {aba === 'clientes' && data.clientes && <AbaClientes dados={data.clientes} />}
             {aba === 'agendamentos' && data.agendamentos && <AbaAgendamentos dados={data.agendamentos} />}

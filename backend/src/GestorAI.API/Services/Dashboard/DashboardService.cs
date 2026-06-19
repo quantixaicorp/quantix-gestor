@@ -57,7 +57,8 @@ public class DashboardService(AppDbContext db)
             .SumAsync(l => l.Valor, ct);
 
         var lancamentosReceita = await db.Lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pendente)
+            .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pendente
+                && l.DataVencimento >= inicioMes && l.DataVencimento < inicioMes.AddMonths(1))
             .ToListAsync(ct);
 
         var contasReceberPendentes = lancamentosReceita.Sum(l => l.Valor);

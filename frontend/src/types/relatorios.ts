@@ -56,12 +56,17 @@ export interface RelatorioVendasResponse {
 
 export interface FluxoCaixaDiaResponse { data: string; receitas: number; despesas: number; saldo: number }
 export interface CategoriaDespesaResponse { categoria: string; total: number }
+export interface LancamentoAnaliticoResponse {
+  id: string; tipo: string; descricao: string; categoria: string; valor: number
+  dataVencimento: string; dataPagamento: string | null; status: string
+}
 export interface RelatorioFinanceiroResponse {
   totalReceitas: number
   totalDespesas: number
   saldo: number
   fluxoPorDia: FluxoCaixaDiaResponse[]
   categoriasDespesas: CategoriaDespesaResponse[]
+  analitico: LancamentoAnaliticoResponse[]
 }
 
 export interface GiroProdutoResponse { nome: string; entradas: number; saidas: number; giroLiquido: number }

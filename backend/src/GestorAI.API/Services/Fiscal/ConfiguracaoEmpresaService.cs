@@ -70,6 +70,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         if (req.FocusNfeToken is not null) config.FocusNfeToken = req.FocusNfeToken;
         if (req.Telefone is not null) config.Telefone = req.Telefone;
         if (req.Email is not null) config.Email = req.Email;
+        if (req.TipoNegocio is not null) config.TipoNegocio = req.TipoNegocio;
 
         await db.SaveChangesAsync(ct);
         return ToResponse(config);
@@ -117,7 +118,8 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.DominioCustomizado,
         c.AprovarAutomaticamente,
         c.ValorSinal,
-        c.HorasLimiteCancelamento);
+        c.HorasLimiteCancelamento,
+        c.TipoNegocio);
 
     public async Task<ConfiguracaoEmpresaResponse> SalvarBrandingAsync(
         ConfigurarBrandingRequest req, CancellationToken ct)

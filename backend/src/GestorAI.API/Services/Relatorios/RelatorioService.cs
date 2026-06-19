@@ -1,4 +1,5 @@
 using System.Globalization;
+using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Relatorios;
 using GestorAI.API.Infrastructure.Data;
@@ -177,17 +178,33 @@ public class RelatorioService(AppDbContext db)
     }
 
     public async Task<RelatorioFinanceiroResponse> GetFinanceiroAsync(
-        DateTime de, DateTime ate, CancellationToken ct)
+        DateTime de, DateTime ate, string tipoData, CancellationToken ct)
     {
-        var lancamentos = await db.Lancamentos
-            .Where(l => l.Status == StatusLancamento.Pago
+        IQueryable<Lancamento> query;
+        if (tipoData == "vencimento")
+        {
+            query = db.Lancamentos.Where(l =>
+                l.DataVencimento.Date >= de.Date && l.DataVencimento.Date <= ate.Date);
+        }
+        else
+        {
+            // default: pagamento
+            query = db.Lancamentos.Where(l =>
+                l.Status == StatusLancamento.Pago
                 && l.DataPagamento.HasValue
                 && l.DataPagamento!.Value.Date >= de.Date
-                && l.DataPagamento.Value.Date <= ate.Date)
-            .ToListAsync(ct);
+                && l.DataPagamento.Value.Date <= ate.Date);
+        }
+
+        var lancamentos = await query.ToListAsync(ct);
+
+        var dataRef = (Lancamento l) => tipoData == "vencimento"
+            ? l.DataVencimento.Date
+            : l.DataPagamento!.Value.Date;
 
         var fluxoPorDia = lancamentos
-            .GroupBy(l => l.DataPagamento!.Value.Date)
+            .Where(l => tipoData != "pagamento" || l.DataPagamento.HasValue)
+            .GroupBy(dataRef)
             .OrderBy(g => g.Key)
             .Select(g =>
             {
@@ -207,9 +224,22 @@ public class RelatorioService(AppDbContext db)
         var totalReceitas = lancamentos.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
         var totalDespesas = lancamentos.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
 
+        var analitico = lancamentos
+            .OrderBy(l => l.DataVencimento)
+            .Select(l => new LancamentoAnaliticoResponse(
+                l.Id,
+                l.Tipo.ToString(),
+                l.Descricao,
+                l.Categoria,
+                l.Valor,
+                l.DataVencimento,
+                l.DataPagamento,
+                l.Status.ToString()))
+            .ToList();
+
         return new RelatorioFinanceiroResponse(
             totalReceitas, totalDespesas, totalReceitas - totalDespesas,
-            fluxoPorDia, categoriasDespesas);
+            fluxoPorDia, categoriasDespesas, analitico);
     }
 
     public async Task<RelatorioEstoqueResponse> GetEstoqueAsync(

@@ -21,4 +21,12 @@ public class CategoriaService(AppDbContext db, TenantContext tenantContext)
         await db.SaveChangesAsync(ct);
         return new CategoriaResponse(categoria.Id, categoria.Nome);
     }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var categoria = await db.Categorias.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new InvalidOperationException("Categoria não encontrada");
+        db.Categorias.Remove(categoria);
+        await db.SaveChangesAsync(ct);
+    }
 }

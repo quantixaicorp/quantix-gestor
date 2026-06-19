@@ -14,10 +14,11 @@ import type { ProdutoResponse, CreateProdutoRequest, UpdateProdutoRequest } from
 import { KpiRow } from '@/components/ui/KpiRow'
 
 export default function Servicos() {
-  const { categorias, listCategorias, createCategoria, createProduto } = useEstoque()
+  const { categorias, listCategorias, createCategoria, deleteCategoria, createProduto } = useEstoque()
   const [servicos, setServicos] = useState<ProdutoResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [busca, setBusca] = useState('')
+  const [filtroCategoria, setFiltroCategoria] = useState('')
   const [modalCriar, setModalCriar] = useState(false)
   const [editando, setEditando] = useState<ProdutoResponse | null>(null)
   const { confirm, ConfirmDialogNode } = useConfirm()
@@ -70,7 +71,25 @@ export default function Servicos() {
     }
   }
 
-  const filtrados = servicos.filter(s => s.nome.toLowerCase().includes(busca.toLowerCase()))
+  async function handleDeleteCategoria(id: string, nome: string) {
+    const ok = await confirm({
+      title: `Excluir categoria "${nome}"?`,
+      description: 'Serviços vinculados a esta categoria ficarão sem categoria.',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    try {
+      await deleteCategoria(id)
+      toast.success('Categoria excluída')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao excluir categoria')
+    }
+  }
+
+  const filtrados = servicos.filter(s =>
+    s.nome.toLowerCase().includes(busca.toLowerCase()) &&
+    (!filtroCategoria || s.categoriaId === filtroCategoria)
+  )
 
   return (
     <div className="space-y-4">
@@ -90,12 +109,43 @@ export default function Servicos() {
           : '—' },
       ]} />
 
-      <Input
-        placeholder="Buscar serviço por nome..."
-        value={busca}
-        onChange={e => setBusca(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex flex-wrap gap-2 items-center">
+        <Input
+          placeholder="Buscar serviço por nome..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          className="max-w-xs"
+        />
+        <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm">
+          <option value="">Todas as categorias</option>
+          {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+        </select>
+        {filtroCategoria && (
+          <button onClick={() => setFiltroCategoria('')}
+            className="h-9 px-3 text-xs text-muted-foreground hover:text-foreground rounded-md border border-input">
+            Limpar filtro
+          </button>
+        )}
+      </div>
+
+      {categorias.length > 0 && (
+        <div className="rounded-xl border bg-card px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Categorias</p>
+          <div className="flex flex-wrap gap-2">
+            {categorias.map(c => (
+              <div key={c.id} className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                {c.nome}
+                <button
+                  onClick={() => void handleDeleteCategoria(c.id, c.nome)}
+                  className="ml-1 text-muted-foreground hover:text-destructive transition-colors">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>

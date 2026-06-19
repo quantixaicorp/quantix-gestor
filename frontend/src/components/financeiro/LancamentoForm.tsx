@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCategoriasLancamento } from '@/hooks/useCategoriasLancamento'
+import { api } from '@/services/api'
 import type { CreateLancamentoRequest, CategoriaLancamentoResponse } from '@/types/financeiro'
 
 const schema = z.object({
@@ -93,23 +94,21 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
 
   async function handleFormSubmit(data: FormValues) {
     if (parcelado) {
-      const parcelas = buildParcelas(
-        data.descricao,
-        parseFloat(data.valor),
-        data.dataVencimento,
-        numParcelas,
-        data.tipo,
-        data.categoria,
-        data.observacao,
-      )
+      const valorParcela = parseFloat(data.valor)
+      const parcelas = Array.from({ length: numParcelas }, (_, i) => ({
+        valor: valorParcela,
+        dataVencimento: addMonths(data.dataVencimento, i),
+      }))
       setSaving(true)
-      setProgresso({ atual: 0, total: parcelas.length })
       try {
-        for (let i = 0; i < parcelas.length; i++) {
-          setProgresso({ atual: i + 1, total: parcelas.length })
-          await onSubmit(parcelas[i])
-        }
-        onAllCreated?.(parcelas.length)
+        await api.post('/api/lancamentos/parcelado', {
+          tipo: data.tipo,
+          descricao: data.descricao,
+          categoria: data.categoria,
+          observacao: data.observacao,
+          parcelas,
+        })
+        onAllCreated?.(numParcelas)
       } finally {
         setSaving(false)
         setProgresso(null)

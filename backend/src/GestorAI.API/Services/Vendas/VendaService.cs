@@ -71,6 +71,8 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
                 FormaPagamento = formaPagamento,
                 Parcelas = req.Parcelas,
                 Observacao = req.Observacao,
+                ProfissionalId   = req.ProfissionalId,
+                ObservacaoOS     = req.ObservacaoOS,
             };
             db.Vendas.Add(venda);
 
@@ -100,6 +102,11 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
             var nomeCliente = req.ClienteId.HasValue
                 ? (await db.Clientes.FindAsync([req.ClienteId.Value], ct))?.Nome ?? "Cliente"
                 : "Venda balcão";
+
+            string? nomeProfissional = null;
+            if (req.ProfissionalId.HasValue)
+                nomeProfissional = (await db.Profissionais.FindAsync([req.ProfissionalId.Value], ct))?.Nome;
+            venda.ProfissionalNome = nomeProfissional;
 
             db.Lancamentos.Add(new Lancamento
             {
@@ -275,7 +282,8 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
             .Select(v => new VendaListItem(
                 v.Id, v.ClienteId, v.Cliente != null ? v.Cliente.Nome : null,
                 v.DataHora, v.Status.ToString(),
-                v.Total, v.FormaPagamento.ToString()))
+                v.Total, v.FormaPagamento.ToString(),
+                v.ProfissionalNome))
             .ToListAsync(ct);
     }
 
@@ -357,6 +365,8 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
             venda.Itens.Select(i => new ItemVendaResponse(
                 i.ProdutoId, i.Produto?.Nome ?? "",
                 i.Quantidade, i.PrecoUnitario,
-                i.Desconto, i.Total)).ToList());
+                i.Desconto, i.Total)).ToList(),
+            venda.ProfissionalNome,
+            venda.ObservacaoOS);
     }
 }

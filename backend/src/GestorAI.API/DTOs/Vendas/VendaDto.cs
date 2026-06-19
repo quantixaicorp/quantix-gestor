@@ -9,7 +9,9 @@ public record CreateVendaRequest(
     string FormaPagamento,
     int? Parcelas,
     string? Observacao,
-    DateTime? DataHora = null);
+    DateTime? DataHora = null,
+    Guid? ProfissionalId = null,
+    string? ObservacaoOS = null);
 
 public record ItemVendaResponse(
     Guid ProdutoId,
@@ -31,7 +33,9 @@ public record VendaResponse(
     string FormaPagamento,
     int? Parcelas,
     string? Observacao,
-    List<ItemVendaResponse> Itens);
+    List<ItemVendaResponse> Itens,
+    string? ProfissionalNome = null,
+    string? ObservacaoOS = null);
 
 public record VendaListItem(
     Guid Id,
@@ -40,7 +44,8 @@ public record VendaListItem(
     DateTime DataHora,
     string Status,
     decimal Total,
-    string FormaPagamento);
+    string FormaPagamento,
+    string? ProfissionalNome = null);
 
 public record FecharVendaRequest(string FormaPagamento, int? Parcelas, string? Observacao);
 

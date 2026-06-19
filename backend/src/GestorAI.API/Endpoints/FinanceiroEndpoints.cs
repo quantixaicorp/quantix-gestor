@@ -35,6 +35,13 @@ public static class FinanceiroEndpoints
             return Results.Created($"/api/lancamentos/{result.Id}", result);
         }).AddEndpointFilter<ValidationFilter<CreateLancamentoRequest>>();
 
+        group.MapPost("/lancamentos/parcelado", async (
+            CreateParceladoRequest req, LancamentoService svc, CancellationToken ct) =>
+        {
+            var parcelamentoId = await svc.CreateParceladoAsync(req, ct);
+            return Results.Created($"/api/parcelamentos/{parcelamentoId}", new { parcelamentoId });
+        });
+
         group.MapPost("/lancamentos/{id:guid}/pagar", async (
             Guid id, PagarLancamentoRequest req, LancamentoService svc, CancellationToken ct) =>
             Results.Ok(await svc.PagarAsync(id, req, ct)));

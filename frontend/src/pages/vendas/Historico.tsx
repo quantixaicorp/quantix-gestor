@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Trash2, Pencil } from 'lucide-react'
+import { useConfiguracaoEmpresa } from '@/hooks/useConfiguracaoEmpresa'
 import { useVendas } from '@/hooks/useVendas'
 import { useClientes } from '@/hooks/useClientes'
 import { useAuth } from '@/contexts/AuthContext'
@@ -21,6 +22,14 @@ export default function Historico() {
   const { vendas, loading, list, cancelar, remove, update } = useVendas()
   const { clientes, list: listClientes } = useClientes()
   const { isAdmin } = useAuth()
+  const { obter } = useConfiguracaoEmpresa()
+  const [tipoNegocio, setTipoNegocio] = useState('Lojista')
+
+  useEffect(() => {
+    void obter().then(c => setTipoNegocio(c?.tipoNegocio || 'Lojista'))
+  }, [obter])
+
+  const isPrestador = tipoNegocio === 'Prestador'
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
   const [status, setStatus] = useState('')
@@ -131,6 +140,11 @@ export default function Historico() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{v.clienteNome ?? 'Balcão'}</p>
+                    {isPrestador && v.profissionalNome && (
+                      <p className="text-xs text-muted-foreground">
+                        Profissional: {v.profissionalNome}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">{new Date(v.dataHora).toLocaleString('pt-BR')}</p>
                   </div>
                   <Badge variant={statusVariant(v.status)} className="shrink-0">{v.status}</Badge>
@@ -174,6 +188,7 @@ export default function Historico() {
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-3 text-left font-medium">Data</th>
                   <th className="px-4 py-3 text-left font-medium">Cliente</th>
+                  {isPrestador && <th className="px-4 py-3 text-left font-medium">Profissional</th>}
                   <th className="px-4 py-3 text-left font-medium">Pagamento</th>
                   <th className="px-4 py-3 text-right font-medium">Total</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
@@ -185,6 +200,11 @@ export default function Historico() {
                   <tr key={v.id} className="border-b">
                     <td className="px-4 py-3">{new Date(v.dataHora).toLocaleString('pt-BR')}</td>
                     <td className="px-4 py-3">{v.clienteNome ?? 'Balcão'}</td>
+                    {isPrestador && (
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {v.profissionalNome ?? '—'}
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-muted-foreground">{v.formaPagamento}</td>
                     <td className="px-4 py-3 text-right font-medium">{fmt(v.total)}</td>
                     <td className="px-4 py-3">

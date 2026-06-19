@@ -173,6 +173,8 @@ export default function Lancamentos() {
     try {
       await remove(l.id)
       toast.success('Lançamento excluído')
+      void list()
+      void fetchResumo().then(setResumo).catch(() => {})
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
     } finally { setExcluindo(null) }
@@ -189,6 +191,8 @@ export default function Lancamentos() {
     try {
       for (const item of parcelas) await remove(item.id)
       toast.success(`${parcelas.length} parcelas excluídas`)
+      void list()
+      void fetchResumo().then(setResumo).catch(() => {})
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao excluir')
     } finally { setExcluindo(null) }
@@ -204,6 +208,8 @@ export default function Lancamentos() {
     try {
       await pagar(l.id, { dataPagamento: new Date().toISOString() })
       toast.success('Pagamento registrado')
+      void list()
+      void fetchResumo().then(setResumo).catch(() => {})
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao registrar pagamento')
     } finally { setPagando(null) }

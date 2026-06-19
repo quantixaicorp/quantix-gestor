@@ -51,6 +51,7 @@ const ALL_TABS: { id: RelatorioTabId; label: string; description: string }[] = [
   { id: 'assinaturas', label: 'Assinaturas', description: 'MRR, churn e evolução mensal' },
   { id: 'curva-abc', label: 'Curva ABC', description: 'Classificação A/B/C de produtos e clientes' },
   { id: 'dre', label: 'DRE', description: 'Demonstração do Resultado do Exercício' },
+  { id: 'compras', label: 'Compras', description: 'KPIs, evolução mensal, por fornecedor e top produtos comprados' },
 ]
 
 const WIDGET_CATEGORIES_ORDER = [

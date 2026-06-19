@@ -28,15 +28,16 @@ export type RelatorioData = Partial<TabData>
 export function useRelatorios() {
   const [data, setData] = useState<RelatorioData>({})
   const [loadingTab, setLoadingTab] = useState<RelatorioTabId | null>(null)
-  const periodoRef = useRef({ de: '', ate: '' })
+  const periodoRef = useRef({ de: '', ate: '', tipoData: 'pagamento' })
   const loadedRef = useRef<Set<RelatorioTabId>>(new Set())
 
-  function buildQs(de: string, ate: string) {
-    return `?de=${encodeURIComponent(de)}&ate=${encodeURIComponent(ate)}`
+  function buildQs(de: string, ate: string, extra?: Record<string, string>) {
+    const qs = new URLSearchParams({ de, ate, ...(extra ?? {}) })
+    return `?${qs}`
   }
 
-  const setPeriodo = useCallback((de: string, ate: string) => {
-    periodoRef.current = { de, ate }
+  const setPeriodo = useCallback((de: string, ate: string, tipoData?: string) => {
+    periodoRef.current = { de, ate, tipoData: tipoData ?? 'pagamento' }
     loadedRef.current.clear()
     setData({})
   }, [])
@@ -48,7 +49,7 @@ export function useRelatorios() {
 
     setLoadingTab(tab)
     try {
-      const qs = buildQs(de, ate)
+      const qs = buildQs(de, ate, {})
       switch (tab) {
         case 'visao-geral': {
           const d = await api.get<KpisGeralResponse>(`/api/relatorios/kpis${qs}`)
@@ -61,7 +62,8 @@ export function useRelatorios() {
           break
         }
         case 'financeiro': {
-          const d = await api.get<RelatorioFinanceiroResponse>(`/api/relatorios/financeiro${qs}`)
+          const finQs = buildQs(de, ate, { tipoData: periodoRef.current.tipoData })
+          const d = await api.get<RelatorioFinanceiroResponse>(`/api/relatorios/financeiro${finQs}`)
           setData(prev => ({ ...prev, financeiro: d }))
           break
         }

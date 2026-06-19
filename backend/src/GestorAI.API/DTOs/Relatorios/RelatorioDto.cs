@@ -42,13 +42,23 @@ public record RelatorioVendasResponse(
 // Financeiro
 public record FluxoCaixaDiaResponse(DateTime Data, decimal Receitas, decimal Despesas, decimal Saldo);
 public record CategoriaDespesaResponse(string Categoria, decimal Total);
+public record LancamentoAnaliticoResponse(
+    Guid Id,
+    string Tipo,
+    string Descricao,
+    string Categoria,
+    decimal Valor,
+    DateTime DataVencimento,
+    DateTime? DataPagamento,
+    string Status);
 
 public record RelatorioFinanceiroResponse(
     decimal TotalReceitas,
     decimal TotalDespesas,
     decimal Saldo,
     List<FluxoCaixaDiaResponse> FluxoPorDia,
-    List<CategoriaDespesaResponse> CategoriasDespesas);
+    List<CategoriaDespesaResponse> CategoriasDespesas,
+    List<LancamentoAnaliticoResponse> Analitico);
 
 // Estoque
 public record GiroProdutoResponse(string Nome, decimal Entradas, decimal Saidas, decimal GiroLiquido);

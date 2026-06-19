@@ -20,6 +20,12 @@ public static class EstoqueEndpoints
             return Results.Created($"/api/categorias/{result.Id}", result);
         });
 
+        group.MapDelete("/categorias/{id:guid}", async (Guid id, CategoriaService svc, CancellationToken ct) =>
+        {
+            await svc.DeleteAsync(id, ct);
+            return Results.NoContent();
+        });
+
         // Produtos
         group.MapGet("/produtos", async (
             string? busca, Guid? categoriaId, bool? estoqueBaixo,

@@ -4,6 +4,31 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/useToast'
+
+function maskCnpj(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 14)
+  return d
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+}
+
+function maskCep(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 8)
+  return d.replace(/^(\d{5})(\d)/, '$1-$2')
+}
+
+function isValidCnpj(cnpj: string) {
+  const d = cnpj.replace(/\D/g, '')
+  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false
+  const calc = (n: number) => {
+    let s = 0, p = n - 7
+    for (let i = 0; i < n; i++) { s += parseInt(d[i]) * (p--); if (p < 2) p = 9 }
+    const r = s % 11; return r < 2 ? 0 : 11 - r
+  }
+  return calc(12) === parseInt(d[12]) && calc(13) === parseInt(d[13])
+}
 import type { ConfiguracaoEmpresaResponse } from '@/types/fiscal'
 import { useDashboardLayout } from '@/hooks/useDashboardLayout'
 import { ALL_WIDGETS, WIDGET_CATEGORY } from '@/components/dashboard/widgetRegistry'
@@ -95,6 +120,8 @@ export default function ConfiguracaoEmpresa() {
 
   const [end, setEnd] = useState({ logradouro: '', numero: '', complemento: '', bairro: '', codigoMunicipio: '', municipio: '', uf: '', cep: '' })
   const [savingEnd, setSavingEnd] = useState(false)
+  const [buscandoCep, setBuscandoCep] = useState(false)
+  const [cnpjErro, setCnpjErro] = useState('')
 
   const [visual, setVisual] = useState({ slug: '', nomeExibicao: '', corPrimaria: '#2563eb', descricaoPublica: '', logoUrl: '' })
   const [savingVisual, setSavingVisual] = useState(false)
@@ -122,7 +149,33 @@ export default function ConfiguracaoEmpresa() {
       .finally(() => setLoading(false))
   }, [])
 
+  async function buscarCep(cep: string) {
+    const raw = cep.replace(/\D/g, '')
+    if (raw.length !== 8) return
+    setBuscandoCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`)
+      const data = await res.json() as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string; ibge?: string }
+      if (data.erro) { toast.error('CEP não encontrado'); return }
+      setEnd(v => ({
+        ...v,
+        logradouro: data.logradouro ?? v.logradouro,
+        bairro: data.bairro ?? v.bairro,
+        municipio: data.localidade ?? v.municipio,
+        uf: data.uf ?? v.uf,
+        codigoMunicipio: data.ibge ?? v.codigoMunicipio,
+      }))
+    } catch { toast.error('Erro ao buscar CEP') }
+    finally { setBuscandoCep(false) }
+  }
+
   async function saveIdent() {
+    const cnpjRaw = ident.cnpj.replace(/\D/g, '')
+    if (cnpjRaw && !isValidCnpj(cnpjRaw)) {
+      setCnpjErro('CNPJ inválido')
+      return
+    }
+    setCnpjErro('')
     setSavingIdent(true)
     try { await api.put('/api/configuracao-empresa', { ...ident }); toast.success('Identificação salva!') }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
@@ -259,7 +312,19 @@ export default function ConfiguracaoEmpresa() {
             <div className="grid grid-cols-2 gap-4">
               <Field label="Razão Social"><Input value={ident.razaoSocial} onChange={e => setIdent(v => ({ ...v, razaoSocial: e.target.value }))} /></Field>
               <Field label="Nome Fantasia"><Input value={ident.nomeFantasia} onChange={e => setIdent(v => ({ ...v, nomeFantasia: e.target.value }))} /></Field>
-              <Field label="CNPJ"><Input value={ident.cnpj} placeholder="00.000.000/0000-00" onChange={e => setIdent(v => ({ ...v, cnpj: e.target.value }))} /></Field>
+              <Field label="CNPJ">
+                <Input
+                  value={ident.cnpj}
+                  placeholder="00.000.000/0000-00"
+                  className={cnpjErro ? 'border-destructive' : ''}
+                  onChange={e => {
+                    const masked = maskCnpj(e.target.value)
+                    setIdent(v => ({ ...v, cnpj: masked }))
+                    setCnpjErro('')
+                  }}
+                />
+                {cnpjErro && <p className="text-xs text-destructive mt-1">{cnpjErro}</p>}
+              </Field>
               <Field label="Inscrição Estadual"><Input value={ident.inscricaoEstadual} onChange={e => setIdent(v => ({ ...v, inscricaoEstadual: e.target.value }))} /></Field>
               <Field label="Inscrição Municipal"><Input value={ident.inscricaoMunicipal} onChange={e => setIdent(v => ({ ...v, inscricaoMunicipal: e.target.value }))} /></Field>
               <Field label="Telefone"><Input value={ident.telefone} placeholder="(11) 99999-0000" onChange={e => setIdent(v => ({ ...v, telefone: e.target.value }))} /></Field>
@@ -279,7 +344,20 @@ export default function ConfiguracaoEmpresa() {
               <Field label="Número"><Input value={end.numero} onChange={e => setEnd(v => ({ ...v, numero: e.target.value }))} /></Field>
               <Field label="Complemento"><Input value={end.complemento} onChange={e => setEnd(v => ({ ...v, complemento: e.target.value }))} /></Field>
               <Field label="Bairro"><Input value={end.bairro} onChange={e => setEnd(v => ({ ...v, bairro: e.target.value }))} /></Field>
-              <Field label="CEP"><Input value={end.cep} placeholder="00000-000" onChange={e => setEnd(v => ({ ...v, cep: e.target.value }))} /></Field>
+              <Field label="CEP">
+                <div className="flex gap-2">
+                  <Input
+                    value={end.cep}
+                    placeholder="00000-000"
+                    onChange={e => setEnd(v => ({ ...v, cep: maskCep(e.target.value) }))}
+                    onBlur={e => void buscarCep(e.target.value)}
+                  />
+                  <Button type="button" variant="outline" size="sm" disabled={buscandoCep}
+                    onClick={() => void buscarCep(end.cep)}>
+                    {buscandoCep ? '...' : 'Buscar'}
+                  </Button>
+                </div>
+              </Field>
               <Field label="Município"><Input value={end.municipio} onChange={e => setEnd(v => ({ ...v, municipio: e.target.value }))} /></Field>
               <Field label="UF"><Input value={end.uf} maxLength={2} className="uppercase" onChange={e => setEnd(v => ({ ...v, uf: e.target.value.toUpperCase() }))} /></Field>
               <div className="col-span-2">

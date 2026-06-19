@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using GestorAI.API.Domain.Enums;
 
 namespace GestorAI.API.Domain.Entities;
@@ -18,4 +19,9 @@ public class Venda : ITenantEntity
     public Cliente? Cliente { get; set; }
     public ICollection<ItemVenda> Itens { get; set; } = [];
     public Lancamento? Lancamento { get; set; }
+
+    public Guid?   ProfissionalId   { get; set; }
+    public string? ProfissionalNome { get; set; }
+    [Column("observacao_os")]
+    public string? ObservacaoOS     { get; set; }
 }

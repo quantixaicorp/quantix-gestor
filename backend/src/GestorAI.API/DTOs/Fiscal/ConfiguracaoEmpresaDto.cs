@@ -42,7 +42,8 @@ public record ConfiguracaoEmpresaResponse(
     string? DominioCustomizado,
     bool AprovarAutomaticamente,
     decimal? ValorSinal,
-    int? HorasLimiteCancelamento);
+    int? HorasLimiteCancelamento,
+    string TipoNegocio = "Lojista");
 
 public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox, string? ClickSignApiKey, bool ClickSignSandbox);
 
@@ -91,4 +92,5 @@ public record AtualizarConfiguracaoEmpresaRequest(
     int? SerieNfce,
     string? FocusNfeToken,
     string? Telefone = null,
-    string? Email = null);
+    string? Email = null,
+    string? TipoNegocio = null);

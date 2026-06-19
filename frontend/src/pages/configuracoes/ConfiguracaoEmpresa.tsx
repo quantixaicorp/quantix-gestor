@@ -115,7 +115,7 @@ export default function ConfiguracaoEmpresa() {
   const [loading, setLoading] = useState(true)
   const [temToken, setTemToken] = useState(false)
 
-  const [ident, setIdent] = useState({ razaoSocial: '', nomeFantasia: '', cnpj: '', inscricaoEstadual: '', inscricaoMunicipal: '', telefone: '', email: '' })
+  const [ident, setIdent] = useState({ razaoSocial: '', nomeFantasia: '', cnpj: '', inscricaoEstadual: '', inscricaoMunicipal: '', telefone: '', email: '', tipoNegocio: 'Lojista' })
   const [savingIdent, setSavingIdent] = useState(false)
 
   const [end, setEnd] = useState({ logradouro: '', numero: '', complemento: '', bairro: '', codigoMunicipio: '', municipio: '', uf: '', cep: '' })
@@ -139,7 +139,7 @@ export default function ConfiguracaoEmpresa() {
   useEffect(() => {
     api.get<ConfiguracaoEmpresaResponse>('/api/configuracao-empresa')
       .then(c => {
-        setIdent({ razaoSocial: c.razaoSocial ?? '', nomeFantasia: c.nomeFantasia ?? '', cnpj: c.cnpj ?? '', inscricaoEstadual: c.inscricaoEstadual ?? '', inscricaoMunicipal: c.inscricaoMunicipal ?? '', telefone: c.telefone ?? '', email: c.email ?? '' })
+        setIdent({ razaoSocial: c.razaoSocial ?? '', nomeFantasia: c.nomeFantasia ?? '', cnpj: c.cnpj ?? '', inscricaoEstadual: c.inscricaoEstadual ?? '', inscricaoMunicipal: c.inscricaoMunicipal ?? '', telefone: c.telefone ?? '', email: c.email ?? '', tipoNegocio: c.tipoNegocio ?? 'Lojista' })
         setEnd({ logradouro: c.logradouro ?? '', numero: c.numero ?? '', complemento: c.complemento ?? '', bairro: c.bairro ?? '', codigoMunicipio: c.codigoMunicipio ?? '', municipio: c.municipio ?? '', uf: c.uf ?? '', cep: c.cep ?? '' })
         setVisual({ slug: c.slug ?? '', nomeExibicao: c.nomeFantasia ?? '', corPrimaria: c.corPrimaria ?? '#2563eb', descricaoPublica: c.descricaoPublica ?? '', logoUrl: c.logoUrl ?? '' })
         setNfe({ regimeTributario: c.regimeTributario ?? 1, ambiente: c.ambiente ?? 2, serieNfe: c.serieNfe ?? 1, serieNfce: c.serieNfce ?? 1 })
@@ -177,7 +177,7 @@ export default function ConfiguracaoEmpresa() {
     }
     setCnpjErro('')
     setSavingIdent(true)
-    try { await api.put('/api/configuracao-empresa', { ...ident }); toast.success('Identificação salva!') }
+    try { await api.put('/api/configuracao-empresa', { ...ident, tipoNegocio: ident.tipoNegocio }); toast.success('Identificação salva!') }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setSavingIdent(false) }
   }
@@ -330,6 +330,18 @@ export default function ConfiguracaoEmpresa() {
               <Field label="Telefone"><Input value={ident.telefone} placeholder="(11) 99999-0000" onChange={e => setIdent(v => ({ ...v, telefone: e.target.value }))} /></Field>
               <div className="col-span-2">
                 <Field label="E-mail"><Input type="email" value={ident.email} placeholder="contato@empresa.com" onChange={e => setIdent(v => ({ ...v, email: e.target.value }))} /></Field>
+              </div>
+              <div className="col-span-2">
+                <Field label="Tipo de negócio">
+                  <select
+                    value={ident.tipoNegocio}
+                    onChange={e => setIdent(v => ({ ...v, tipoNegocio: e.target.value }))}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  >
+                    <option value="Lojista">Lojista (varejo / produtos)</option>
+                    <option value="Prestador">Prestador de Serviço</option>
+                  </select>
+                </Field>
               </div>
             </div>
           </Panel>

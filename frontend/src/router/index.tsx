@@ -47,7 +47,7 @@ import DetalheCompra from '@/pages/compras/DetalheCompra'
 import PedidosCompra from '@/pages/compras/PedidosCompra'
 import NovoPedidoCompra from '@/pages/compras/NovoPedidoCompra'
 import DetalhePedidoCompra from '@/pages/compras/DetalhePedidoCompra'
-import DashboardCompras from '@/pages/compras/DashboardCompras'
+import { Navigate } from 'react-router-dom'
 import LogAutomacao from '@/pages/automacao/LogAutomacao'
 import PlanosList from '@/pages/planos/PlanosList'
 import PlanoWizard from '@/pages/planos/PlanoWizard'
@@ -90,7 +90,7 @@ export const router = createBrowserRouter([
       { path: '/compras/pedidos', element: <PedidosCompra /> },
       { path: '/compras/pedidos/novo', element: <NovoPedidoCompra /> },
       { path: '/compras/pedidos/:id', element: <DetalhePedidoCompra /> },
-      { path: '/compras/dashboard', element: <DashboardCompras /> },
+      { path: '/compras/dashboard', element: <Navigate to="/relatorios" replace /> },
       { path: '/compras/:id', element: <DetalheCompra /> },
       { path: '/relatorios', element: <Relatorios /> },
       { path: '/fiscal', element: <Fiscal /> },

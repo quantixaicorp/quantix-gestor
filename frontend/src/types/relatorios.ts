@@ -11,6 +11,7 @@ export type RelatorioTabId =
   | 'assinaturas'
   | 'curva-abc'
   | 'dre'
+  | 'compras'
 
 export interface RelatorioLayoutDto {
   tabs: RelatorioTabId[]

@@ -12,6 +12,8 @@ export interface CreateVendaRequest {
   parcelas?: number
   observacao?: string
   dataHora?: string
+  profissionalId?: string
+  observacaoOS?: string
 }
 
 export interface ItemVendaResponse {
@@ -42,6 +44,8 @@ export interface VendaResponse {
   parcelas: number | null
   observacao: string | null
   itens: ItemVendaResponse[]
+  profissionalNome?: string | null
+  observacaoOS?: string | null
 }
 
 export interface VendaListItem {
@@ -52,6 +56,7 @@ export interface VendaListItem {
   status: string
   total: number
   formaPagamento: string
+  profissionalNome?: string | null
 }
 
 export interface ItemCarrinho {

@@ -78,6 +78,7 @@ export interface ConfiguracaoEmpresaResponse {
   aprovarAutomaticamente: boolean
   valorSinal: number | null
   horasLimiteCancelamento: number | null
+  tipoNegocio: string
 }
 
 export interface AtualizarConfiguracaoEmpresaRequest {
@@ -103,4 +104,5 @@ export interface AtualizarConfiguracaoEmpresaRequest {
   serieNfe?: number
   serieNfce?: number
   focusNfeToken?: string
+  tipoNegocio?: string
 }

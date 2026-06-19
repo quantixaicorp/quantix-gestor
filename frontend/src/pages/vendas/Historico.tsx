@@ -26,7 +26,7 @@ export default function Historico() {
   const [tipoNegocio, setTipoNegocio] = useState('Lojista')
 
   useEffect(() => {
-    void obter().then(c => setTipoNegocio(c?.tipoNegocio ?? 'Lojista'))
+    void obter().then(c => setTipoNegocio(c?.tipoNegocio || 'Lojista'))
   }, [obter])
 
   const isPrestador = tipoNegocio === 'Prestador'

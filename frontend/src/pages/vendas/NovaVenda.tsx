@@ -8,7 +8,7 @@ export default function NovaVenda() {
   const [tipoNegocio, setTipoNegocio] = useState<string | null>(null)
 
   useEffect(() => {
-    void obter().then(c => setTipoNegocio(c?.tipoNegocio ?? 'Lojista'))
+    void obter().then(c => setTipoNegocio(c?.tipoNegocio || 'Lojista'))
   }, [obter])
 
   if (tipoNegocio === null)

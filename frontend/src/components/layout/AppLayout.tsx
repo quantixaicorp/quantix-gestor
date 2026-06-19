@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/services/api'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
+import TopNav from './TopNav'
 import { cn } from '@/lib/utils'
 
 export interface EmpresaInfo {
@@ -62,6 +63,21 @@ export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth()
   const [empresa, setEmpresa] = useState<EmpresaInfo | null>(null)
 
+  const [layoutMode, setLayoutMode] = useState<'sidebar' | 'topnav'>(() => {
+    try { return (localStorage.getItem('layout-mode') as 'sidebar' | 'topnav') || 'sidebar' }
+    catch { return 'sidebar' }
+  })
+
+  // Expose layout mode change globally so settings page can trigger it
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const mode = e.detail as 'sidebar' | 'topnav'
+      setLayoutMode(mode)
+    }
+    window.addEventListener('layout-mode-change', handler as EventListener)
+    return () => window.removeEventListener('layout-mode-change', handler as EventListener)
+  }, [])
+
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem('sidebar-collapsed') === 'true' }
     catch { return false }
@@ -116,47 +132,56 @@ export default function AppLayout() {
 
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
+  const isTopNav = layoutMode === 'topnav'
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Tablet top bar — hamburger for sidebar expand on md–lg */}
-      <header
-        style={{ ...sidebarStyle, marginLeft: effectiveCollapsed ? '4rem' : '16rem' } as React.CSSProperties}
-        className="hidden md:flex lg:hidden fixed top-0 left-0 right-0 z-30 h-14 items-center gap-3 px-4 bg-sidebar border-b border-sidebar-border"
-      >
-        <button
-          onClick={() => setCollapsed(v => !v)}
-          className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-          aria-label="Expandir menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      </header>
+      {isTopNav ? (
+        /* ── TopNav mode ─────────────────────────────────────────── */
+        <TopNav empresaConfig={empresa} sidebarStyle={sidebarStyle} />
+      ) : (
+        /* ── Sidebar mode ────────────────────────────────────────── */
+        <>
+          {/* Tablet top bar — hamburger only, sidebar mode */}
+          <header
+            style={{ ...sidebarStyle, marginLeft: effectiveCollapsed ? '4rem' : '16rem' } as React.CSSProperties}
+            className="hidden md:flex lg:hidden fixed top-0 left-0 right-0 z-30 h-14 items-center gap-3 px-4 bg-sidebar border-b border-sidebar-border"
+          >
+            <button
+              onClick={() => setCollapsed(v => !v)}
+              className="p-1.5 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+              aria-label="Expandir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </header>
 
-      {/* Sidebar — hidden on mobile, always visible on md+ */}
-      <Sidebar
-        collapsed={effectiveCollapsed}
-        onToggle={() => !isTablet && setCollapsed(v => !v)}
-        mobileOpen={false}
-        onMobileClose={() => {}}
-        empresaConfig={empresa}
-        sidebarStyle={sidebarStyle}
-      />
+          <Sidebar
+            collapsed={effectiveCollapsed}
+            onToggle={() => !isTablet && setCollapsed(v => !v)}
+            mobileOpen={false}
+            onMobileClose={() => {}}
+            empresaConfig={empresa}
+            sidebarStyle={sidebarStyle}
+          />
+        </>
+      )}
 
-      {/* Bottom navigation — mobile only */}
+      {/* Bottom navigation — mobile only, always shown */}
       <BottomNav sidebarStyle={sidebarStyle} empresaConfig={empresa} />
 
       <main
         className={cn(
           'min-h-screen transition-[margin-left] duration-300',
           'px-4 md:px-6',
-          // Mobile: padding top for nothing (no top bar), padding bottom for bottom nav
           'pt-4 pb-20',
-          // Tablet: padding top for tablet top bar
-          'md:pt-[72px] md:pb-6',
-          // Desktop: padding top for nothing (no top bar)
-          'lg:pt-6 lg:pb-6',
-          // Sidebar margin
-          effectiveCollapsed ? 'md:ml-16' : 'md:ml-64',
+          isTopNav
+            ? 'md:pt-16 md:pb-6 md:ml-0'
+            : cn(
+                'md:pt-[72px] md:pb-6',
+                'lg:pt-6 lg:pb-6',
+                effectiveCollapsed ? 'md:ml-16' : 'md:ml-64',
+              )
         )}
       >
         <Outlet />

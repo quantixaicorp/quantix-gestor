@@ -454,6 +454,67 @@ export default function ConfiguracaoEmpresa() {
         </Panel>
       )}
 
+      {/* ── Layout da navegação ───────────────────────────────── */}
+      {page === 'visual' && (
+        <Panel title="Layout da navegação">
+          <p className="text-xs text-muted-foreground -mt-2">Escolha como o menu principal é exibido no desktop e tablet. No celular o menu inferior é sempre usado.</p>
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            {([
+              {
+                mode: 'sidebar',
+                label: 'Sidebar lateral',
+                desc: 'Menu fixo na esquerda com grupos e ícones',
+                preview: (
+                  <div className="flex gap-1 h-10 rounded overflow-hidden border">
+                    <div className="w-4 bg-muted-foreground/20 flex flex-col gap-0.5 p-0.5">
+                      {[1,2,3,4].map(i => <div key={i} className="h-1 rounded bg-muted-foreground/40" />)}
+                    </div>
+                    <div className="flex-1 bg-muted/30" />
+                  </div>
+                ),
+              },
+              {
+                mode: 'topnav',
+                label: 'Barra superior',
+                desc: 'Menu horizontal no topo com dropdowns',
+                preview: (
+                  <div className="flex flex-col gap-1 h-10 rounded overflow-hidden border">
+                    <div className="h-3 bg-muted-foreground/20 flex items-center gap-0.5 px-1">
+                      {[1,2,3,4,5].map(i => <div key={i} className="h-1 w-4 rounded bg-muted-foreground/40" />)}
+                    </div>
+                    <div className="flex-1 bg-muted/30" />
+                  </div>
+                ),
+              },
+            ] as const).map(({ mode, label, desc, preview }) => {
+              const current = (() => {
+                try { return localStorage.getItem('layout-mode') || 'sidebar' } catch { return 'sidebar' }
+              })()
+              const selected = current === mode
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    try { localStorage.setItem('layout-mode', mode) } catch { /* ignore */ }
+                    window.dispatchEvent(new CustomEvent('layout-mode-change', { detail: mode }))
+                  }}
+                  className={`rounded-lg border-2 p-3 text-left space-y-2 transition-colors ${
+                    selected ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
+                  }`}
+                >
+                  {preview}
+                  <div>
+                    <p className={`text-sm font-medium ${selected ? 'text-primary' : ''}`}>{label}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </Panel>
+      )}
+
       {/* ── Dashboard ─────────────────────────────────────────── */}
       {page === 'dashboard' && (
         <div className="space-y-4">

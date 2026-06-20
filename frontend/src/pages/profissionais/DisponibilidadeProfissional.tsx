@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useProfissionais } from '@/hooks/useProfissionais'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/useToast'
+import { cn } from '@/lib/utils'
 import type { DisponibilidadeItem, DisponibilidadePeriodoResponse, TipoPeriodo } from '@/types/agendamento'
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -130,7 +131,14 @@ export default function DisponibilidadeProfissional() {
   useEffect(() => { void carregarLista() }, [carregarLista])
 
   function adicionarFaixa(dia: number) {
-    setFaixas(prev => [...prev, { diaSemana: dia, horaInicio: '08:00', horaFim: '18:00' }])
+    const existentes = faixas.filter(f => f.diaSemana === dia)
+    if (existentes.length === 0) {
+      setFaixas(prev => [...prev, { diaSemana: dia, horaInicio: '08:00', horaFim: '18:00' }])
+    } else {
+      // adiciona faixa de intervalo após a última
+      const ultima = existentes[existentes.length - 1]
+      setFaixas(prev => [...prev, { diaSemana: dia, horaInicio: ultima.horaFim, horaFim: '18:00' }])
+    }
   }
 
   function removerFaixa(index: number) {
@@ -139,6 +147,16 @@ export default function DisponibilidadeProfissional() {
 
   function atualizarFaixa(index: number, field: keyof DisponibilidadeItem, value: string | number) {
     setFaixas(prev => prev.map((f, i) => i === index ? { ...f, [field]: value } : f))
+  }
+
+  function replicarDia(diaOrigem: number, destinos: number[]) {
+    const faixasOrigem = faixas.filter(f => f.diaSemana === diaOrigem)
+    if (faixasOrigem.length === 0) { toast.error('Sem horários para replicar'); return }
+    setFaixas(prev => [
+      ...prev.filter(f => !destinos.includes(f.diaSemana)),
+      ...destinos.flatMap(dia => faixasOrigem.map(f => ({ ...f, diaSemana: dia }))),
+    ])
+    toast.success(`Horários replicados para ${destinos.length} dia(s)`)
   }
 
   async function salvar() {
@@ -171,6 +189,17 @@ export default function DisponibilidadeProfissional() {
     const d = new Date(p.dataInicio + 'T12:00:00')
     setRef(d)
   }
+
+  const [dropdownAberto, setDropdownAberto] = useState<number | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdownAberto(null)
+    }
+    document.addEventListener('mousedown', fechar)
+    return () => document.removeEventListener('mousedown', fechar)
+  }, [])
 
   const TIPOS: { value: TipoPeriodo; label: string }[] = [
     { value: 'semana', label: 'Semana' },
@@ -247,24 +276,64 @@ export default function DisponibilidadeProfissional() {
         {loading ? (
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3" ref={dropdownRef}>
             {DIAS.map((dia, diaIdx) => {
               const faixasDia = faixas.filter(f => f.diaSemana === diaIdx)
+              const diasUteis = [1, 2, 3, 4, 5].filter(d => d !== diaIdx)
+              const todosDias = [0, 1, 2, 3, 4, 5, 6].filter(d => d !== diaIdx)
               return (
                 <div key={diaIdx} className="rounded-md border p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm w-8">{dia}</span>
-                    <Button variant="outline" size="sm" onClick={() => adicionarFaixa(diaIdx)}>
-                      + Faixa
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      {/* Replicar dropdown */}
+                      <div className="relative">
+                        <Button
+                          variant="ghost" size="sm"
+                          disabled={faixasDia.length === 0}
+                          onClick={() => setDropdownAberto(d => d === diaIdx ? null : diaIdx)}
+                          className="text-xs text-muted-foreground"
+                          title="Replicar horários para outros dias"
+                        >
+                          Replicar ▾
+                        </Button>
+                        {dropdownAberto === diaIdx && (
+                          <div className="absolute right-0 top-8 z-20 min-w-[200px] rounded-md border bg-popover shadow-md text-sm">
+                            <button
+                              className="w-full px-3 py-2 text-left hover:bg-accent transition-colors"
+                              onClick={() => { replicarDia(diaIdx, diasUteis); setDropdownAberto(null) }}
+                            >
+                              Para dias úteis (Seg–Sex)
+                            </button>
+                            <button
+                              className="w-full px-3 py-2 text-left hover:bg-accent transition-colors"
+                              onClick={() => { replicarDia(diaIdx, todosDias); setDropdownAberto(null) }}
+                            >
+                              Para todos os dias
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => adicionarFaixa(diaIdx)}>
+                        + Horário
+                      </Button>
+                    </div>
                   </div>
                   {faixasDia.length === 0 && (
                     <p className="text-xs text-muted-foreground">Sem horários neste dia</p>
                   )}
-                  {faixasDia.map((faixa) => {
+                  {faixasDia.map((faixa, faixaOrder) => {
                     const idx = faixas.indexOf(faixa)
                     return (
                       <div key={idx} className="flex items-center gap-2 mt-2">
+                        {faixasDia.length > 1 && (
+                          <span className={cn(
+                            'text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0',
+                            faixaOrder === 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                          )}>
+                            {faixaOrder === 0 ? '1ª' : `${faixaOrder + 1}ª`}
+                          </span>
+                        )}
                         <Input
                           type="time"
                           value={faixa.horaInicio}

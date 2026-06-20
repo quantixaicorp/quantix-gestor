@@ -122,14 +122,28 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    overscroll-behavior: none;
   }
 
   html {
     @apply scroll-smooth;
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
+  @media screen and (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Prevent double-tap zoom on interactive elements */
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 }
 

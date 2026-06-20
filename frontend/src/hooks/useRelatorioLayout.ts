@@ -15,6 +15,7 @@ const DEFAULT_TABS: RelatorioTabId[] = [
   'assinaturas',
   'curva-abc',
   'dre',
+  'compras',
 ]
 
 export function useRelatorioLayout() {

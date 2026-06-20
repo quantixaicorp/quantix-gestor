@@ -14,7 +14,11 @@ interface JwtPayload {
 function parseJwt(token: string): JwtPayload | null {
   try {
     const payload = token.split('.')[1]
-    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as JwtPayload
+    const bytes = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    const decoded = decodeURIComponent(
+      bytes.split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join('')
+    )
+    return JSON.parse(decoded) as JwtPayload
   } catch { return null }
 }
 
@@ -148,12 +152,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
+    const token = localStorage.getItem('ga_token')
     localStorage.removeItem('ga_token')
     localStorage.removeItem('ga_refresh_token')
+    localStorage.removeItem('pkce_verifier')
     setIsAuthenticated(false)
+    setIsAdmin(false)
+    setUserName(null)
     setEnabledModules(new Set())
     setModulesLoaded(false)
-    window.location.href = `${ADMIN_URL}/Account/Logout`
+    const params = new URLSearchParams({
+      post_logout_redirect_uri: window.location.origin,
+      ...(token ? { id_token_hint: token } : {}),
+    })
+    window.location.href = `${ADMIN_URL}/connect/endsession?${params}`
   }, [])
 
   return (

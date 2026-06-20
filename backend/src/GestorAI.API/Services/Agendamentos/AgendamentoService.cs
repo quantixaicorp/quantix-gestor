@@ -171,6 +171,8 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
 
         var preco = a.Servico!.PrecoVenda;
 
+        var profissional = await db.Profissionais.FindAsync([a.ProfissionalId], ct);
+
         var venda = new Venda
         {
             EmpresaId = tenantContext.EmpresaId,
@@ -181,6 +183,9 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
             Total = preco,
             FormaPagamento = FormaPagamento.Outro,
             Observacao = $"Gerado do agendamento de {a.ClienteNome}",
+            ProfissionalId   = a.ProfissionalId,
+            ProfissionalNome = profissional?.Nome,
+            ObservacaoOS     = $"Agendamento de {a.ClienteNome}",
         };
         db.Vendas.Add(venda);
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAgendamentos } from '@/hooks/useAgendamentos'
 import { useProfissionais } from '@/hooks/useProfissionais'
@@ -8,6 +8,98 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/useToast'
+import { cn } from '@/lib/utils'
+
+const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const DIAS_SEMANA_MINI = ['D','S','T','Q','Q','S','S']
+
+function buildCells(ano: number, mes: number) {
+  const first = new Date(ano, mes, 1).getDay()
+  const days = new Date(ano, mes + 1, 0).getDate()
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const cells: Array<{ day: number; date: string; disabled: boolean } | null> = Array(first).fill(null)
+  for (let d = 1; d <= days; d++) {
+    const dt = new Date(ano, mes, d)
+    const date = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    cells.push({ day: d, date, disabled: dt < today })
+  }
+  return cells
+}
+
+function CalendarioPicker({ value, onChange }: { value: string; onChange: (d: string) => void }) {
+  const [aberto, setAberto] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const base = value ? new Date(value + 'T12:00:00') : new Date()
+  const [ano, setAno] = useState(base.getFullYear())
+  const [mes, setMes] = useState(base.getMonth())
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAberto(false)
+    }
+    if (aberto) document.addEventListener('mousedown', fechar)
+    return () => document.removeEventListener('mousedown', fechar)
+  }, [aberto])
+
+  function navMes(dir: 1 | -1) {
+    if (dir === -1 && mes === 0) { setMes(11); setAno(a => a - 1) }
+    else if (dir === 1 && mes === 11) { setMes(0); setAno(a => a + 1) }
+    else setMes(m => m + dir)
+  }
+
+  const cells = buildCells(ano, mes)
+  const displayLabel = value
+    ? new Date(value + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
+    : 'Selecionar data'
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setAberto(o => !o)}
+        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm hover:bg-accent/30 transition-colors"
+      >
+        <span>{displayLabel}</span>
+        <span className="text-muted-foreground text-xs">📅</span>
+      </button>
+      {aberto && (
+        <div className="absolute z-50 top-11 left-0 bg-card border rounded-xl shadow-xl p-3 w-64">
+          <div className="flex items-center justify-between mb-3">
+            <button type="button" onClick={() => navMes(-1)}
+              className="h-7 w-7 rounded-md hover:bg-accent transition-colors flex items-center justify-center text-muted-foreground">‹</button>
+            <span className="text-sm font-semibold">{MESES_NOME[mes]} {ano}</span>
+            <button type="button" onClick={() => navMes(1)}
+              className="h-7 w-7 rounded-md hover:bg-accent transition-colors flex items-center justify-center text-muted-foreground">›</button>
+          </div>
+          <div className="grid grid-cols-7 mb-1">
+            {DIAS_SEMANA_MINI.map((d, i) => (
+              <span key={i} className="text-center text-[10px] font-medium text-muted-foreground py-1">{d}</span>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-y-0.5">
+            {cells.map((cell, i) =>
+              cell === null ? <div key={i} /> : (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={cell.disabled}
+                  onClick={() => { onChange(cell.date); setAberto(false) }}
+                  className={cn(
+                    'h-8 w-8 mx-auto rounded-full text-sm transition-colors',
+                    cell.disabled && 'opacity-30 cursor-not-allowed',
+                    value === cell.date ? 'bg-primary text-primary-foreground font-semibold' : !cell.disabled && 'hover:bg-accent'
+                  )}
+                >
+                  {cell.day}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const fmtHora = (iso: string) =>
   new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -136,7 +228,7 @@ export default function NovoAgendamento() {
 
       <div className="space-y-2">
         <Label>Data *</Label>
-        <Input type="date" value={data} onChange={e => setData(e.target.value)} />
+        <CalendarioPicker value={data} onChange={setData} />
       </div>
 
       <div className="space-y-2">

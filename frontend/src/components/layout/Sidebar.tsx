@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
+import { useConfiguracaoEmpresa } from '@/hooks/useConfiguracaoEmpresa'
 import { cn } from '@/lib/utils'
 import type { EmpresaInfo } from './AppLayout'
 
@@ -110,7 +111,6 @@ const menuGroups: MenuGroup[] = [
       { icon: Truck,         label: 'Fornecedores', path: '/fornecedores' },
       { icon: ClipboardList, label: 'Pedidos',       path: '/compras/pedidos' },
       { icon: ShoppingCart,  label: 'Compras',       path: '/compras' },
-      { icon: BarChart3,     label: 'Dashboard',     path: '/compras/dashboard' },
     ],
   },
   {
@@ -169,7 +169,20 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   const navigate = useNavigate()
   const { logout, enabledModules, modulesLoaded } = useAuth()
   const { resolved, toggleTheme } = useTheme()
+  const { obter } = useConfiguracaoEmpresa()
   const empresa = empresaConfig
+
+  const [isPrestador, setIsPrestador] = useState(false)
+  useEffect(() => {
+    void obter().then(c => setIsPrestador((c?.tipoNegocio || 'Lojista') === 'Prestador'))
+  }, [obter])
+
+  const vendaLabel = (path: string, original: string) => {
+    if (!isPrestador) return original
+    if (path === '/vendas/nova') return 'Nova OS'
+    if (path === '/vendas') return 'Histórico de Serviços'
+    return original
+  }
 
   // Show all groups when: still loading, OR no modules configured (empty = no restrictions).
   // Only filter when the company has at least one module configured.
@@ -309,7 +322,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                   <Link
                     key={item.path}
                     to={item.path}
-                    title={!showLabels ? item.label : undefined}
+                    title={!showLabels ? vendaLabel(item.path, item.label) : undefined}
                     onClick={handleNavClick}
                     className={cn(
                       'sidebar-link',
@@ -318,7 +331,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
-                    {showLabels && <span>{item.label}</span>}
+                    {showLabels && <span>{vendaLabel(item.path, item.label)}</span>}
                   </Link>
                 )
               })}

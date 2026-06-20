@@ -16,6 +16,7 @@ import AbaOrcamentos from '@/components/relatorios/AbaOrcamentos'
 import AbaAssinaturas from '@/components/relatorios/AbaAssinaturas'
 import AbaCurvaABC from '@/components/relatorios/AbaCurvaABC'
 import AbaDRE from '@/components/relatorios/AbaDRE'
+import AbaCompras from '@/components/relatorios/AbaCompras'
 import { cn } from '@/lib/utils'
 import type { RelatorioTabId } from '@/types/relatorios'
 
@@ -32,6 +33,7 @@ const TAB_META: Record<RelatorioTabId, string> = {
   'assinaturas': 'Assinaturas',
   'curva-abc': 'Curva ABC',
   'dre': 'DRE',
+  'compras': 'Compras',
 }
 
 function exportarCSV(nome: string, linhas: string[][]) {
@@ -48,6 +50,7 @@ export default function Relatorios() {
   const { tabs, load: loadLayout } = useRelatorioLayout()
   const [aba, setAba] = useState<RelatorioTabId | null>(null)
   const [periodo, setPeriodoState] = useState({ de: '', ate: '' })
+  const [tipoDataFinanceiro, setTipoDataFinanceiro] = useState('pagamento')
 
   const hoje = new Date().toISOString().split('T')[0]
   const inicioMes = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
@@ -67,13 +70,19 @@ export default function Relatorios() {
 
   function handlePeriodo(de: string, ate: string) {
     setPeriodoState({ de, ate })
-    setPeriodo(de, ate)
+    setPeriodo(de, ate, tipoDataFinanceiro)
     if (aba) void loadTab(aba)
+  }
+
+  function handleTipoDataFinanceiro(v: string) {
+    setTipoDataFinanceiro(v)
+    setPeriodo(periodo.de, periodo.ate, v)
+    void loadTab('financeiro')
   }
 
   function handleAba(nova: RelatorioTabId) {
     setAba(nova)
-    void loadTab(nova)
+    if (nova !== 'compras') void loadTab(nova)
   }
 
   function handleExportar() {
@@ -159,7 +168,7 @@ export default function Relatorios() {
     }
   }
 
-  const isLoading = loadingTab === aba
+  const isLoading = aba !== 'compras' && loadingTab === aba
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -204,7 +213,7 @@ export default function Relatorios() {
           <>
             {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} />}
             {aba === 'vendas' && data.vendas && <AbaVendas dados={data.vendas} />}
-            {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} />}
+            {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} tipoData={tipoDataFinanceiro} onChangeTipoData={handleTipoDataFinanceiro} />}
             {aba === 'estoque' && data.estoque && <AbaEstoque dados={data.estoque} />}
             {aba === 'clientes' && data.clientes && <AbaClientes dados={data.clientes} />}
             {aba === 'agendamentos' && data.agendamentos && <AbaAgendamentos dados={data.agendamentos} />}
@@ -216,6 +225,7 @@ export default function Relatorios() {
               <AbaCurvaABC produtos={data['curva-abc'].produtos} clientes={data['curva-abc'].clientes} />
             )}
             {aba === 'dre' && data.dre && <AbaDRE dados={data.dre} />}
+            {aba === 'compras' && <AbaCompras />}
           </>
         )}
       </div>

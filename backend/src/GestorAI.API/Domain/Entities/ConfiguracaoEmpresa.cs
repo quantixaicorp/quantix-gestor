@@ -59,5 +59,5 @@ public class ConfiguracaoEmpresa : ITenantEntity
     // White label — domínio customizado
     public string? DominioCustomizado { get; set; }
 
-
+    public string TipoNegocio { get; set; } = "Lojista";
 }

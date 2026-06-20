@@ -31,8 +31,8 @@ public static class DashboardEndpoints
             Results.Ok(await svc.GetVendasAsync(de, ate, ct)));
 
         group.MapGet("/relatorios/financeiro", async (
-            DateTime de, DateTime ate, RelatorioService svc, CancellationToken ct) =>
-            Results.Ok(await svc.GetFinanceiroAsync(de, ate, ct)));
+            DateTime de, DateTime ate, string? tipoData, RelatorioService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetFinanceiroAsync(de, ate, tipoData ?? "pagamento", ct)));
 
         group.MapGet("/relatorios/estoque", async (
             DateTime de, DateTime ate, RelatorioService svc, CancellationToken ct) =>

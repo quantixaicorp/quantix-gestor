@@ -46,3 +46,12 @@ public record UpdateLancamentoRequest(
     DateTime DataVencimento,
     string Categoria,
     string? Observacao);
+
+public record CreateParceladoRequest(
+    string Tipo,
+    string Descricao,
+    string Categoria,
+    string? Observacao,
+    List<ParcelaItemRequest> Parcelas);
+
+public record ParcelaItemRequest(decimal Valor, DateTime DataVencimento);

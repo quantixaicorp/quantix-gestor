@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Trash2 } from 'lucide-react'
 import { useProfissionais } from '@/hooks/useProfissionais'
@@ -17,8 +17,22 @@ export default function Profissionais() {
   const [editando, setEditando] = useState<ProfissionalResponse | null>(null)
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [telefoneErro, setTelefoneErro] = useState('')
   const [ativo, setAtivo] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  const maskTelefone = useCallback((v: string) => {
+    const d = v.replace(/\D/g, '').slice(0, 11)
+    if (d.length <= 10)
+      return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').trimEnd()
+    return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').trimEnd()
+  }, [])
+
+  function validarTelefone(v: string) {
+    const digits = v.replace(/\D/g, '')
+    if (v && (digits.length < 10 || digits.length > 11)) return 'Telefone inválido (DDD + 8 ou 9 dígitos)'
+    return ''
+  }
   const { confirm, ConfirmDialogNode } = useConfirm()
 
   useEffect(() => { void list() }, [list])
@@ -34,13 +48,16 @@ export default function Profissionais() {
   function abrirEditar(p: ProfissionalResponse) {
     setEditando(p)
     setNome(p.nome)
-    setTelefone(p.telefone ?? '')
+    setTelefone(p.telefone ? maskTelefone(p.telefone) : '')
+    setTelefoneErro('')
     setAtivo(p.ativo)
     setShowForm(true)
   }
 
   async function salvar() {
     if (!nome.trim()) return
+    const erroTel = validarTelefone(telefone)
+    if (erroTel) { setTelefoneErro(erroTel); return }
     setSaving(true)
     try {
       if (editando) {
@@ -88,7 +105,18 @@ export default function Profissionais() {
           </div>
           <div className="space-y-2">
             <Label>Telefone / WhatsApp</Label>
-            <Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+            <Input
+              value={telefone}
+              placeholder="(11) 99999-9999"
+              className={telefoneErro ? 'border-destructive' : ''}
+              onChange={e => {
+                const masked = maskTelefone(e.target.value)
+                setTelefone(masked)
+                setTelefoneErro('')
+              }}
+              onBlur={() => setTelefoneErro(validarTelefone(telefone))}
+            />
+            {telefoneErro && <p className="text-xs text-destructive">{telefoneErro}</p>}
           </div>
           {editando && (
             <div className="flex items-center gap-2">

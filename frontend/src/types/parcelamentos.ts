@@ -17,5 +17,6 @@ export interface ParcelamentoResponse {
   valorTotal: number
   qtdParcelas: number
   status: StatusParcelamento
+  categoria: string
   parcelas: ParcelaResponse[]
 }

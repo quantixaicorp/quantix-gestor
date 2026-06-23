@@ -387,7 +387,7 @@ export default function Lancamentos() {
                                 <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-sm font-semibold text-destructive">{fmt(l.valor)}</span>
+                                <span className={`text-sm font-semibold ${l.tipo === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>{fmt(l.valor)}</span>
                                 <Badge variant={statusVariant(l.status, l.vencido)}>
                                   {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
                                 </Badge>
@@ -397,7 +397,7 @@ export default function Lancamentos() {
                               {l.status === 'Pendente' && (
                                 <Button size="sm" variant="outline" disabled={pagando === l.id}
                                   onClick={() => void handlePagar(l)}>
-                                  {pagando === l.id ? '...' : 'Pagar'}
+                                  {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
                                 </Button>
                               )}
                               {l.status === 'Pendente' && !l.vendaId && (

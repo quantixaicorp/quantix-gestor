@@ -101,7 +101,7 @@ export default function ContasReceber() {
 
       <KpiRow items={[
         { label: 'Total a receber', value: fmt(total), color: 'text-primary' },
-        { label: 'Vencidas', value: fmt(totalVencido), color: 'text-destructive' },
+        { label: 'Vencidas', value: fmt(totalVencido), color: 'text-primary' },
         { label: 'A vencer', value: fmt(totalAVencer), color: 'text-green-600 dark:text-green-400' },
         { label: 'Qtd contas', value: String(allFiltered.length), color: 'text-muted-foreground' },
       ]} />
@@ -190,7 +190,9 @@ export default function ContasReceber() {
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{l.descricao}</p>
-                              <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {l.categoria ? `${l.categoria} · ` : ''}Vence: {fmtDate(l.dataVencimento)}
+                              </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="text-sm font-semibold text-primary">{fmt(l.valor)}</span>

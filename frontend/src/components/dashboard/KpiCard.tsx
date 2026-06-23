@@ -19,12 +19,12 @@ const corClasses = {
 export default function KpiCard({ titulo, valor, icon: Icon, cor = 'default', detalhe }: Props) {
   return (
     <div className="rounded-lg border bg-card p-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{titulo}</p>
-        <Icon size={18} className="text-muted-foreground" />
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground truncate min-w-0">{titulo}</p>
+        <Icon size={18} className="text-muted-foreground shrink-0" />
       </div>
-      <p className={cn('text-2xl font-bold', corClasses[cor])}>{valor}</p>
-      {detalhe && <p className="text-xs text-muted-foreground">{detalhe}</p>}
+      <p className={cn('text-xl sm:text-2xl font-bold break-words tabular-nums leading-tight', corClasses[cor])}>{valor}</p>
+      {detalhe && <p className="text-xs text-muted-foreground break-words">{detalhe}</p>}
     </div>
   )
 }

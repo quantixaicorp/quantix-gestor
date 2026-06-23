@@ -224,7 +224,9 @@ export default function ContasPagar() {
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{l.descricao}</p>
-                              <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {l.categoria ? `${l.categoria} · ` : ''}Vence: {fmtDate(l.dataVencimento)}
+                              </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="text-sm font-semibold">{fmt(l.valor)}</span>

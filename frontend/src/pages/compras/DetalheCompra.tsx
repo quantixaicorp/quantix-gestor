@@ -138,7 +138,12 @@ export default function DetalheCompra() {
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Parcelamento</h2>
-            <span className="text-sm text-muted-foreground">{parcelamento.status}</span>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              {parcelamento.categoria && (
+                <span className="rounded-full bg-muted px-2.5 py-0.5">{parcelamento.categoria}</span>
+              )}
+              <span>{parcelamento.status}</span>
+            </div>
           </div>
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-sm">

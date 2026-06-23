@@ -16,6 +16,7 @@ const DEFAULT_TABS: RelatorioTabId[] = [
   'curva-abc',
   'dre',
   'compras',
+  'historico-clientes',
 ]
 
 export function useRelatorioLayout() {

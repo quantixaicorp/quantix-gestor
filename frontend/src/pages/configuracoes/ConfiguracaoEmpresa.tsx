@@ -52,6 +52,7 @@ const ALL_TABS: { id: RelatorioTabId; label: string; description: string }[] = [
   { id: 'curva-abc', label: 'Curva ABC', description: 'Classificação A/B/C de produtos e clientes' },
   { id: 'dre', label: 'DRE', description: 'Demonstração do Resultado do Exercício' },
   { id: 'compras', label: 'Compras', description: 'KPIs, evolução mensal, por fornecedor e top produtos comprados' },
+  { id: 'historico-clientes', label: 'Histórico de Clientes', description: 'Jornada lifetime: total gasto, recorrência, inativos e fidelização' },
 ]
 
 const WIDGET_CATEGORIES_ORDER = [

@@ -14,7 +14,7 @@ const fmtN = (v: number) => v.toLocaleString('pt-BR')
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
 const fmtDia = (d: string) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
-interface Props { kpis: KpisGeralResponse }
+interface Props { kpis: KpisGeralResponse; showVendas?: boolean }
 
 function Panel({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -25,7 +25,7 @@ function Panel({ titulo, children }: { titulo: string; children: React.ReactNode
   )
 }
 
-export default function AbaVisaoGeral({ kpis }: Props) {
+export default function AbaVisaoGeral({ kpis, showVendas = true }: Props) {
   const tendencia = kpis.tendenciaVendas.map(d => ({
     dia: fmtDia(d.data as unknown as string),
     total: d.total,
@@ -42,7 +42,8 @@ export default function AbaVisaoGeral({ kpis }: Props) {
   return (
     <div className="space-y-5">
 
-      {/* ── Vendas ─────────────────────────────────────────── */}
+      {/* ── Vendas (oculto sem o módulo de vendas contratado) ── */}
+      {showVendas && (
       <Panel titulo="Vendas do Período">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <KpiCard titulo="Faturamento" valor={fmt(kpis.faturamento)} icon={TrendingUp} cor="green" />
@@ -141,6 +142,7 @@ export default function AbaVisaoGeral({ kpis }: Props) {
           </div>
         )}
       </Panel>
+      )}
 
       {/* ── Financeiro ─────────────────────────────────────── */}
       <Panel titulo="Financeiro do Período">

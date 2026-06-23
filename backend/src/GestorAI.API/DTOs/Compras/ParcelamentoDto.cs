@@ -16,4 +16,5 @@ public record ParcelamentoDetalheResponse(
     decimal ValorTotal,
     int QtdParcelas,
     string Status,
+    string Categoria,
     List<ParcelaResponse> Parcelas);

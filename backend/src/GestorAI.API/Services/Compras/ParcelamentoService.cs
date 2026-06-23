@@ -134,8 +134,10 @@ public class ParcelamentoService(AppDbContext db, TenantContext tenantContext)
                 l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < hoje))
             .ToList();
 
+        var categoria = p.Parcelas.FirstOrDefault()?.Categoria ?? "";
+
         return new ParcelamentoDetalheResponse(
             p.Id, p.CompraId, p.Descricao, p.ValorTotal,
-            p.QtdParcelas, p.Status.ToString(), parcelas);
+            p.QtdParcelas, p.Status.ToString(), categoria, parcelas);
     }
 }

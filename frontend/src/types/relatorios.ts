@@ -12,6 +12,7 @@ export type RelatorioTabId =
   | 'curva-abc'
   | 'dre'
   | 'compras'
+  | 'historico-clientes'
 
 export interface RelatorioLayoutDto {
   tabs: RelatorioTabId[]
@@ -86,6 +87,55 @@ export interface RelatorioClientesResponse {
   clientesCompraram: number
   ticketMedioCliente: number
   topClientes: ClienteRankingResponse[]
+}
+
+// Histórico de Clientes (lifetime)
+export interface HistoricoClienteItemResponse {
+  clienteId: string
+  nome: string
+  whatsapp: string
+  qtdPedidos: number
+  totalGasto: number
+  ticketMedio: number
+  primeiraCompra: string
+  ultimaCompra: string
+  tempoMedioEntreComprasDias: number | null
+  diasDesdeUltimaCompra: number
+  classificacao: string
+}
+export interface HistoricoClientesResponse {
+  totalClientesComCompras: number
+  recorrentes: number
+  inativos: number
+  novos: number
+  emRisco: number
+  ltvMedio: number
+  ticketMedioGeral: number
+  tempoMedioEntreComprasGeralDias: number | null
+  clientes: HistoricoClienteItemResponse[]
+}
+export interface CompraHistoricoItemResponse {
+  vendaId: string
+  dataHora: string
+  qtdItens: number
+  total: number
+  formaPagamento: string
+  status: string
+}
+export interface HistoricoClienteDetalheResponse {
+  clienteId: string
+  nome: string
+  whatsapp: string
+  email: string | null
+  dataCadastro: string
+  qtdPedidos: number
+  totalGasto: number
+  ticketMedio: number
+  primeiraCompra: string
+  ultimaCompra: string
+  tempoMedioEntreComprasDias: number | null
+  classificacao: string
+  compras: CompraHistoricoItemResponse[]
 }
 
 // Curva ABC

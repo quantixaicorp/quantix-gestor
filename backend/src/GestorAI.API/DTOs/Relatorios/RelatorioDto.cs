@@ -80,6 +80,54 @@ public record RelatorioClientesResponse(
     decimal TicketMedioCliente,
     List<ClienteRankingResponse> TopClientes);
 
+// Histórico de Clientes (lifetime)
+public record HistoricoClienteItemResponse(
+    Guid ClienteId,
+    string Nome,
+    string Whatsapp,
+    int QtdPedidos,
+    decimal TotalGasto,
+    decimal TicketMedio,
+    DateTime PrimeiraCompra,
+    DateTime UltimaCompra,
+    int? TempoMedioEntreComprasDias,
+    int DiasDesdeUltimaCompra,
+    string Classificacao);
+
+public record HistoricoClientesResponse(
+    int TotalClientesComCompras,
+    int Recorrentes,
+    int Inativos,
+    int Novos,
+    int EmRisco,
+    decimal LtvMedio,
+    decimal TicketMedioGeral,
+    int? TempoMedioEntreComprasGeralDias,
+    List<HistoricoClienteItemResponse> Clientes);
+
+public record CompraHistoricoItemResponse(
+    Guid VendaId,
+    DateTime DataHora,
+    int QtdItens,
+    decimal Total,
+    string FormaPagamento,
+    string Status);
+
+public record HistoricoClienteDetalheResponse(
+    Guid ClienteId,
+    string Nome,
+    string Whatsapp,
+    string? Email,
+    DateTime DataCadastro,
+    int QtdPedidos,
+    decimal TotalGasto,
+    decimal TicketMedio,
+    DateTime PrimeiraCompra,
+    DateTime UltimaCompra,
+    int? TempoMedioEntreComprasDias,
+    string Classificacao,
+    List<CompraHistoricoItemResponse> Compras);
+
 // Curva ABC
 public record CurvaAbcItemResponse(
     string Nome,

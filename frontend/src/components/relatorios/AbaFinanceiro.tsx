@@ -64,7 +64,7 @@ export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Pro
 
       {/* ── Resumo + Fluxo ─────────────────────────────────── */}
       <Panel titulo="Fluxo de Caixa">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KpiCard titulo="Total Receitas" valor={fmt(dados.totalReceitas)} icon={ArrowUpCircle} cor="green" />
           <KpiCard titulo="Total Despesas" valor={fmt(dados.totalDespesas)} icon={ArrowDownCircle}
             cor={dados.totalDespesas > 0 ? 'red' : 'default'} />

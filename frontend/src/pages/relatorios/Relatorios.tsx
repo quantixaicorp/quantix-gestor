@@ -17,7 +17,9 @@ import AbaAssinaturas from '@/components/relatorios/AbaAssinaturas'
 import AbaCurvaABC from '@/components/relatorios/AbaCurvaABC'
 import AbaDRE from '@/components/relatorios/AbaDRE'
 import AbaCompras from '@/components/relatorios/AbaCompras'
+import AbaHistoricoClientes from '@/components/relatorios/AbaHistoricoClientes'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import type { RelatorioTabId } from '@/types/relatorios'
 
 const TAB_META: Record<RelatorioTabId, string> = {
@@ -34,6 +36,7 @@ const TAB_META: Record<RelatorioTabId, string> = {
   'curva-abc': 'Curva ABC',
   'dre': 'DRE',
   'compras': 'Compras',
+  'historico-clientes': 'Histórico de Clientes',
 }
 
 function exportarCSV(nome: string, linhas: string[][]) {
@@ -48,6 +51,11 @@ function exportarCSV(nome: string, linhas: string[][]) {
 export default function Relatorios() {
   const { data, loadingTab, setPeriodo, loadTab } = useRelatorios()
   const { tabs, load: loadLayout } = useRelatorioLayout()
+  const { enabledModules, modulesLoaded } = useAuth()
+  // Sem módulo de vendas contratado, oculta KPIs e gráficos de vendas.
+  // (vazio/não carregado = sem restrição, igual ao gating do menu)
+  const hasVendas = !modulesLoaded || enabledModules.size === 0 || enabledModules.has('vendas')
+  const visibleTabs = hasVendas ? tabs : tabs.filter(t => t !== 'vendas')
   const [aba, setAba] = useState<RelatorioTabId | null>(null)
   const [periodo, setPeriodoState] = useState({ de: '', ate: '' })
   const [tipoDataFinanceiro, setTipoDataFinanceiro] = useState('pagamento')
@@ -59,14 +67,14 @@ export default function Relatorios() {
 
   // Quando o layout carrega, ativa a primeira aba e carrega os dados
   useEffect(() => {
-    if (tabs.length > 0 && aba === null) {
-      const primeiraAba = tabs[0]
+    if (visibleTabs.length > 0 && aba === null) {
+      const primeiraAba = visibleTabs[0]
       setAba(primeiraAba)
       setPeriodo(inicioMes, hoje)
       setPeriodoState({ de: inicioMes, ate: hoje })
       void loadTab(primeiraAba)
     }
-  }, [tabs])
+  }, [tabs, hasVendas])
 
   function handlePeriodo(de: string, ate: string) {
     setPeriodoState({ de, ate })
@@ -82,7 +90,7 @@ export default function Relatorios() {
 
   function handleAba(nova: RelatorioTabId) {
     setAba(nova)
-    if (nova !== 'compras') void loadTab(nova)
+    if (nova !== 'compras' && nova !== 'historico-clientes') void loadTab(nova)
   }
 
   function handleExportar() {
@@ -168,7 +176,7 @@ export default function Relatorios() {
     }
   }
 
-  const isLoading = aba !== 'compras' && loadingTab === aba
+  const isLoading = aba !== 'compras' && aba !== 'historico-clientes' && loadingTab === aba
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -183,7 +191,7 @@ export default function Relatorios() {
       <div className="rounded-xl border bg-card p-4 space-y-3 print:hidden">
         <FiltrosPeriodo onChange={handlePeriodo} />
         <div className="flex gap-1 border-b overflow-x-auto">
-          {tabs.map(id => (
+          {visibleTabs.map(id => (
             <button
               key={id}
               onClick={() => handleAba(id)}
@@ -211,7 +219,7 @@ export default function Relatorios() {
           </div>
         ) : (
           <>
-            {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} />}
+            {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} showVendas={hasVendas} />}
             {aba === 'vendas' && data.vendas && <AbaVendas dados={data.vendas} />}
             {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} tipoData={tipoDataFinanceiro} onChangeTipoData={handleTipoDataFinanceiro} />}
             {aba === 'estoque' && data.estoque && <AbaEstoque dados={data.estoque} />}
@@ -226,6 +234,7 @@ export default function Relatorios() {
             )}
             {aba === 'dre' && data.dre && <AbaDRE dados={data.dre} />}
             {aba === 'compras' && <AbaCompras />}
+            {aba === 'historico-clientes' && <AbaHistoricoClientes />}
           </>
         )}
       </div>

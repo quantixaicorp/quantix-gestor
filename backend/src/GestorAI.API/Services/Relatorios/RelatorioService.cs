@@ -673,4 +673,131 @@ public class RelatorioService(AppDbContext db)
             ativas.Count, Math.Round(mrr, 2), canceladasNoPeriodo, taxaChurn,
             evolucao, detalhe);
     }
+
+    // ── Histórico de Clientes (lifetime) ─────────────────────────────────────
+    private static int? TempoMedioEntreCompras(int qtd, DateTime primeira, DateTime ultima)
+        => qtd >= 2 ? (int)Math.Round((ultima - primeira).TotalDays / (qtd - 1)) : null;
+
+    private static (string Classificacao, bool EmRisco) Classificar(int qtd, int diasDesdeUltima)
+    {
+        if (diasDesdeUltima > 90) return ("Inativo", false);
+        if (qtd == 1) return ("Novo", false);
+        // qtd >= 2 && diasDesdeUltima <= 90 => Recorrente (em risco se 61-90 dias)
+        return ("Recorrente", diasDesdeUltima >= 61);
+    }
+
+    public async Task<HistoricoClientesResponse> GetHistoricoClientesAsync(CancellationToken ct)
+    {
+        var hoje = DateTime.UtcNow.Date;
+
+        // Agregação no banco (GROUP BY) — não materializa todas as vendas.
+        var agregados = await db.Vendas
+            .Where(v => v.Status == StatusVenda.Concluida && v.ClienteId != null)
+            .GroupBy(v => v.ClienteId!.Value)
+            .Select(g => new
+            {
+                ClienteId = g.Key,
+                Qtd = g.Count(),
+                Total = g.Sum(v => v.Total),
+                Primeira = g.Min(v => v.DataHora),
+                Ultima = g.Max(v => v.DataHora),
+            })
+            .ToListAsync(ct);
+
+        var ids = agregados.Select(a => a.ClienteId).ToList();
+        var clientes = await db.Clientes
+            .Where(c => ids.Contains(c.Id))
+            .Select(c => new { c.Id, c.Nome, c.Whatsapp })
+            .ToListAsync(ct);
+        var clienteMap = clientes.ToDictionary(c => c.Id);
+
+        var itens = agregados
+            .Select(a =>
+            {
+                var diasDesdeUltima = (int)(hoje - a.Ultima.Date).TotalDays;
+                var (classificacao, _) = Classificar(a.Qtd, diasDesdeUltima);
+                clienteMap.TryGetValue(a.ClienteId, out var c);
+                return new HistoricoClienteItemResponse(
+                    a.ClienteId,
+                    c?.Nome ?? "Sem identificação",
+                    c?.Whatsapp ?? "",
+                    a.Qtd,
+                    a.Total,
+                    a.Qtd > 0 ? a.Total / a.Qtd : 0m,
+                    a.Primeira,
+                    a.Ultima,
+                    TempoMedioEntreCompras(a.Qtd, a.Primeira, a.Ultima),
+                    diasDesdeUltima,
+                    classificacao);
+            })
+            .OrderByDescending(c => c.TotalGasto)
+            .ToList();
+
+        var emRisco = agregados.Count(a =>
+            Classificar(a.Qtd, (int)(hoje - a.Ultima.Date).TotalDays).EmRisco);
+
+        var totalClientes = itens.Count;
+        var recorrentes = itens.Count(i => i.Classificacao == "Recorrente");
+        var inativos = itens.Count(i => i.Classificacao == "Inativo");
+        var novos = itens.Count(i => i.Classificacao == "Novo");
+
+        var ltvMedio = totalClientes > 0 ? itens.Average(i => i.TotalGasto) : 0m;
+        var totalPedidos = itens.Sum(i => i.QtdPedidos);
+        var ticketMedioGeral = totalPedidos > 0 ? itens.Sum(i => i.TotalGasto) / totalPedidos : 0m;
+
+        var comTempo = itens.Where(i => i.TempoMedioEntreComprasDias.HasValue).ToList();
+        int? tempoMedioGeral = comTempo.Count > 0
+            ? (int)Math.Round(comTempo.Average(i => i.TempoMedioEntreComprasDias!.Value))
+            : null;
+
+        return new HistoricoClientesResponse(
+            totalClientes, recorrentes, inativos, novos, emRisco,
+            Math.Round(ltvMedio, 2), Math.Round(ticketMedioGeral, 2), tempoMedioGeral,
+            itens);
+    }
+
+    public async Task<HistoricoClienteDetalheResponse?> GetHistoricoClienteDetalheAsync(
+        Guid clienteId, CancellationToken ct)
+    {
+        var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, ct);
+        if (cliente is null) return null;
+
+        var vendas = await db.Vendas
+            .Where(v => v.ClienteId == clienteId && v.Status == StatusVenda.Concluida)
+            .Include(v => v.Itens)
+            .OrderByDescending(v => v.DataHora)
+            .ToListAsync(ct);
+
+        var compras = vendas
+            .Select(v => new CompraHistoricoItemResponse(
+                v.Id,
+                v.DataHora,
+                v.Itens.Count,
+                v.Total,
+                v.FormaPagamento.ToString(),
+                v.Status.ToString()))
+            .ToList();
+
+        var qtd = vendas.Count;
+        var total = vendas.Sum(v => v.Total);
+        var primeira = qtd > 0 ? vendas.Min(v => v.DataHora) : cliente.DataCadastro;
+        var ultima = qtd > 0 ? vendas.Max(v => v.DataHora) : cliente.DataCadastro;
+        var diasDesdeUltima = (int)(DateTime.UtcNow.Date - ultima.Date).TotalDays;
+        var classificacao = qtd > 0 ? Classificar(qtd, diasDesdeUltima).Classificacao : "Sem compras";
+
+        return new HistoricoClienteDetalheResponse(
+            cliente.Id,
+            cliente.Nome,
+            cliente.Whatsapp,
+            cliente.Email,
+            cliente.DataCadastro,
+            qtd,
+            total,
+            qtd > 0 ? total / qtd : 0m,
+            primeira,
+            ultima,
+            TempoMedioEntreCompras(qtd, primeira, ultima),
+            classificacao,
+            compras);
+    }
 }

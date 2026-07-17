@@ -142,19 +142,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!res.ok) throw new Error('Falha na troca do código')
 
-    const tokens = await res.json() as { access_token?: string; refresh_token?: string }
+    const tokens = await res.json() as { access_token?: string; refresh_token?: string; id_token?: string }
     if (!tokens.access_token || !tokens.refresh_token) throw new Error('Tokens ausentes na resposta')
     localStorage.setItem('ga_token', tokens.access_token)
     localStorage.setItem('ga_refresh_token', tokens.refresh_token)
+    if (tokens.id_token) localStorage.setItem('ga_id_token', tokens.id_token)
     localStorage.removeItem('pkce_verifier')
     applyToken(tokens.access_token)
     await fetchModules(tokens.access_token)
   }, [])
 
   const logout = useCallback(() => {
-    const token = localStorage.getItem('ga_token')
+    const idToken = localStorage.getItem('ga_id_token')
     localStorage.removeItem('ga_token')
     localStorage.removeItem('ga_refresh_token')
+    localStorage.removeItem('ga_id_token')
     localStorage.removeItem('pkce_verifier')
     setIsAuthenticated(false)
     setIsAdmin(false)
@@ -163,9 +165,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setModulesLoaded(false)
     const params = new URLSearchParams({
       post_logout_redirect_uri: window.location.origin,
-      ...(token ? { id_token_hint: token } : {}),
+      ...(idToken ? { id_token_hint: idToken } : {}),
     })
-    window.location.href = `${ADMIN_URL}/connect/endsession?${params}`
+    window.location.href = `${ADMIN_URL}/connect/logout?${params}`
   }, [])
 
   return (

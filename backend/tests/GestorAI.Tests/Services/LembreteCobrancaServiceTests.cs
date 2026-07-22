@@ -40,39 +40,39 @@ public class LembreteCobrancaServiceTests
 
     private AppDbContext CreateDb()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         return new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
             tenant);
     }
 
-    private static ConfiguracaoEmpresa ConfigComEvolution(Guid empresaId) => new()
+    private static CompanySettings ConfigComEvolution(Guid empresaId) => new()
     {
-        EmpresaId        = empresaId,
+        CompanyId        = empresaId,
         EvolutionApiUrl  = "https://evo.test",
         EvolutionApiKey  = "key",
         EvolutionInstance = "inst",
-        LembreteNoDia    = true,
+        ReminderOnDueDate    = true,
     };
 
-    private async Task<(Cobranca cobranca, Cliente cliente)> CriarCobrancaAsync(
+    private async Task<(Charge cobranca, Customer cliente)> CriarCobrancaAsync(
         AppDbContext db, Guid empresaId, DateOnly vencimento)
     {
-        var cliente = new Cliente { EmpresaId = empresaId, Nome = "João", Whatsapp = "11999990000" };
+        var cliente = new Customer { CompanyId = empresaId, Name = "João", WhatsApp = "11999990000" };
         db.Clientes.Add(cliente);
         await db.SaveChangesAsync();
 
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId      = empresaId,
-            ClienteId      = cliente.Id,
-            Referencia     = "Mensalidade",
-            Valor          = 200m,
-            DataVencimento = vencimento,
+            CompanyId      = empresaId,
+            CustomerId      = cliente.Id,
+            Reference     = "Mensalidade",
+            Amount          = 200m,
+            DueDate = vencimento,
             Status         = CobrancaStatus.Pendente,
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         return (cobranca, cliente);
@@ -85,11 +85,11 @@ public class LembreteCobrancaServiceTests
     public async Task ProcessarTodosTenantsAsync_SemConfigEvolution_NaoEnviaNada()
     {
         var db = CreateDb();
-        // ConfiguracaoEmpresa sem campos Evolution
-        db.ConfiguracoesEmpresa.Add(new ConfiguracaoEmpresa
+        // CompanySettings sem campos Evolution
+        db.ConfiguracoesEmpresa.Add(new CompanySettings
         {
-            EmpresaId = _empresaId,
-            LembreteNoDia = true,
+            CompanyId = _empresaId,
+            ReminderOnDueDate = true,
         });
         var hoje = new DateOnly(2026, 6, 10);
         await CriarCobrancaAsync(db, _empresaId, hoje);
@@ -117,13 +117,13 @@ public class LembreteCobrancaServiceTests
         await svc.ProcessarTodosTenantsAsync(default, hoje);
 
         Assert.Single(fake.EnviadosPara);
-        Assert.Equal(cliente.Whatsapp, fake.EnviadosPara[0]);
+        Assert.Equal(cliente.WhatsApp, fake.EnviadosPara[0]);
 
         var log = db.AutomacaoLogs.IgnoreQueryFilters()
-            .FirstOrDefault(l => l.CobrancaId == cobranca.Id
-                              && l.TipoEvento == AutomacaoTipoEvento.LembreteNoDia);
+            .FirstOrDefault(l => l.ChargeId == cobranca.Id
+                              && l.EventType == AutomacaoTipoEvento.ReminderOnDueDate);
         Assert.NotNull(log);
-        Assert.True(log.Sucesso);
+        Assert.True(log.Success);
     }
 
     // ------------------------------------------------------------------
@@ -138,12 +138,12 @@ public class LembreteCobrancaServiceTests
         var (cobranca, _) = await CriarCobrancaAsync(db, _empresaId, hoje);
 
         // Simula log já existente
-        db.AutomacaoLogs.Add(new AutomacaoLog
+        db.AutomacaoLogs.Add(new AutomationLog
         {
-            EmpresaId  = _empresaId,
-            CobrancaId = cobranca.Id,
-            TipoEvento = AutomacaoTipoEvento.LembreteNoDia,
-            Sucesso    = true,
+            CompanyId  = _empresaId,
+            ChargeId = cobranca.Id,
+            EventType = AutomacaoTipoEvento.ReminderOnDueDate,
+            Success    = true,
         });
         await db.SaveChangesAsync();
 
@@ -164,17 +164,17 @@ public class LembreteCobrancaServiceTests
         var hoje = new DateOnly(2026, 6, 10);
         db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
 
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Maria", Whatsapp = "11988880000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Maria", WhatsApp = "11988880000" };
         db.Clientes.Add(cliente);
         await db.SaveChangesAsync();
 
-        db.Cobrancas.Add(new Cobranca
+        db.Charges.Add(new Charge
         {
-            EmpresaId      = _empresaId,
-            ClienteId      = cliente.Id,
-            Referencia     = "Mens",
-            Valor          = 100m,
-            DataVencimento = hoje,
+            CompanyId      = _empresaId,
+            CustomerId      = cliente.Id,
+            Reference     = "Mens",
+            Amount          = 100m,
+            DueDate = hoje,
             Status         = CobrancaStatus.Pago,
         });
         await db.SaveChangesAsync();
@@ -195,20 +195,20 @@ public class LembreteCobrancaServiceTests
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
 
-        db.ConfiguracoesEmpresa.Add(new ConfiguracaoEmpresa
+        db.ConfiguracoesEmpresa.Add(new CompanySettings
         {
-            EmpresaId        = _empresaId,
+            CompanyId        = _empresaId,
             EvolutionApiUrl  = "https://evo.test",
             EvolutionApiKey  = "key",
             EvolutionInstance = "inst",
-            LembreteNoDia    = true,
-            Lembrete1dAntes  = true,
+            ReminderOnDueDate    = true,
+            Reminder1DayBefore  = true,
         });
         await db.SaveChangesAsync();
 
         // Cobrança vencendo hoje
         await CriarCobrancaAsync(db, _empresaId, hoje);
-        // Cobrança vencendo amanhã (hoje + 1d → Lembrete1dAntes)
+        // Cobrança vencendo amanhã (hoje + 1d → Reminder1DayBefore)
         await CriarCobrancaAsync(db, _empresaId, hoje.AddDays(1));
 
         var fake = new FakeEvolutionApiService();
@@ -219,7 +219,7 @@ public class LembreteCobrancaServiceTests
     }
 
     // ------------------------------------------------------------------
-    // 6. Exceção na API → grava log com Sucesso=false e ErroMsg
+    // 6. Exceção na API → grava log com Success=false e ErrorMessage
     // ------------------------------------------------------------------
     [Fact]
     public async Task ProcessarTodosTenantsAsync_GravaLog_QuandoApiLancaExcecao()
@@ -234,15 +234,15 @@ public class LembreteCobrancaServiceTests
         await svc.ProcessarTodosTenantsAsync(default, hoje);
 
         var log = db.AutomacaoLogs.IgnoreQueryFilters()
-            .FirstOrDefault(l => l.CobrancaId == cobranca.Id
-                              && l.TipoEvento == AutomacaoTipoEvento.LembreteNoDia);
+            .FirstOrDefault(l => l.ChargeId == cobranca.Id
+                              && l.EventType == AutomacaoTipoEvento.ReminderOnDueDate);
         Assert.NotNull(log);
-        Assert.False(log.Sucesso);
-        Assert.NotNull(log.ErroMsg);
+        Assert.False(log.Success);
+        Assert.NotNull(log.ErrorMessage);
     }
 
     // ------------------------------------------------------------------
-    // 7 (Fix 3 – Test A): Envio com retorno false → grava Sucesso=false
+    // 7 (Fix 3 – Test A): Envio com retorno false → grava Success=false
     // ------------------------------------------------------------------
     [Fact]
     public async Task ProcessarTodosTenantsAsync_GravaLog_ComSucessoFalse_QuandoEnvioFalha()
@@ -257,13 +257,13 @@ public class LembreteCobrancaServiceTests
         await svc.ProcessarTodosTenantsAsync(default, hoje);
 
         var log = db.AutomacaoLogs.IgnoreQueryFilters()
-            .FirstOrDefault(l => l.CobrancaId == cobranca.Id && l.TipoEvento == AutomacaoTipoEvento.LembreteNoDia);
+            .FirstOrDefault(l => l.ChargeId == cobranca.Id && l.EventType == AutomacaoTipoEvento.ReminderOnDueDate);
         Assert.NotNull(log);
-        Assert.False(log.Sucesso);
+        Assert.False(log.Success);
     }
 
     // ------------------------------------------------------------------
-    // 8 (Fix 3 – Test B): Cliente sem Whatsapp → não envia, não grava log
+    // 8 (Fix 3 – Test B): Customer sem WhatsApp → não envia, não grava log
     // ------------------------------------------------------------------
     [Fact]
     public async Task ProcessarTodosTenantsAsync_NaoEnvia_NaoGravaLog_QuandoClienteSemWhatsapp()
@@ -272,19 +272,19 @@ public class LembreteCobrancaServiceTests
         var hoje = new DateOnly(2026, 6, 10);
         db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
 
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Sem Tel", Whatsapp = "" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Sem Tel", WhatsApp = "" };
         db.Clientes.Add(cliente);
         await db.SaveChangesAsync();
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId      = _empresaId,
-            ClienteId      = cliente.Id,
-            Referencia     = "Mensalidade",
-            Valor          = 100m,
-            DataVencimento = hoje,
+            CompanyId      = _empresaId,
+            CustomerId      = cliente.Id,
+            Reference     = "Mensalidade",
+            Amount          = 100m,
+            DueDate = hoje,
             Status         = CobrancaStatus.Pendente,
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         var fake = new FakeEvolutionApiService();

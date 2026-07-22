@@ -16,7 +16,7 @@ public class LancamentoUpdateServiceTests
 
     private (AppDbContext db, LancamentoService svc) Setup()
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
@@ -24,18 +24,18 @@ public class LancamentoUpdateServiceTests
         return (db, new LancamentoService(db, tc, parcelamentoService));
     }
 
-    private async Task<Lancamento> SeedAsync(AppDbContext db, StatusLancamento status, Guid? vendaId = null)
+    private async Task<Transaction> SeedAsync(AppDbContext db, StatusLancamento status, Guid? vendaId = null)
     {
-        var l = new Lancamento
+        var l = new Transaction
         {
-            EmpresaId = _empresaId,
-            Tipo = TipoLancamento.Despesa,
-            Descricao = "Original",
-            Valor = 100m,
-            DataVencimento = DateTime.UtcNow.AddDays(5),
+            CompanyId = _empresaId,
+            Type = TipoLancamento.Despesa,
+            Description = "Original",
+            Amount = 100m,
+            DueDate = DateTime.UtcNow.AddDays(5),
             Status = status,
-            Categoria = "Aluguel",
-            VendaId = vendaId,
+            Category = "Aluguel",
+            SaleId = vendaId,
         };
         db.Lancamentos.Add(l);
         await db.SaveChangesAsync();
@@ -53,10 +53,10 @@ public class LancamentoUpdateServiceTests
 
         var result = await svc.UpdateAsync(l.Id, req, default);
 
-        Assert.Equal("Receita", result.Tipo);
-        Assert.Equal("Novo nome", result.Descricao);
-        Assert.Equal(250m, result.Valor);
-        Assert.Equal("Obs", result.Observacao);
+        Assert.Equal("Receita", result.Type);
+        Assert.Equal("Novo nome", result.Description);
+        Assert.Equal(250m, result.Amount);
+        Assert.Equal("Obs", result.Notes);
     }
 
     [Fact]

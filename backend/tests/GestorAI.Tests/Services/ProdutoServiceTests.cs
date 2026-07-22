@@ -15,7 +15,7 @@ public class ProdutoServiceTests
 
     private (AppDbContext db, ProdutoService service) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -24,9 +24,9 @@ public class ProdutoServiceTests
         return (db, service);
     }
 
-    private async Task<Categoria> SeedCategoriaAsync(AppDbContext db)
+    private async Task<Category> SeedCategoriaAsync(AppDbContext db)
     {
-        var cat = new Categoria { EmpresaId = _empresaId, Nome = "Categoria Teste" };
+        var cat = new Category { CompanyId = _empresaId, Name = "Category Teste" };
         db.Categorias.Add(cat);
         await db.SaveChangesAsync();
         return cat;
@@ -41,8 +41,8 @@ public class ProdutoServiceTests
 
         var result = await service.CreateAsync(req, default);
 
-        Assert.Equal("Camiseta", result.Nome);
-        Assert.Equal(_empresaId, db.Produtos.First().EmpresaId);
+        Assert.Equal("Camiseta", result.Name);
+        Assert.Equal(_empresaId, db.Produtos.First().CompanyId);
     }
 
     [Fact]
@@ -50,11 +50,11 @@ public class ProdutoServiceTests
     {
         var (db, service) = Setup();
         var cat = await SeedCategoriaAsync(db);
-        var produto = new Produto
+        var produto = new Product
         {
-            EmpresaId = _empresaId, CategoriaId = cat.Id,
-            Nome = "Produto", PrecoVenda = 100m,
-            CustoMedio = 20m, EstoqueAtual = 10m, EstoqueMinimo = 2m
+            CompanyId = _empresaId, CategoryId = cat.Id,
+            Name = "Product", SalePrice = 100m,
+            AverageCost = 20m, CurrentStock = 10m, MinimumStock = 2m
         };
         db.Produtos.Add(produto);
         await db.SaveChangesAsync();
@@ -63,8 +63,8 @@ public class ProdutoServiceTests
         await service.EntradaEstoqueAsync(req, default);
 
         var atualizado = await db.Produtos.FindAsync(produto.Id);
-        Assert.Equal(20m, atualizado!.EstoqueAtual);
-        Assert.Equal(25m, atualizado.CustoMedio); // (10*20 + 10*30) / 20 = 25
+        Assert.Equal(20m, atualizado!.CurrentStock);
+        Assert.Equal(25m, atualizado.AverageCost); // (10*20 + 10*30) / 20 = 25
     }
 
     [Fact]
@@ -72,11 +72,11 @@ public class ProdutoServiceTests
     {
         var (db, service) = Setup();
         var cat = await SeedCategoriaAsync(db);
-        var produto = new Produto
+        var produto = new Product
         {
-            EmpresaId = _empresaId, CategoriaId = cat.Id,
-            Nome = "Produto", PrecoVenda = 50m,
-            CustoMedio = 10m, EstoqueAtual = 5m, EstoqueMinimo = 2m
+            CompanyId = _empresaId, CategoryId = cat.Id,
+            Name = "Product", SalePrice = 50m,
+            AverageCost = 10m, CurrentStock = 5m, MinimumStock = 2m
         };
         db.Produtos.Add(produto);
         await db.SaveChangesAsync();
@@ -85,9 +85,9 @@ public class ProdutoServiceTests
             new EntradaEstoqueRequest(produto.Id, 5m, null, "Reposição"), default);
 
         var mov = await db.MovimentacoesEstoque.IgnoreQueryFilters().FirstAsync();
-        Assert.Equal(TipoMovimentacao.Entrada, mov.Tipo);
-        Assert.Equal(OrigemMovimentacao.Manual, mov.Origem);
-        Assert.Equal(5m, mov.Quantidade);
+        Assert.Equal(TipoMovimentacao.Entrada, mov.Type);
+        Assert.Equal(OrigemMovimentacao.Manual, mov.Source);
+        Assert.Equal(5m, mov.Quantity);
     }
 
     [Fact]

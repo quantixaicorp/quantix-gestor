@@ -14,39 +14,39 @@ public class AgendamentoCancelamentoTests
 
     private AppDbContext CreateDb(int? horasLimite = null)
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
-        db.ConfiguracoesEmpresa.Add(new ConfiguracaoEmpresa
+        db.ConfiguracoesEmpresa.Add(new CompanySettings
         {
-            EmpresaId = _empresaId,
-            HorasLimiteCancelamento = horasLimite,
+            CompanyId = _empresaId,
+            CancellationLimitHours = horasLimite,
         });
         db.SaveChanges();
         return db;
     }
 
-    private async Task<Agendamento> CriarAgendamentoAsync(AppDbContext db, DateTime inicio)
+    private async Task<Appointment> CriarAgendamentoAsync(AppDbContext db, DateTime inicio)
     {
-        var profissional = new Profissional { EmpresaId = _empresaId, Nome = "Dr. Carlos" };
+        var profissional = new Professional { CompanyId = _empresaId, Name = "Dr. Carlos" };
         db.Profissionais.Add(profissional);
-        var servico = new Produto
+        var servico = new Product
         {
-            EmpresaId = _empresaId, Nome = "Consulta",
-            Tipo = TipoProduto.Servico, PrecoVenda = 100m, DuracaoMinutos = 30,
+            CompanyId = _empresaId, Name = "Consulta",
+            Type = TipoProduto.Servico, SalePrice = 100m, DurationMinutes = 30,
         };
         db.Produtos.Add(servico);
         await db.SaveChangesAsync();
-        var agendamento = new Agendamento
+        var agendamento = new Appointment
         {
-            EmpresaId = _empresaId, ProfissionalId = profissional.Id,
-            ServicoId = servico.Id, ClienteNome = "Maria",
-            ClienteTelefone = "11999990000",
-            DataHoraInicio = inicio, DataHoraFim = inicio.AddMinutes(30),
+            CompanyId = _empresaId, ProfessionalId = profissional.Id,
+            ServicoId = servico.Id, CustomerName = "Maria",
+            CustomerPhone = "11999990000",
+            StartAt = inicio, EndAt = inicio.AddMinutes(30),
             Status = AgendamentoStatus.Agendado,
         };
-        db.Agendamentos.Add(agendamento);
+        db.Appointments.Add(agendamento);
         await db.SaveChangesAsync();
         return agendamento;
     }
@@ -57,7 +57,7 @@ public class AgendamentoCancelamentoTests
         var db = CreateDb(horasLimite: 24);
         var inicio = DateTime.UtcNow.AddHours(2);
         var ag = await CriarAgendamentoAsync(db, inicio);
-        var svc = new AgendamentoService(db, new TenantContext { EmpresaId = _empresaId });
+        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId });
         await Assert.ThrowsAsync<AppException>(() => svc.CancelarPublicoAsync(ag.Id, default));
     }
 
@@ -67,7 +67,7 @@ public class AgendamentoCancelamentoTests
         var db = CreateDb(horasLimite: 24);
         var inicio = DateTime.UtcNow.AddHours(48);
         var ag = await CriarAgendamentoAsync(db, inicio);
-        var svc = new AgendamentoService(db, new TenantContext { EmpresaId = _empresaId });
+        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId });
         var result = await svc.CancelarPublicoAsync(ag.Id, default);
         Assert.Equal(AgendamentoStatus.Cancelado, result.Status);
     }
@@ -78,7 +78,7 @@ public class AgendamentoCancelamentoTests
         var db = CreateDb(horasLimite: null);
         var inicio = DateTime.UtcNow.AddHours(1);
         var ag = await CriarAgendamentoAsync(db, inicio);
-        var svc = new AgendamentoService(db, new TenantContext { EmpresaId = _empresaId });
+        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId });
         var result = await svc.CancelarPublicoAsync(ag.Id, default);
         Assert.Equal(AgendamentoStatus.Cancelado, result.Status);
     }

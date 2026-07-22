@@ -15,7 +15,7 @@ public class CategoriaLancamentoServiceTests
 
     private (AppDbContext db, CategoriaLancamentoService svc) Setup()
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
@@ -28,8 +28,8 @@ public class CategoriaLancamentoServiceTests
         var (_, svc) = Setup();
         var result = await svc.CreateAsync(
             new CreateCategoriaLancamentoRequest("Honorários", "Receita"), default);
-        Assert.Equal("Honorários", result.Nome);
-        Assert.Equal("Receita", result.Tipo);
+        Assert.Equal("Honorários", result.Name);
+        Assert.Equal("Receita", result.Type);
         Assert.NotEqual(Guid.Empty, result.Id);
     }
 
@@ -37,11 +37,11 @@ public class CategoriaLancamentoServiceTests
     public async Task CreateAsync_LancaExcecao_QuandoNomeDuplicadoNoMesmoTipo()
     {
         var (db, svc) = Setup();
-        db.CategoriasLancamento.Add(new CategoriaLancamento
+        db.CategoriasLancamento.Add(new TransactionCategory
         {
-            EmpresaId = _empresaId,
-            Nome = "Honorários",
-            Tipo = TipoLancamento.Receita
+            CompanyId = _empresaId,
+            Name = "Honorários",
+            Type = TipoLancamento.Receita
         });
         await db.SaveChangesAsync();
 
@@ -54,41 +54,41 @@ public class CategoriaLancamentoServiceTests
     public async Task UpdateAsync_RenomeiaCom_NomeValido_EAtualizaLancamentosExistentes()
     {
         var (db, svc) = Setup();
-        var cat = new CategoriaLancamento
+        var cat = new TransactionCategory
         {
-            EmpresaId = _empresaId,
-            Nome = "Aluguel",
-            Tipo = TipoLancamento.Despesa
+            CompanyId = _empresaId,
+            Name = "Aluguel",
+            Type = TipoLancamento.Despesa
         };
         db.CategoriasLancamento.Add(cat);
-        db.Lancamentos.Add(new Lancamento
+        db.Lancamentos.Add(new Transaction
         {
-            EmpresaId = _empresaId,
-            Tipo = TipoLancamento.Despesa,
-            Descricao = "Aluguel março",
-            Valor = 1500m,
-            DataVencimento = DateTime.Today,
-            Categoria = "Aluguel",
+            CompanyId = _empresaId,
+            Type = TipoLancamento.Despesa,
+            Description = "Aluguel março",
+            Amount = 1500m,
+            DueDate = DateTime.Today,
+            Category = "Aluguel",
             Status = StatusLancamento.Pendente
         });
         await db.SaveChangesAsync();
 
         var result = await svc.UpdateAsync(cat.Id, new UpdateCategoriaLancamentoRequest("Aluguel Comercial"), default);
 
-        Assert.Equal("Aluguel Comercial", result.Nome);
+        Assert.Equal("Aluguel Comercial", result.Name);
         var lancamento = await db.Lancamentos.IgnoreQueryFilters().FirstAsync();
-        Assert.Equal("Aluguel Comercial", lancamento.Categoria);
+        Assert.Equal("Aluguel Comercial", lancamento.Category);
     }
 
     [Fact]
     public async Task DeleteAsync_RemoveCategoria_QuandoSemLancamentosVinculados()
     {
         var (db, svc) = Setup();
-        var cat = new CategoriaLancamento
+        var cat = new TransactionCategory
         {
-            EmpresaId = _empresaId,
-            Nome = "Marketing",
-            Tipo = TipoLancamento.Despesa
+            CompanyId = _empresaId,
+            Name = "Marketing",
+            Type = TipoLancamento.Despesa
         };
         db.CategoriasLancamento.Add(cat);
         await db.SaveChangesAsync();
@@ -102,21 +102,21 @@ public class CategoriaLancamentoServiceTests
     public async Task DeleteAsync_LancaExcecao_QuandoLancamentoUsaCategoria()
     {
         var (db, svc) = Setup();
-        var cat = new CategoriaLancamento
+        var cat = new TransactionCategory
         {
-            EmpresaId = _empresaId,
-            Nome = "Marketing",
-            Tipo = TipoLancamento.Despesa
+            CompanyId = _empresaId,
+            Name = "Marketing",
+            Type = TipoLancamento.Despesa
         };
         db.CategoriasLancamento.Add(cat);
-        db.Lancamentos.Add(new Lancamento
+        db.Lancamentos.Add(new Transaction
         {
-            EmpresaId = _empresaId,
-            Tipo = TipoLancamento.Despesa,
-            Descricao = "Anúncio Google",
-            Valor = 300m,
-            DataVencimento = DateTime.Today,
-            Categoria = "Marketing",
+            CompanyId = _empresaId,
+            Type = TipoLancamento.Despesa,
+            Description = "Anúncio Google",
+            Amount = 300m,
+            DueDate = DateTime.Today,
+            Category = "Marketing",
             Status = StatusLancamento.Pendente
         });
         await db.SaveChangesAsync();

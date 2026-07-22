@@ -11,7 +11,7 @@ public class LembreteCobrancaService(AppDbContext db, IEvolutionApiService evolu
     {
         var hoje = hojeOverride ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var configs = await db.ConfiguracoesEmpresa
+        var configs = await db.CompanySettings
             .IgnoreQueryFilters()
             .Where(c => c.EvolutionApiUrl != null
                      && c.EvolutionApiKey != null
@@ -22,42 +22,42 @@ public class LembreteCobrancaService(AppDbContext db, IEvolutionApiService evolu
             await ProcessarTenantAsync(config, hoje, ct);
     }
 
-    private async Task ProcessarTenantAsync(ConfiguracaoEmpresa config, DateOnly hoje, CancellationToken ct)
+    private async Task ProcessarTenantAsync(CompanySettings config, DateOnly hoje, CancellationToken ct)
     {
-        var offsets = new List<(DateOnly TargetDate, AutomacaoTipoEvento TipoEvento)>();
-        if (config.Lembrete3dAntes)  offsets.Add((hoje.AddDays(3),  AutomacaoTipoEvento.Lembrete3dAntes));
-        if (config.Lembrete1dAntes)  offsets.Add((hoje.AddDays(1),  AutomacaoTipoEvento.Lembrete1dAntes));
-        if (config.LembreteNoDia)    offsets.Add((hoje,             AutomacaoTipoEvento.LembreteNoDia));
-        if (config.Lembrete1dDepois) offsets.Add((hoje.AddDays(-1), AutomacaoTipoEvento.Lembrete1dDepois));
-        if (config.Lembrete3dDepois) offsets.Add((hoje.AddDays(-3), AutomacaoTipoEvento.Lembrete3dDepois));
-        if (config.Lembrete7dDepois) offsets.Add((hoje.AddDays(-7), AutomacaoTipoEvento.Lembrete7dDepois));
+        var offsets = new List<(DateOnly TargetDate, AutomacaoTipoEvento EventType)>();
+        if (config.Reminder3DaysBefore)  offsets.Add((hoje.AddDays(3),  AutomacaoTipoEvento.Lembrete3dAntes));
+        if (config.Reminder1DayBefore)  offsets.Add((hoje.AddDays(1),  AutomacaoTipoEvento.Lembrete1dAntes));
+        if (config.ReminderOnDueDate)    offsets.Add((hoje,             AutomacaoTipoEvento.LembreteNoDia));
+        if (config.Reminder1DayAfter) offsets.Add((hoje.AddDays(-1), AutomacaoTipoEvento.Lembrete1dDepois));
+        if (config.Reminder3DaysAfter) offsets.Add((hoje.AddDays(-3), AutomacaoTipoEvento.Lembrete3dDepois));
+        if (config.Reminder7DaysAfter) offsets.Add((hoje.AddDays(-7), AutomacaoTipoEvento.Lembrete7dDepois));
 
         if (offsets.Count == 0) return;
 
-        var eventosTipos = offsets.Select(o => (int)o.TipoEvento).ToList();
-        var logsExistentes = (await db.AutomacaoLogs
+        var eventosTipos = offsets.Select(o => (int)o.EventType).ToList();
+        var logsExistentes = (await db.AutomationLogs
             .IgnoreQueryFilters()
-            .Where(l => l.EmpresaId == config.EmpresaId && eventosTipos.Contains((int)l.TipoEvento))
-            .Select(l => new { l.CobrancaId, l.TipoEvento })
+            .Where(l => l.CompanyId == config.CompanyId && eventosTipos.Contains((int)l.EventType))
+            .Select(l => new { l.ChargeId, l.EventType })
             .ToListAsync(ct))
-            .Select(l => (l.CobrancaId, l.TipoEvento))
+            .Select(l => (l.ChargeId, l.EventType))
             .ToHashSet();
 
-        var novosLogs = new List<AutomacaoLog>();
+        var novosLogs = new List<AutomationLog>();
 
         foreach (var (targetDate, tipoEvento) in offsets)
         {
-            var cobrancas = await db.Cobrancas
+            var cobrancas = await db.Charges
                 .IgnoreQueryFilters()
-                .Include(c => c.Cliente)
-                .Where(c => c.EmpresaId == config.EmpresaId
-                         && c.DataVencimento == targetDate
+                .Include(c => c.Customer)
+                .Where(c => c.CompanyId == config.CompanyId
+                         && c.DueDate == targetDate
                          && c.Status == CobrancaStatus.Pendente)
                 .ToListAsync(ct);
 
             foreach (var cobranca in cobrancas)
             {
-                if (string.IsNullOrWhiteSpace(cobranca.Cliente?.Whatsapp))
+                if (string.IsNullOrWhiteSpace(cobranca.Customer?.WhatsApp))
                     continue;
 
                 if (logsExistentes.Contains((cobranca.Id, tipoEvento)))
@@ -70,7 +70,7 @@ public class LembreteCobrancaService(AppDbContext db, IEvolutionApiService evolu
                 {
                     sucesso = await evolutionService.EnviarMensagemAsync(
                         config.EvolutionApiUrl!, config.EvolutionApiKey!, config.EvolutionInstance!,
-                        cobranca.Cliente.Whatsapp, mensagem, ct);
+                        cobranca.Customer.WhatsApp, mensagem, ct);
                 }
                 catch (Exception ex)
                 {
@@ -78,13 +78,13 @@ public class LembreteCobrancaService(AppDbContext db, IEvolutionApiService evolu
                     erroMsg = ex.Message;
                 }
 
-                novosLogs.Add(new AutomacaoLog
+                novosLogs.Add(new AutomationLog
                 {
-                    EmpresaId  = config.EmpresaId,
-                    CobrancaId = cobranca.Id,
-                    TipoEvento = tipoEvento,
-                    Sucesso    = sucesso,
-                    ErroMsg    = erroMsg,
+                    CompanyId  = config.CompanyId,
+                    ChargeId = cobranca.Id,
+                    EventType = tipoEvento,
+                    Success    = sucesso,
+                    ErrorMessage    = erroMsg,
                 });
                 logsExistentes.Add((cobranca.Id, tipoEvento));
             }
@@ -92,17 +92,17 @@ public class LembreteCobrancaService(AppDbContext db, IEvolutionApiService evolu
 
         if (novosLogs.Count > 0)
         {
-            db.AutomacaoLogs.AddRange(novosLogs);
+            db.AutomationLogs.AddRange(novosLogs);
             await db.SaveChangesAsync(ct);
         }
     }
 
-    private static string MontarMensagem(Cobranca cobranca, AutomacaoTipoEvento tipoEvento)
+    private static string MontarMensagem(Charge cobranca, AutomacaoTipoEvento tipoEvento)
     {
-        var nome  = cobranca.Cliente?.Nome ?? "Cliente";
-        var ref_  = cobranca.Referencia;
-        var valor = cobranca.Valor.ToString("N2");
-        var venc  = cobranca.DataVencimento.ToString("dd/MM/yyyy");
+        var nome  = cobranca.Customer?.Name ?? "Customer";
+        var ref_  = cobranca.Reference;
+        var valor = cobranca.Amount.ToString("N2");
+        var venc  = cobranca.DueDate.ToString("dd/MM/yyyy");
 
         return tipoEvento switch
         {

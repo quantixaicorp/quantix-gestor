@@ -1,55 +1,55 @@
 namespace GestorAI.API.DTOs.Vendas;
 
-public record ItemVendaRequest(Guid ProdutoId, decimal Quantidade, decimal Desconto);
+public record ItemVendaRequest(Guid ProductId, decimal Quantity, decimal Discount);
 
 public record CreateVendaRequest(
-    Guid? ClienteId,
-    List<ItemVendaRequest> Itens,
-    decimal Desconto,
-    string FormaPagamento,
-    int? Parcelas,
-    string? Observacao,
-    DateTime? DataHora = null,
-    Guid? ProfissionalId = null,
-    string? ObservacaoOS = null);
+    Guid? CustomerId,
+    List<ItemVendaRequest> Items,
+    decimal Discount,
+    string PaymentMethod,
+    int? Installments,
+    string? Notes,
+    DateTime? SaleDate = null,
+    Guid? ProfessionalId = null,
+    string? ServiceOrderNotes = null);
 
 public record ItemVendaResponse(
-    Guid ProdutoId,
+    Guid ProductId,
     string ProdutoNome,
-    decimal Quantidade,
-    decimal PrecoUnitario,
-    decimal Desconto,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal Discount,
     decimal Total);
 
 public record VendaResponse(
     Guid Id,
-    Guid? ClienteId,
-    string? ClienteNome,
-    DateTime DataHora,
+    Guid? CustomerId,
+    string? CustomerName,
+    DateTime SaleDate,
     string Status,
     decimal Subtotal,
-    decimal Desconto,
+    decimal Discount,
     decimal Total,
-    string FormaPagamento,
-    int? Parcelas,
-    string? Observacao,
-    List<ItemVendaResponse> Itens,
-    string? ProfissionalNome = null,
-    string? ObservacaoOS = null);
+    string PaymentMethod,
+    int? Installments,
+    string? Notes,
+    List<ItemVendaResponse> Items,
+    string? ProfessionalName = null,
+    string? ServiceOrderNotes = null);
 
 public record VendaListItem(
     Guid Id,
-    Guid? ClienteId,
-    string? ClienteNome,
-    DateTime DataHora,
+    Guid? CustomerId,
+    string? CustomerName,
+    DateTime SaleDate,
     string Status,
     decimal Total,
-    string FormaPagamento,
-    string? ProfissionalNome = null);
+    string PaymentMethod,
+    string? ProfessionalName = null);
 
-public record FecharVendaRequest(string FormaPagamento, int? Parcelas, string? Observacao);
+public record FecharVendaRequest(string PaymentMethod, int? Installments, string? Notes);
 
 public record UpdateVendaRequest(
-    Guid? ClienteId,
-    string FormaPagamento,
-    DateTime DataHora);
+    Guid? CustomerId,
+    string PaymentMethod,
+    DateTime SaleDate);

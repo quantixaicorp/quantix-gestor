@@ -1,39 +1,39 @@
 namespace GestorAI.API.DTOs.Cobrancas;
 
 public record CreateCobrancaRequest(
-    Guid ClienteId,
-    string Referencia,
-    decimal Valor,
-    DateOnly DataVencimento,
-    string? Observacao);
+    Guid CustomerId,
+    string Reference,
+    decimal Amount,
+    DateOnly DueDate,
+    string? Notes);
 
 public record PagarCobrancaRequest(
-    DateTime DataPagamento,
-    string FormaPagamento);
+    DateTime PaymentDate,
+    string PaymentMethod);
 
 public record CobrancaResponse(
     Guid Id,
-    string ClienteNome,
+    string CustomerName,
     string ClienteWhatsapp,
-    Guid? ContratoId,
+    Guid? ContractId,
     string? ContratoTitulo,
-    string Referencia,
-    decimal Valor,
-    DateOnly DataVencimento,
-    DateTime? DataPagamento,
+    string Reference,
+    decimal Amount,
+    DateOnly DueDate,
+    DateTime? PaymentDate,
     string Status,
-    string? FormaPagamento,
-    string? Observacao,
-    DateTime CriadoEm);
+    string? PaymentMethod,
+    string? Notes,
+    DateTime CreatedAt);
 
 public record CobrancaListItem(
     Guid Id,
-    string ClienteNome,
-    Guid? ContratoId,
+    string CustomerName,
+    Guid? ContractId,
     string? ContratoTitulo,
-    string Referencia,
-    decimal Valor,
-    DateOnly DataVencimento,
+    string Reference,
+    decimal Amount,
+    DateOnly DueDate,
     string Status);
 
 public record WhatsappUrlResponse(string Url);

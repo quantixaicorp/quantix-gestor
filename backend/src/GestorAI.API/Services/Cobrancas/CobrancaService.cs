@@ -14,30 +14,30 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
     public async Task<List<CobrancaListItem>> ListAsync(
         string? status, Guid? clienteId, string? mes, CancellationToken ct)
     {
-        var query = db.Cobrancas
-            .Include(c => c.Cliente)
-            .Include(c => c.Contrato)
+        var query = db.Charges
+            .Include(c => c.Customer)
+            .Include(c => c.Contract)
             .AsQueryable();
 
         if (clienteId.HasValue)
-            query = query.Where(c => c.ClienteId == clienteId.Value);
+            query = query.Where(c => c.CustomerId == clienteId.Value);
 
         if (mes != null && DateOnly.TryParseExact(mes + "-01", "yyyy-MM-dd",
             System.Globalization.CultureInfo.InvariantCulture,
             System.Globalization.DateTimeStyles.None, out var mesDate))
         {
             var fimMes = mesDate.AddMonths(1).AddDays(-1);
-            query = query.Where(c => c.DataVencimento >= mesDate && c.DataVencimento <= fimMes);
+            query = query.Where(c => c.DueDate >= mesDate && c.DueDate <= fimMes);
         }
 
-        var list = await query.OrderBy(c => c.DataVencimento).ToListAsync(ct);
+        var list = await query.OrderBy(c => c.DueDate).ToListAsync(ct);
 
         if (status != null)
         {
             var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
             list = status switch
             {
-                "Vencido" => list.Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje).ToList(),
+                "Vencido" => list.Where(c => c.Status == CobrancaStatus.Pendente && c.DueDate < hoje).ToList(),
                 _ when Enum.TryParse<CobrancaStatus>(status, out var s) => list.Where(c => c.Status == s).ToList(),
                 _ => list
             };
@@ -48,9 +48,9 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
 
     public async Task<CobrancaResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var c = await db.Cobrancas
-            .Include(c => c.Cliente)
-            .Include(c => c.Contrato)
+        var c = await db.Charges
+            .Include(c => c.Customer)
+            .Include(c => c.Contract)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Cobrança não encontrada.", 404);
         return ToResponse(c);
@@ -58,19 +58,19 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
 
     public async Task<CobrancaResponse> CreateAsync(CreateCobrancaRequest req, CancellationToken ct)
     {
-        _ = await db.Clientes.FirstOrDefaultAsync(c => c.Id == req.ClienteId, ct)
-            ?? throw new AppException("Cliente não encontrado.", 404);
+        _ = await db.Customers.FirstOrDefaultAsync(c => c.Id == req.CustomerId, ct)
+            ?? throw new AppException("Customer não encontrado.", 404);
 
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId = tenantContext.EmpresaId,
-            ClienteId = req.ClienteId,
-            Referencia = req.Referencia,
-            Valor = req.Valor,
-            DataVencimento = req.DataVencimento,
-            Observacao = req.Observacao,
+            CompanyId = tenantContext.CompanyId,
+            CustomerId = req.CustomerId,
+            Reference = req.Reference,
+            Amount = req.Amount,
+            DueDate = req.DueDate,
+            Notes = req.Notes,
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync(ct);
         return await GetAsync(cobranca.Id, ct);
     }
@@ -80,19 +80,19 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         var c = await FindAsync(id, ct);
         if (c.Status != CobrancaStatus.Pendente)
             throw new AppException("Apenas cobranças pendentes podem ser pagas.", 400);
-        if (!Enum.TryParse<FormaPagamento>(req.FormaPagamento, out var forma))
-            throw new AppException($"FormaPagamento inválida: {req.FormaPagamento}.", 400);
+        if (!Enum.TryParse<FormaPagamento>(req.PaymentMethod, out var forma))
+            throw new AppException($"FormaPagamento inválida: {req.PaymentMethod}.", 400);
 
         c.Status = CobrancaStatus.Pago;
-        c.DataPagamento = req.DataPagamento;
-        c.FormaPagamento = forma;
+        c.PaymentDate = req.PaymentDate;
+        c.PaymentMethod = forma;
 
-        CriarLancamentoReceita(c, c.DataPagamento);
+        CriarLancamentoReceita(c, c.PaymentDate);
 
         await db.SaveChangesAsync(ct);
 
-        if (c.ContratoId.HasValue)
-            await VerificarEncerramentoContratoAsync(c.ContratoId.Value, ct);
+        if (c.ContractId.HasValue)
+            await VerificarEncerramentoContratoAsync(c.ContractId.Value, ct);
 
         return await GetAsync(id, ct);
     }
@@ -102,7 +102,7 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         var c = await FindAsync(id, ct);
         if (c.Status == CobrancaStatus.Pago)
             throw new AppException("Cobranças pagas não podem ser excluídas.", 400);
-        db.Cobrancas.Remove(c);
+        db.Charges.Remove(c);
         await db.SaveChangesAsync(ct);
     }
 
@@ -118,14 +118,14 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
 
     public async Task<WhatsappUrlResponse> GetWhatsappUrlAsync(Guid id, CancellationToken ct)
     {
-        var c = await db.Cobrancas
-            .Include(c => c.Cliente)
+        var c = await db.Charges
+            .Include(c => c.Customer)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Cobrança não encontrada.", 404);
 
-        var fone = new string(c.Cliente!.Whatsapp.Where(char.IsDigit).ToArray());
-        var msg = $"Olá {c.Cliente.Nome}, segue cobrança referente a {c.Referencia}: " +
-                  $"R$ {c.Valor:N2} com vencimento em {c.DataVencimento:dd/MM/yyyy}. " +
+        var fone = new string(c.Customer!.WhatsApp.Where(char.IsDigit).ToArray());
+        var msg = $"Olá {c.Customer.Name}, segue cobrança referente a {c.Reference}: " +
+                  $"R$ {c.Amount:N2} com vencimento em {c.DueDate:dd/MM/yyyy}. " +
                   "Em caso de dúvidas, entre em contato.";
         var encodedMsg = Uri.EscapeDataString(msg).Replace("%20", "+");
         var url = $"https://wa.me/55{fone}?text={encodedMsg}";
@@ -137,17 +137,17 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-        var aReceber = await db.Cobrancas
-            .Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento >= hoje)
-            .SumAsync(c => (decimal?)c.Valor, ct) ?? 0m;
+        var aReceber = await db.Charges
+            .Where(c => c.Status == CobrancaStatus.Pendente && c.DueDate >= hoje)
+            .SumAsync(c => (decimal?)c.Amount, ct) ?? 0m;
 
-        var vencido = await db.Cobrancas
-            .Where(c => c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje)
-            .SumAsync(c => (decimal?)c.Valor, ct) ?? 0m;
+        var vencido = await db.Charges
+            .Where(c => c.Status == CobrancaStatus.Pendente && c.DueDate < hoje)
+            .SumAsync(c => (decimal?)c.Amount, ct) ?? 0m;
 
-        var recebido = await db.Cobrancas
-            .Where(c => c.Status == CobrancaStatus.Pago && c.DataPagamento >= inicioMes)
-            .SumAsync(c => (decimal?)c.Valor, ct) ?? 0m;
+        var recebido = await db.Charges
+            .Where(c => c.Status == CobrancaStatus.Pago && c.PaymentDate >= inicioMes)
+            .SumAsync(c => (decimal?)c.Amount, ct) ?? 0m;
 
         return new CobrancaResumo(aReceber, vencido, recebido);
     }
@@ -155,7 +155,7 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
     public async Task<AgingResponse> GetAgingAsync(CancellationToken ct)
     {
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        var pendentes = await db.Cobrancas
+        var pendentes = await db.Charges
             .Where(c => c.Status == CobrancaStatus.Pendente)
             .ToListAsync(ct);
 
@@ -164,12 +164,12 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
 
         foreach (var c in pendentes)
         {
-            var diasAtraso = (hoje.ToDateTime(TimeOnly.MinValue) - c.DataVencimento.ToDateTime(TimeOnly.MinValue)).Days;
-            if (diasAtraso <= 0)       { atual   += c.Valor; qAtual++;    }
-            else if (diasAtraso <= 30) { ate30   += c.Valor; qAte30++;    }
-            else if (diasAtraso <= 60) { de31a60 += c.Valor; qDe31a60++;  }
-            else if (diasAtraso <= 90) { de61a90 += c.Valor; qDe61a90++;  }
-            else                       { acima90 += c.Valor; qAcima90++;  }
+            var diasAtraso = (hoje.ToDateTime(TimeOnly.MinValue) - c.DueDate.ToDateTime(TimeOnly.MinValue)).Days;
+            if (diasAtraso <= 0)       { atual   += c.Amount; qAtual++;    }
+            else if (diasAtraso <= 30) { ate30   += c.Amount; qAte30++;    }
+            else if (diasAtraso <= 60) { de31a60 += c.Amount; qDe31a60++;  }
+            else if (diasAtraso <= 90) { de61a90 += c.Amount; qDe61a90++;  }
+            else                       { acima90 += c.Amount; qAcima90++;  }
         }
 
         return new AgingResponse(
@@ -181,15 +181,15 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
     public async Task<CobrancaAsaasResponse> EnviarAsaasAsync(
         Guid id, EnviarAsaasRequest req, CancellationToken ct)
     {
-        var cobranca = await db.Cobrancas
-            .Include(c => c.Cliente)
+        var cobranca = await db.Charges
+            .Include(c => c.Customer)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Cobrança não encontrada.", 404);
 
         if (cobranca.Status != CobrancaStatus.Pendente)
             throw new AppException("Apenas cobranças pendentes podem ser enviadas ao Asaas.", 400);
 
-        var config = await db.ConfiguracoesEmpresa
+        var config = await db.CompanySettings
             .FirstOrDefaultAsync(ct)
             ?? throw new AppException("Configuração da empresa não encontrada.", 404);
 
@@ -198,13 +198,13 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
 
         var customerId = await asaasService.GetOrCreateCustomerAsync(
             config.AsaasApiKey, config.AsaasSandbox,
-            cobranca.Cliente!.Nome,
+            cobranca.Customer!.Name,
             null, ct);
 
         var result = await asaasService.CreatePaymentAsync(
             config.AsaasApiKey, config.AsaasSandbox,
-            customerId, cobranca.Valor,
-            cobranca.DataVencimento, cobranca.Referencia,
+            customerId, cobranca.Amount,
+            cobranca.DueDate, cobranca.Reference,
             req.BillingType, ct);
 
         cobranca.AsaasId = result.Id;
@@ -222,7 +222,7 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
 
     public async Task ConfirmarPagamentoAsaasAsync(string asaasId, string? billingType, CancellationToken ct)
     {
-        var cobranca = await db.Cobrancas
+        var cobranca = await db.Charges
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.AsaasId == asaasId, ct);
 
@@ -230,42 +230,42 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
             return;
 
         cobranca.Status = CobrancaStatus.Pago;
-        cobranca.DataPagamento = DateTime.UtcNow;
-        cobranca.FormaPagamento = billingType switch
+        cobranca.PaymentDate = DateTime.UtcNow;
+        cobranca.PaymentMethod = billingType switch
         {
             "PIX" => FormaPagamento.Pix,
             "CREDIT_CARD" => FormaPagamento.Cartao,
             _ => FormaPagamento.Outro,
         };
 
-        CriarLancamentoReceita(cobranca, cobranca.DataPagamento);
+        CriarLancamentoReceita(cobranca, cobranca.PaymentDate);
 
         await db.SaveChangesAsync(ct);
 
-        if (cobranca.ContratoId.HasValue)
-            await VerificarEncerramentoContratoAsync(cobranca.ContratoId.Value, ct);
+        if (cobranca.ContractId.HasValue)
+            await VerificarEncerramentoContratoAsync(cobranca.ContractId.Value, ct);
     }
 
     private async Task VerificarEncerramentoContratoAsync(Guid contratoId, CancellationToken ct)
     {
-        var contrato = await db.Contratos
+        var contrato = await db.Contracts
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Id == contratoId, ct);
 
         if (contrato is null
             || contrato.Status != ContratoStatus.Ativo
-            || contrato.TipoCobranca != TipoCobranca.ParceladoPrazoFixo)
+            || contrato.ChargeType != TipoCobranca.ParceladoPrazoFixo)
             return;
 
-        var existeAlguma = await db.Cobrancas
+        var existeAlguma = await db.Charges
             .IgnoreQueryFilters()
-            .AnyAsync(c => c.ContratoId == contratoId && c.Status != CobrancaStatus.Cancelado, ct);
+            .AnyAsync(c => c.ContractId == contratoId && c.Status != CobrancaStatus.Cancelado, ct);
 
         if (!existeAlguma) return;
 
-        var todasPagas = await db.Cobrancas
+        var todasPagas = await db.Charges
             .IgnoreQueryFilters()
-            .Where(c => c.ContratoId == contratoId && c.Status != CobrancaStatus.Cancelado)
+            .Where(c => c.ContractId == contratoId && c.Status != CobrancaStatus.Cancelado)
             .AllAsync(c => c.Status == CobrancaStatus.Pago, ct);
 
         if (todasPagas)
@@ -275,48 +275,48 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
         }
     }
 
-    private void CriarLancamentoReceita(Cobranca c, DateTime? dataPagamento)
+    private void CriarLancamentoReceita(Charge c, DateTime? dataPagamento)
     {
-        db.Lancamentos.Add(new Lancamento
+        db.Transactions.Add(new Transaction
         {
-            EmpresaId = c.EmpresaId,
-            Tipo = TipoLancamento.Receita,
-            Descricao = c.Referencia,
-            Valor = c.Valor,
-            DataVencimento = c.DataVencimento.ToDateTime(TimeOnly.MinValue),
-            DataPagamento = dataPagamento,
+            CompanyId = c.CompanyId,
+            Type = TipoLancamento.Receita,
+            Description = c.Reference,
+            Amount = c.Amount,
+            DueDate = c.DueDate.ToDateTime(TimeOnly.MinValue),
+            PaymentDate = dataPagamento,
             Status = StatusLancamento.Pago,
-            Categoria = "Cobrança",
+            Category = "Cobrança",
         });
     }
 
-    private async Task<Cobranca> FindAsync(Guid id, CancellationToken ct) =>
-        await db.Cobrancas.FirstOrDefaultAsync(c => c.Id == id, ct)
+    private async Task<Charge> FindAsync(Guid id, CancellationToken ct) =>
+        await db.Charges.FirstOrDefaultAsync(c => c.Id == id, ct)
             ?? throw new AppException("Cobrança não encontrada.", 404);
 
-    private static CobrancaListItem ToListItem(Cobranca c)
+    private static CobrancaListItem ToListItem(Charge c)
     {
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        var statusDisplay = c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje
+        var statusDisplay = c.Status == CobrancaStatus.Pendente && c.DueDate < hoje
             ? "Vencido"
             : c.Status.ToString();
         return new CobrancaListItem(
-            c.Id, c.Cliente?.Nome ?? "", c.ContratoId,
-            c.Contrato?.Titulo, c.Referencia, c.Valor,
-            c.DataVencimento, statusDisplay);
+            c.Id, c.Customer?.Name ?? "", c.ContractId,
+            c.Contract?.Title, c.Reference, c.Amount,
+            c.DueDate, statusDisplay);
     }
 
-    private static CobrancaResponse ToResponse(Cobranca c)
+    private static CobrancaResponse ToResponse(Charge c)
     {
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        var statusDisplay = c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje
+        var statusDisplay = c.Status == CobrancaStatus.Pendente && c.DueDate < hoje
             ? "Vencido"
             : c.Status.ToString();
         return new CobrancaResponse(
-            c.Id, c.Cliente?.Nome ?? "", c.Cliente?.Whatsapp ?? "",
-            c.ContratoId, c.Contrato?.Titulo,
-            c.Referencia, c.Valor, c.DataVencimento,
-            c.DataPagamento, statusDisplay,
-            c.FormaPagamento?.ToString(), c.Observacao, c.CriadoEm);
+            c.Id, c.Customer?.Name ?? "", c.Customer?.WhatsApp ?? "",
+            c.ContractId, c.Contract?.Title,
+            c.Reference, c.Amount, c.DueDate,
+            c.PaymentDate, statusDisplay,
+            c.PaymentMethod?.ToString(), c.Notes, c.CreatedAt);
     }
 }

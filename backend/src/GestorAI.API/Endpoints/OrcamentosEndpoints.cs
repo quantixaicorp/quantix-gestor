@@ -47,7 +47,7 @@ public static class OrcamentosEndpoints
         group.MapPost("/{id:guid}/gerar-cobranca", async (
             Guid id, GerarCobrancaOrcamentoRequest req,
             OrcamentoService svc, CancellationToken ct) =>
-            Results.Ok(await svc.GerarCobrancaAsync(id, req.DataVencimento, ct)));
+            Results.Ok(await svc.GerarCobrancaAsync(id, req.DueDate, ct)));
 
         group.MapGet("/{id:guid}/pdf", async (
             Guid id, OrcamentoService svc, IConfiguration config, CancellationToken ct) =>

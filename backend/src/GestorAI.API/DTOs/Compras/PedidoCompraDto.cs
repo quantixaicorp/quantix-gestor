@@ -1,38 +1,38 @@
 namespace GestorAI.API.DTOs.Compras;
 
 public record ItemPedidoRequest(
-    Guid? ProdutoId,
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorEstimado);
+    Guid? ProductId,
+    string Description,
+    decimal Quantity,
+    decimal EstimatedAmount);
 
 public record ItemPedidoResponse(
     Guid Id,
-    Guid? ProdutoId,
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorEstimado);
+    Guid? ProductId,
+    string Description,
+    decimal Quantity,
+    decimal EstimatedAmount);
 
 public record CreatePedidoCompraRequest(
-    Guid FornecedorId,
-    DateTime Data,
-    string? Observacoes,
-    List<ItemPedidoRequest> Itens);
+    Guid SupplierId,
+    DateTime Date,
+    string? Notes,
+    List<ItemPedidoRequest> Items);
 
 public record UpdatePedidoCompraRequest(
-    Guid FornecedorId,
-    DateTime Data,
-    string? Observacoes,
-    List<ItemPedidoRequest> Itens);
+    Guid SupplierId,
+    DateTime Date,
+    string? Notes,
+    List<ItemPedidoRequest> Items);
 
 public record PedidoCompraResponse(
     Guid Id,
-    int Numero,
-    DateTime Data,
-    Guid FornecedorId,
+    int Number,
+    DateTime Date,
+    Guid SupplierId,
     string FornecedorNome,
     string Status,
-    decimal ValorEstimado,
-    string? Observacoes,
-    DateTime CriadoEm,
-    List<ItemPedidoResponse> Itens);
+    decimal EstimatedAmount,
+    string? Notes,
+    DateTime CreatedAt,
+    List<ItemPedidoResponse> Items);

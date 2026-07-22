@@ -16,7 +16,7 @@ public class CobrancaServiceTests
 
     private (AppDbContext db, CobrancaService svc) Setup()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -24,9 +24,9 @@ public class CobrancaServiceTests
         return (db, new CobrancaService(db, tenant, null!));
     }
 
-    private Cliente CriarCliente(AppDbContext db)
+    private Customer CriarCliente(AppDbContext db)
     {
-        var c = new Cliente { EmpresaId = _empresaId, Nome = "Ana", Whatsapp = "11988880000" };
+        var c = new Customer { CompanyId = _empresaId, Name = "Ana", WhatsApp = "11988880000" };
         db.Clientes.Add(c);
         db.SaveChanges();
         return c;
@@ -44,7 +44,7 @@ public class CobrancaServiceTests
         var result = await svc.CreateAsync(req, default);
 
         Assert.Equal("Pendente", result.Status);
-        Assert.Equal(300m, result.Valor);
+        Assert.Equal(300m, result.Amount);
     }
 
     [Fact]
@@ -52,14 +52,14 @@ public class CobrancaServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Referencia = "Test", Valor = 100m,
-            DataVencimento = new DateOnly(2026, 6, 10),
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Reference = "Test", Amount = 100m,
+            DueDate = new DateOnly(2026, 6, 10),
             Status = CobrancaStatus.Pendente
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         var req = new PagarCobrancaRequest(DateTime.UtcNow, "Pix");
@@ -67,7 +67,7 @@ public class CobrancaServiceTests
 
         Assert.Equal("Pago", result.Status);
         Assert.Equal("Pix", result.FormaPagamento);
-        Assert.NotNull(result.DataPagamento);
+        Assert.NotNull(result.PaymentDate);
     }
 
     [Fact]
@@ -75,14 +75,14 @@ public class CobrancaServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Referencia = "Test", Valor = 100m,
-            DataVencimento = new DateOnly(2026, 6, 10),
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Reference = "Test", Amount = 100m,
+            DueDate = new DateOnly(2026, 6, 10),
             Status = CobrancaStatus.Cancelado
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         await Assert.ThrowsAsync<AppException>(() =>
@@ -93,14 +93,14 @@ public class CobrancaServiceTests
     public async Task GetWhatsappUrlAsync_RetornaUrlCorreta()
     {
         var (db, svc) = Setup();
-        var cliente = CriarCliente(db); // Whatsapp = "11988880000"
-        var cobranca = new Cobranca
+        var cliente = CriarCliente(db); // WhatsApp = "11988880000"
+        var cobranca = new Charge
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Referencia = "Mensalidade Jun/2026", Valor = 300m,
-            DataVencimento = new DateOnly(2026, 6, 10),
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Reference = "Mensalidade Jun/2026", Amount = 300m,
+            DueDate = new DateOnly(2026, 6, 10),
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         var result = await svc.GetWhatsappUrlAsync(cobranca.Id, default);
@@ -116,22 +116,22 @@ public class CobrancaServiceTests
         var clienteId = CriarCliente(db).Id;
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        db.Cobrancas.AddRange(
+        db.Charges.AddRange(
             // Atual (vence hoje)
-            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
-                Referencia = "R1", Valor = 100m, DataVencimento = hoje,
+            new Charge { CompanyId = _empresaId, CustomerId = clienteId,
+                Reference = "R1", Amount = 100m, DueDate = hoje,
                 Status = CobrancaStatus.Pendente },
             // 1–30 dias
-            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
-                Referencia = "R2", Valor = 200m, DataVencimento = hoje.AddDays(-15),
+            new Charge { CompanyId = _empresaId, CustomerId = clienteId,
+                Reference = "R2", Amount = 200m, DueDate = hoje.AddDays(-15),
                 Status = CobrancaStatus.Pendente },
             // 31–60 dias
-            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
-                Referencia = "R3", Valor = 300m, DataVencimento = hoje.AddDays(-45),
+            new Charge { CompanyId = _empresaId, CustomerId = clienteId,
+                Reference = "R3", Amount = 300m, DueDate = hoje.AddDays(-45),
                 Status = CobrancaStatus.Pendente },
             // Paga — não deve aparecer
-            new Cobranca { EmpresaId = _empresaId, ClienteId = clienteId,
-                Referencia = "R4", Valor = 400m, DataVencimento = hoje.AddDays(-10),
+            new Charge { CompanyId = _empresaId, CustomerId = clienteId,
+                Reference = "R4", Amount = 400m, DueDate = hoje.AddDays(-10),
                 Status = CobrancaStatus.Pago }
         );
         await db.SaveChangesAsync();

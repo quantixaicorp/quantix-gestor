@@ -13,7 +13,7 @@ public class DashboardServiceTests
 
     private (AppDbContext db, DashboardService service) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -29,25 +29,25 @@ public class DashboardServiceTests
         var ontem = hoje.AddDays(-1);
 
         db.Vendas.AddRange(
-            new Venda
+            new Sale
             {
-                EmpresaId = _empresaId, DataHora = hoje,
+                CompanyId = _empresaId, DataHora = hoje,
                 Status = StatusVenda.Concluida, Total = 300m,
-                Subtotal = 300m, Desconto = 0m,
+                Subtotal = 300m, Discount = 0m,
                 FormaPagamento = FormaPagamento.Pix
             },
-            new Venda
+            new Sale
             {
-                EmpresaId = _empresaId, DataHora = ontem,
+                CompanyId = _empresaId, DataHora = ontem,
                 Status = StatusVenda.Concluida, Total = 500m,
-                Subtotal = 500m, Desconto = 0m,
+                Subtotal = 500m, Discount = 0m,
                 FormaPagamento = FormaPagamento.Dinheiro
             },
-            new Venda
+            new Sale
             {
-                EmpresaId = _empresaId, DataHora = hoje,
+                CompanyId = _empresaId, DataHora = hoje,
                 Status = StatusVenda.Cancelada, Total = 100m,
-                Subtotal = 100m, Desconto = 0m,
+                Subtotal = 100m, Discount = 0m,
                 FormaPagamento = FormaPagamento.Pix
             });
         await db.SaveChangesAsync();
@@ -61,20 +61,20 @@ public class DashboardServiceTests
     public async Task GetKpisAsync_ProdutosEstoqueBaixo_ContaProdutosAbaixoMinimo()
     {
         var (db, service) = Setup();
-        var cat = new Categoria { EmpresaId = _empresaId, Nome = "Cat" };
+        var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
         db.Categorias.Add(cat);
         db.Produtos.AddRange(
-            new Produto
+            new Product
             {
-                EmpresaId = _empresaId, CategoriaId = cat.Id,
-                Nome = "Baixo", PrecoVenda = 10m,
-                EstoqueAtual = 1m, EstoqueMinimo = 5m
+                CompanyId = _empresaId, CategoryId = cat.Id,
+                Name = "Baixo", SalePrice = 10m,
+                CurrentStock = 1m, MinimumStock = 5m
             },
-            new Produto
+            new Product
             {
-                EmpresaId = _empresaId, CategoriaId = cat.Id,
-                Nome = "OK", PrecoVenda = 10m,
-                EstoqueAtual = 10m, EstoqueMinimo = 2m
+                CompanyId = _empresaId, CategoryId = cat.Id,
+                Name = "OK", SalePrice = 10m,
+                CurrentStock = 10m, MinimumStock = 2m
             });
         await db.SaveChangesAsync();
 
@@ -87,29 +87,29 @@ public class DashboardServiceTests
     public async Task GetDashboardAsync_TopProdutos_OrdenaPorQuantidadeVendida()
     {
         var (db, service) = Setup();
-        var cat = new Categoria { EmpresaId = _empresaId, Nome = "Cat" };
+        var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
         db.Categorias.Add(cat);
-        var p1 = new Produto { EmpresaId = _empresaId, CategoriaId = cat.Id, Nome = "A", PrecoVenda = 10m, EstoqueAtual = 0m, EstoqueMinimo = 0m };
-        var p2 = new Produto { EmpresaId = _empresaId, CategoriaId = cat.Id, Nome = "B", PrecoVenda = 20m, EstoqueAtual = 0m, EstoqueMinimo = 0m };
+        var p1 = new Product { CompanyId = _empresaId, CategoryId = cat.Id, Name = "A", SalePrice = 10m, CurrentStock = 0m, MinimumStock = 0m };
+        var p2 = new Product { CompanyId = _empresaId, CategoryId = cat.Id, Name = "B", SalePrice = 20m, CurrentStock = 0m, MinimumStock = 0m };
         db.Produtos.AddRange(p1, p2);
 
-        var venda = new Venda
+        var venda = new Sale
         {
-            EmpresaId = _empresaId, DataHora = DateTime.UtcNow,
+            CompanyId = _empresaId, DataHora = DateTime.UtcNow,
             Status = StatusVenda.Concluida, Subtotal = 50m,
-            Desconto = 0m, Total = 50m, FormaPagamento = FormaPagamento.Pix
+            Discount = 0m, Total = 50m, FormaPagamento = FormaPagamento.Pix
         };
         db.Vendas.Add(venda);
         await db.SaveChangesAsync();
 
-        db.ItensVenda.AddRange(
-            new ItemVenda { VendaId = venda.Id, ProdutoId = p1.Id, Quantidade = 3m, PrecoUnitario = 10m, Desconto = 0m, Total = 30m },
-            new ItemVenda { VendaId = venda.Id, ProdutoId = p2.Id, Quantidade = 1m, PrecoUnitario = 20m, Desconto = 0m, Total = 20m });
+        db.SaleItems.AddRange(
+            new SaleItem { SaleId = venda.Id, ProductId = p1.Id, Quantity = 3m, PrecoUnitario = 10m, Discount = 0m, Total = 30m },
+            new SaleItem { SaleId = venda.Id, ProductId = p2.Id, Quantity = 1m, PrecoUnitario = 20m, Discount = 0m, Total = 20m });
         await db.SaveChangesAsync();
 
         var result = await service.GetDashboardAsync(default);
 
-        Assert.Equal("A", result.TopProdutos[0].Nome);
+        Assert.Equal("A", result.TopProdutos[0].Name);
         Assert.Equal(3m, result.TopProdutos[0].QuantidadeVendida);
     }
 }

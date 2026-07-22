@@ -13,61 +13,61 @@ public class ParcelamentoService(AppDbContext db, TenantContext tenantContext)
     public async Task<List<ParcelamentoDetalheResponse>> ListAsync(
         string? status, Guid? compraId, CancellationToken ct)
     {
-        var query = db.Parcelamentos
-            .Include(p => p.Parcelas)
+        var query = db.InstallmentPlans
+            .Include(p => p.Installments)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusParcelamento>(status, out var s))
             query = query.Where(p => p.Status == s);
         if (compraId.HasValue)
-            query = query.Where(p => p.CompraId == compraId.Value);
+            query = query.Where(p => p.PurchaseId == compraId.Value);
 
-        var list = await query.OrderByDescending(p => p.CompraId).ToListAsync(ct);
+        var list = await query.OrderByDescending(p => p.PurchaseId).ToListAsync(ct);
         return list.Select(ToDetalhe).ToList();
     }
 
     public async Task<ParcelamentoDetalheResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var p = await db.Parcelamentos
-            .Include(x => x.Parcelas)
+        var p = await db.InstallmentPlans
+            .Include(x => x.Installments)
             .FirstOrDefaultAsync(x => x.Id == id, ct)
-            ?? throw new AppException("Parcelamento não encontrado.", 404);
+            ?? throw new AppException("InstallmentPlan não encontrado.", 404);
         return ToDetalhe(p);
     }
 
-    public async Task<Parcelamento> CriarAsync(
+    public async Task<InstallmentPlan> CriarAsync(
         Guid compraId,
         string descricao,
         decimal valorTotal,
-        List<(DateTime DataVencimento, decimal Valor)> vencimentos,
+        List<(DateTime DueDate, decimal Amount)> vencimentos,
         string categoriaDefault,
         CancellationToken ct)
     {
-        var parcelamento = new Parcelamento
+        var parcelamento = new InstallmentPlan
         {
-            EmpresaId = tenantContext.EmpresaId,
-            CompraId = compraId,
-            Descricao = descricao,
-            ValorTotal = valorTotal,
-            QtdParcelas = vencimentos.Count,
+            CompanyId = tenantContext.CompanyId,
+            PurchaseId = compraId,
+            Description = descricao,
+            TotalAmount = valorTotal,
+            InstallmentCount = vencimentos.Count,
             Status = StatusParcelamento.EmAberto,
         };
-        db.Parcelamentos.Add(parcelamento);
+        db.InstallmentPlans.Add(parcelamento);
 
         for (var i = 0; i < vencimentos.Count; i++)
         {
             var (dataVenc, valor) = vencimentos[i];
-            db.Lancamentos.Add(new Lancamento
+            db.Transactions.Add(new Transaction
             {
-                EmpresaId = tenantContext.EmpresaId,
-                Tipo = TipoLancamento.Despesa,
-                Descricao = $"{descricao} - Parcela {i + 1}/{vencimentos.Count}",
-                Valor = valor,
-                DataVencimento = dataVenc,
+                CompanyId = tenantContext.CompanyId,
+                Type = TipoLancamento.Despesa,
+                Description = $"{descricao} - Parcela {i + 1}/{vencimentos.Count}",
+                Amount = valor,
+                DueDate = dataVenc,
                 Status = StatusLancamento.Pendente,
-                Categoria = categoriaDefault,
-                ParcelamentoId = parcelamento.Id,
-                NumeroParcela = i + 1,
+                Category = categoriaDefault,
+                InstallmentPlanId = parcelamento.Id,
+                InstallmentNumber = i + 1,
             });
         }
 
@@ -76,14 +76,14 @@ public class ParcelamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task RecalcularStatusAsync(Guid parcelamentoId, CancellationToken ct)
     {
-        var parcelamento = await db.Parcelamentos
-            .Include(p => p.Parcelas)
+        var parcelamento = await db.InstallmentPlans
+            .Include(p => p.Installments)
             .FirstOrDefaultAsync(p => p.Id == parcelamentoId, ct);
 
         if (parcelamento is null || parcelamento.Status == StatusParcelamento.Cancelado)
             return;
 
-        var parcelas = parcelamento.Parcelas
+        var parcelas = parcelamento.Installments
             .Where(l => l.Status != StatusLancamento.Cancelado)
             .ToList();
 
@@ -107,37 +107,37 @@ public class ParcelamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task CancelarParcelasAsync(Guid parcelamentoId, CancellationToken ct)
     {
-        var parcelamento = await db.Parcelamentos
-            .Include(p => p.Parcelas)
+        var parcelamento = await db.InstallmentPlans
+            .Include(p => p.Installments)
             .FirstOrDefaultAsync(p => p.Id == parcelamentoId, ct);
 
         if (parcelamento is null) return;
 
-        foreach (var parcela in parcelamento.Parcelas.Where(l => l.Status == StatusLancamento.Pendente))
+        foreach (var parcela in parcelamento.Installments.Where(l => l.Status == StatusLancamento.Pendente))
             parcela.Status = StatusLancamento.Cancelado;
 
         parcelamento.Status = StatusParcelamento.Cancelado;
     }
 
-    private static ParcelamentoDetalheResponse ToDetalhe(Parcelamento p)
+    private static ParcelamentoDetalheResponse ToDetalhe(InstallmentPlan p)
     {
         var hoje = DateTime.UtcNow.Date;
-        var parcelas = p.Parcelas
-            .OrderBy(l => l.NumeroParcela)
+        var parcelas = p.Installments
+            .OrderBy(l => l.InstallmentNumber)
             .Select(l => new ParcelaResponse(
                 l.Id,
-                l.NumeroParcela ?? 0,
-                l.Valor,
-                l.DataVencimento,
-                l.DataPagamento,
+                l.InstallmentNumber ?? 0,
+                l.Amount,
+                l.DueDate,
+                l.PaymentDate,
                 l.Status.ToString(),
-                l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < hoje))
+                l.Status == StatusLancamento.Pendente && l.DueDate.Date < hoje))
             .ToList();
 
-        var categoria = p.Parcelas.FirstOrDefault()?.Categoria ?? "";
+        var categoria = p.Installments.FirstOrDefault()?.Category ?? "";
 
         return new ParcelamentoDetalheResponse(
-            p.Id, p.CompraId, p.Descricao, p.ValorTotal,
-            p.QtdParcelas, p.Status.ToString(), categoria, parcelas);
+            p.Id, p.PurchaseId, p.Description, p.TotalAmount,
+            p.InstallmentCount, p.Status.ToString(), categoria, parcelas);
     }
 }

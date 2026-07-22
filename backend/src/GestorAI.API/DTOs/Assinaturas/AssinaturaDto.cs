@@ -1,33 +1,33 @@
 namespace GestorAI.API.DTOs.Assinaturas;
 
-public record AssinarRequest(string Nome, string Whatsapp, string? Email);
+public record AssinarRequest(string Name, string WhatsApp, string? Email);
 
 public record AssinarResponse(
     Guid AssinaturaId,
-    Guid ContratoId,
-    Guid CobrancaId,
+    Guid ContractId,
+    Guid ChargeId,
     string? PixQrCode,
     string? BoletoUrl,
-    decimal Valor,
+    decimal Amount,
     DateOnly Vencimento);
 
 public record AssinaturaListItem(
     Guid Id,
-    string ClienteNome,
+    string CustomerName,
     string PlanNome,
     string Status,
-    DateOnly DataRenovacao,
-    int CicloAtual);
+    DateOnly RenewalDate,
+    int CurrentCycle);
 
 public record AssinaturaResponse(
     Guid Id,
-    string ClienteNome,
+    string CustomerName,
     string ClienteWhatsapp,
     Guid PlanoId,
     string PlanoNome,
     decimal PlanPreco,
     string Status,
-    DateOnly DataInicio,
-    DateOnly DataRenovacao,
-    int CicloAtual,
-    Guid ContratoId);
+    DateOnly StartDate,
+    DateOnly RenewalDate,
+    int CurrentCycle,
+    Guid ContractId);

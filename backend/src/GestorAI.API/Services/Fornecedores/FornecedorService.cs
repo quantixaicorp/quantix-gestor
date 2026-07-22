@@ -12,68 +12,68 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<FornecedorResponse>> ListAsync(string? busca, CancellationToken ct)
     {
-        var query = db.Fornecedores.AsQueryable();
+        var query = db.Suppliers.AsQueryable();
         if (!string.IsNullOrWhiteSpace(busca))
-            query = query.Where(f => f.Nome.Contains(busca) ||
+            query = query.Where(f => f.Name.Contains(busca) ||
                 (f.CnpjCpf != null && f.CnpjCpf.Contains(busca)));
 
         return await query
-            .OrderBy(f => f.Nome)
+            .OrderBy(f => f.Name)
             .Select(f => ToResponse(f))
             .ToListAsync(ct);
     }
 
     public async Task<FornecedorResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var f = await db.Fornecedores.FirstOrDefaultAsync(f => f.Id == id, ct)
-            ?? throw new AppException("Fornecedor não encontrado", 404);
+        var f = await db.Suppliers.FirstOrDefaultAsync(f => f.Id == id, ct)
+            ?? throw new AppException("Supplier não encontrado", 404);
         return ToResponse(f);
     }
 
     public async Task<FornecedorResponse> CreateAsync(CreateFornecedorRequest req, CancellationToken ct)
     {
-        var fornecedor = new Fornecedor
+        var fornecedor = new Supplier
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Nome = req.Nome,
+            CompanyId = tenantContext.CompanyId,
+            Name = req.Name,
             CnpjCpf = req.CnpjCpf,
-            Telefone = req.Telefone,
+            Phone = req.Phone,
             Email = req.Email,
             Logradouro = req.Logradouro,
-            Cidade = req.Cidade,
+            City = req.City,
             Uf = req.Uf,
             Cep = req.Cep,
-            Contato = req.Contato,
-            Observacoes = req.Observacoes,
+            ContactPerson = req.ContactPerson,
+            Notes = req.Notes,
             RazaoSocial = req.RazaoSocial,
             NomeFantasia = req.NomeFantasia,
             InscricaoEstadual = req.InscricaoEstadual,
-            Whatsapp = req.Whatsapp,
+            WhatsApp = req.WhatsApp,
         };
-        db.Fornecedores.Add(fornecedor);
+        db.Suppliers.Add(fornecedor);
         await db.SaveChangesAsync(ct);
         return ToResponse(fornecedor);
     }
 
     public async Task<FornecedorResponse> UpdateAsync(Guid id, UpdateFornecedorRequest req, CancellationToken ct)
     {
-        var fornecedor = await db.Fornecedores.FirstOrDefaultAsync(f => f.Id == id, ct)
-            ?? throw new AppException("Fornecedor não encontrado", 404);
+        var fornecedor = await db.Suppliers.FirstOrDefaultAsync(f => f.Id == id, ct)
+            ?? throw new AppException("Supplier não encontrado", 404);
 
-        fornecedor.Nome = req.Nome;
+        fornecedor.Name = req.Name;
         fornecedor.CnpjCpf = req.CnpjCpf;
-        fornecedor.Telefone = req.Telefone;
+        fornecedor.Phone = req.Phone;
         fornecedor.Email = req.Email;
         fornecedor.Logradouro = req.Logradouro;
-        fornecedor.Cidade = req.Cidade;
+        fornecedor.City = req.City;
         fornecedor.Uf = req.Uf;
         fornecedor.Cep = req.Cep;
-        fornecedor.Contato = req.Contato;
-        fornecedor.Observacoes = req.Observacoes;
+        fornecedor.ContactPerson = req.ContactPerson;
+        fornecedor.Notes = req.Notes;
         fornecedor.RazaoSocial = req.RazaoSocial;
         fornecedor.NomeFantasia = req.NomeFantasia;
         fornecedor.InscricaoEstadual = req.InscricaoEstadual;
-        fornecedor.Whatsapp = req.Whatsapp;
+        fornecedor.WhatsApp = req.WhatsApp;
         if (Enum.TryParse<StatusFornecedor>(req.Status, out var status))
             fornecedor.Status = status;
 
@@ -83,16 +83,16 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var fornecedor = await db.Fornecedores.FirstOrDefaultAsync(f => f.Id == id, ct)
-            ?? throw new AppException("Fornecedor não encontrado", 404);
-        db.Fornecedores.Remove(fornecedor);
+        var fornecedor = await db.Suppliers.FirstOrDefaultAsync(f => f.Id == id, ct)
+            ?? throw new AppException("Supplier não encontrado", 404);
+        db.Suppliers.Remove(fornecedor);
         await db.SaveChangesAsync(ct);
     }
 
-    private static FornecedorResponse ToResponse(Fornecedor f) =>
-        new(f.Id, f.Nome, f.CnpjCpf, f.Telefone, f.Email,
-            f.Logradouro, f.Cidade, f.Uf, f.Cep,
-            f.Contato, f.Observacoes, f.DataCadastro,
+    private static FornecedorResponse ToResponse(Supplier f) =>
+        new(f.Id, f.Name, f.CnpjCpf, f.Phone, f.Email,
+            f.Logradouro, f.City, f.Uf, f.Cep,
+            f.ContactPerson, f.Notes, f.CreatedAt,
             f.RazaoSocial, f.NomeFantasia, f.InscricaoEstadual,
-            f.Whatsapp, f.Status.ToString());
+            f.WhatsApp, f.Status.ToString());
 }

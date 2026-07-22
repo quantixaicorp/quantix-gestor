@@ -36,11 +36,11 @@ public class DashboardLayoutService(AppDbContext db, TenantContext tenantContext
         var layout = await db.DashboardLayouts.FirstOrDefaultAsync(ct);
         if (layout is null)
         {
-            layout = new DashboardLayout { EmpresaId = tenantContext.EmpresaId };
+            layout = new DashboardLayout { CompanyId = tenantContext.CompanyId };
             db.DashboardLayouts.Add(layout);
         }
         layout.WidgetsJson = JsonSerializer.Serialize(req.Widgets);
-        layout.AtualizadoEm = DateTime.UtcNow;
+        layout.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return new DashboardLayoutResponse(req.Widgets);
     }

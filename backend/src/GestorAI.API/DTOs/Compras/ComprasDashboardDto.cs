@@ -10,8 +10,8 @@ public record ComprasDashboardResponse(
     List<ComprasPorFornecedorItem> PorFornecedor,
     List<TopProdutoCompradoItem> TopProdutos);
 
-public record ComprasMensalSerieItem(string Mes, decimal Total, int Quantidade);
+public record ComprasMensalSerieItem(string Mes, decimal Total, int Quantity);
 
-public record ComprasPorFornecedorItem(string Fornecedor, decimal Total);
+public record ComprasPorFornecedorItem(string Supplier, decimal Total);
 
-public record TopProdutoCompradoItem(string Produto, decimal QuantidadeTotal, decimal ValorTotal);
+public record TopProdutoCompradoItem(string Product, decimal QuantidadeTotal, decimal TotalAmount);

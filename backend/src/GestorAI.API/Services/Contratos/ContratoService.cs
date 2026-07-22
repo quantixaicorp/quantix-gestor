@@ -14,64 +14,64 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<ContratoListItem>> ListAsync(string? status, CancellationToken ct)
     {
-        var query = db.Contratos.Include(c => c.Cliente).AsQueryable();
+        var query = db.Contracts.Include(c => c.Customer).AsQueryable();
         if (status != null && Enum.TryParse<ContratoStatus>(status, out var s))
             query = query.Where(c => c.Status == s);
         return await query
-            .OrderByDescending(c => c.CriadoEm)
+            .OrderByDescending(c => c.CreatedAt)
             .Select(c => ToListItem(c))
             .ToListAsync(ct);
     }
 
     public async Task<ContratoResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var c = await db.Contratos
-            .Include(c => c.Cliente)
-            .Include(c => c.Itens)
+        var c = await db.Contracts
+            .Include(c => c.Customer)
+            .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Contrato não encontrado.", 404);
+            ?? throw new AppException("Contract não encontrado.", 404);
         return ToResponse(c);
     }
 
     public async Task<ContratoResponse> CreateAsync(CreateContratoRequest req, CancellationToken ct)
     {
-        if (!Enum.TryParse<TipoCobranca>(req.TipoCobranca, out var tipo))
-            throw new AppException($"TipoCobranca inválido: {req.TipoCobranca}.", 400);
-        if (!Enum.TryParse<Periodicidade>(req.Periodicidade, out var periodicidade))
-            throw new AppException($"Periodicidade inválida: {req.Periodicidade}.", 400);
-        if (req.DiaVencimento < 1 || req.DiaVencimento > 28)
-            throw new AppException("DiaVencimento deve ser entre 1 e 28.", 400);
+        if (!Enum.TryParse<TipoCobranca>(req.ChargeType, out var tipo))
+            throw new AppException($"TipoCobranca inválido: {req.ChargeType}.", 400);
+        if (!Enum.TryParse<Periodicidade>(req.Frequency, out var periodicidade))
+            throw new AppException($"Periodicidade inválida: {req.Frequency}.", 400);
+        if (req.DueDay < 1 || req.DueDay > 28)
+            throw new AppException("DueDay deve ser entre 1 e 28.", 400);
 
-        _ = await db.Clientes.FirstOrDefaultAsync(c => c.Id == req.ClienteId, ct)
-            ?? throw new AppException("Cliente não encontrado.", 404);
+        _ = await db.Customers.FirstOrDefaultAsync(c => c.Id == req.CustomerId, ct)
+            ?? throw new AppException("Customer não encontrado.", 404);
 
-        var numero = (await db.Contratos.MaxAsync(c => (int?)c.Numero, ct) ?? 0) + 1;
+        var numero = (await db.Contracts.MaxAsync(c => (int?)c.Number, ct) ?? 0) + 1;
 
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Numero = numero,
-            ClienteId = req.ClienteId,
-            Titulo = req.Titulo,
-            Objeto = req.Objeto,
-            TipoCobranca = tipo,
-            Valor = req.Valor,
-            DataInicio = req.DataInicio,
-            DataFim = req.DataFim,
-            Periodicidade = periodicidade,
-            DiaVencimento = req.DiaVencimento,
-            Observacao = req.Observacao,
+            CompanyId = tenantContext.CompanyId,
+            Number = numero,
+            CustomerId = req.CustomerId,
+            Title = req.Title,
+            Subject = req.Subject,
+            ChargeType = tipo,
+            Amount = req.Amount,
+            StartDate = req.StartDate,
+            EndDate = req.EndDate,
+            Frequency = periodicidade,
+            DueDay = req.DueDay,
+            Notes = req.Notes,
         };
 
-        foreach (var item in req.Itens)
-            contrato.Itens.Add(new ContratoItem
+        foreach (var item in req.Items)
+            contrato.Items.Add(new ContractItem
             {
-                Descricao = item.Descricao,
-                Quantidade = item.Quantidade,
-                ValorUnitario = item.ValorUnitario,
+                Description = item.Description,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
             });
 
-        db.Contratos.Add(contrato);
+        db.Contracts.Add(contrato);
         await db.SaveChangesAsync(ct);
         return await GetAsync(contrato.Id, ct);
     }
@@ -81,10 +81,10 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         var c = await FindAsync(id, ct);
         if (c.Status != ContratoStatus.Rascunho)
             throw new AppException("Apenas rascunhos podem ser ativados.", 400);
-        if (!c.Itens.Any())
-            throw new AppException("Contrato precisa ter pelo menos um item.", 400);
-        if (c.TipoCobranca == TipoCobranca.ParceladoPrazoFixo && c.DataFim == null)
-            throw new AppException("Contratos parcelados requerem DataFim.", 400);
+        if (!c.Items.Any())
+            throw new AppException("Contract precisa ter pelo menos um item.", 400);
+        if (c.ChargeType == TipoCobranca.ParceladoPrazoFixo && c.EndDate == null)
+            throw new AppException("Contratos parcelados requerem EndDate.", 400);
         c.Status = ContratoStatus.Ativo;
         await db.SaveChangesAsync(ct);
         return ToResponse(c);
@@ -104,7 +104,7 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
     {
         var c = await FindAsync(id, ct);
         if (c.Status == ContratoStatus.Encerrado || c.Status == ContratoStatus.Cancelado)
-            throw new AppException("Contrato já está encerrado ou cancelado.", 400);
+            throw new AppException("Contract já está encerrado ou cancelado.", 400);
         c.Status = ContratoStatus.Cancelado;
         await db.SaveChangesAsync(ct);
         return ToResponse(c);
@@ -112,151 +112,151 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var c = await db.Contratos
-            .Include(c => c.Itens)
+        var c = await db.Contracts
+            .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Contrato não encontrado.", 404);
+            ?? throw new AppException("Contract não encontrado.", 404);
 
         if (c.Status != ContratoStatus.Rascunho && c.Status != ContratoStatus.Cancelado)
             throw new AppException("Apenas contratos em rascunho ou cancelados podem ser excluídos.", 400);
 
-        var temCobrancaPaga = await db.Cobrancas
-            .AnyAsync(cb => cb.ContratoId == id && cb.Status == CobrancaStatus.Pago, ct);
+        var temCobrancaPaga = await db.Charges
+            .AnyAsync(cb => cb.ContractId == id && cb.Status == CobrancaStatus.Pago, ct);
         if (temCobrancaPaga)
             throw new AppException("Não é possível excluir um contrato com cobranças pagas.", 400);
 
-        var cobrancasPendentes = await db.Cobrancas
-            .Where(cb => cb.ContratoId == id)
+        var cobrancasPendentes = await db.Charges
+            .Where(cb => cb.ContractId == id)
             .ToListAsync(ct);
-        db.Cobrancas.RemoveRange(cobrancasPendentes);
+        db.Charges.RemoveRange(cobrancasPendentes);
 
-        db.Contratos.Remove(c);
+        db.Contracts.Remove(c);
         await db.SaveChangesAsync(ct);
     }
 
     public async Task<List<CobrancaListItem>> GerarCobrancasAsync(
         Guid id, GerarCobrancasRequest req, CancellationToken ct)
     {
-        var contrato = await db.Contratos
-            .Include(c => c.Cliente)
+        var contrato = await db.Contracts
+            .Include(c => c.Customer)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Contrato não encontrado.", 404);
+            ?? throw new AppException("Contract não encontrado.", 404);
 
         if (contrato.Status != ContratoStatus.Ativo)
             throw new AppException("Apenas contratos ativos podem gerar cobranças.", 400);
 
         var vencimentos = CalcularVencimentos(contrato, req.De, req.Ate);
-        var existentes = await db.Cobrancas
-            .Where(c => c.ContratoId == id)
-            .Select(c => c.DataVencimento)
+        var existentes = await db.Charges
+            .Where(c => c.ContractId == id)
+            .Select(c => c.DueDate)
             .ToListAsync(ct);
 
         var allVencimentos = CalcularVencimentos(contrato,
-            contrato.DataInicio,
-            contrato.DataFim ?? req.Ate.AddYears(10));
+            contrato.StartDate,
+            contrato.EndDate ?? req.Ate.AddYears(10));
         var totalParcelas = allVencimentos.Count;
 
-        var novas = new List<Cobranca>();
+        var novas = new List<Charge>();
         foreach (var venc in vencimentos.Where(v => !existentes.Contains(v)))
         {
             var parcela = allVencimentos.IndexOf(venc) + 1;
-            var referencia = contrato.TipoCobranca == TipoCobranca.ParceladoPrazoFixo
-                ? $"Parcela {parcela}/{totalParcelas} — {contrato.Titulo}"
+            var referencia = contrato.ChargeType == TipoCobranca.ParceladoPrazoFixo
+                ? $"Parcela {parcela}/{totalParcelas} — {contrato.Title}"
                 : GerarReferenciaRecorrente(contrato, venc);
 
             decimal valorCobranca;
-            if (contrato.TipoCobranca == TipoCobranca.ParceladoPrazoFixo)
+            if (contrato.ChargeType == TipoCobranca.ParceladoPrazoFixo)
             {
-                var eachValue = Math.Round(contrato.Valor / totalParcelas, 2);
+                var eachValue = Math.Round(contrato.Amount / totalParcelas, 2);
                 valorCobranca = parcela == totalParcelas
-                    ? contrato.Valor - eachValue * (totalParcelas - 1)
+                    ? contrato.Amount - eachValue * (totalParcelas - 1)
                     : eachValue;
             }
             else
             {
-                valorCobranca = contrato.Valor;
+                valorCobranca = contrato.Amount;
             }
 
-            var cobranca = new Cobranca
+            var cobranca = new Charge
             {
-                EmpresaId = tenantContext.EmpresaId,
-                ClienteId = contrato.ClienteId,
-                ContratoId = contrato.Id,
-                Referencia = referencia,
-                Valor = valorCobranca,
-                DataVencimento = venc,
+                CompanyId = tenantContext.CompanyId,
+                CustomerId = contrato.CustomerId,
+                ContractId = contrato.Id,
+                Reference = referencia,
+                Amount = valorCobranca,
+                DueDate = venc,
             };
             novas.Add(cobranca);
-            db.Cobrancas.Add(cobranca);
+            db.Charges.Add(cobranca);
         }
 
         await db.SaveChangesAsync(ct);
 
         return novas.Select(c => new CobrancaListItem(
-            c.Id, contrato.Cliente!.Nome, c.ContratoId,
-            contrato.Titulo, c.Referencia, c.Valor,
-            c.DataVencimento, c.Status.ToString())).ToList();
+            c.Id, contrato.Customer!.Name, c.ContractId,
+            contrato.Title, c.Reference, c.Amount,
+            c.DueDate, c.Status.ToString())).ToList();
     }
 
     public async Task<string> GetPdfHtmlAsync(Guid id, string apiBase, CancellationToken ct)
     {
-        var c = await db.Contratos
-            .Include(c => c.Cliente)
-            .Include(c => c.Itens)
+        var c = await db.Contracts
+            .Include(c => c.Customer)
+            .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Contrato não encontrado.", 404);
+            ?? throw new AppException("Contract não encontrado.", 404);
 
-        var cfg = await db.ConfiguracoesEmpresa
+        var cfg = await db.CompanySettings
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(e => e.EmpresaId == tenantContext.EmpresaId, ct);
+            .FirstOrDefaultAsync(e => e.CompanyId == tenantContext.CompanyId, ct);
 
-        var total = c.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
-        var linhas = string.Join("", c.Itens.Select(i =>
-            $"<tr><td>{i.Descricao}</td><td>{i.Quantidade:N2}</td>" +
-            $"<td>R$ {i.ValorUnitario:N2}</td><td>R$ {i.Quantidade * i.ValorUnitario:N2}</td></tr>"));
+        var total = c.Items.Sum(i => i.Quantity * i.UnitPrice);
+        var linhas = string.Join("", c.Items.Select(i =>
+            $"<tr><td>{i.Description}</td><td>{i.Quantity:N2}</td>" +
+            $"<td>R$ {i.UnitPrice:N2}</td><td>R$ {i.Quantity * i.UnitPrice:N2}</td></tr>"));
 
         var corpo = $$"""
-            <h1>CONTRATO {{c.Numero:D3}} — {{c.Titulo}}</h1>
+            <h1>CONTRATO {{c.Number:D3}} — {{c.Title}}</h1>
             <div class="meta">
-              Cliente: {{c.Cliente?.Nome}}<br>
-              Início: {{c.DataInicio:dd/MM/yyyy}}{{(c.DataFim.HasValue ? $" | Término: {c.DataFim:dd/MM/yyyy}" : "")}}<br>
-              Tipo: {{c.TipoCobranca}} | Periodicidade: {{c.Periodicidade}} | Valor: R$ {{c.Valor:N2}}
+              Customer: {{c.Customer?.Name}}<br>
+              Início: {{c.StartDate:dd/MM/yyyy}}{{(c.EndDate.HasValue ? $" | Término: {c.EndDate:dd/MM/yyyy}" : "")}}<br>
+              Type: {{c.ChargeType}} | Periodicidade: {{c.Frequency}} | Amount: R$ {{c.Amount:N2}}
             </div>
-            <h2 style="font-size:14px">Objeto</h2>
-            <div class="objeto">{{c.Objeto}}</div>
-            <h2 style="font-size:14px">Itens</h2>
+            <h2 style="font-size:14px">Subject</h2>
+            <div class="objeto">{{c.Subject}}</div>
+            <h2 style="font-size:14px">Items</h2>
             <table>
               <thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
               <tbody>{{linhas}}</tbody>
             </table>
             <div class="total">Total: R$ {{total:N2}}</div>
             <div class="assinatura">
-              <div>Contratante<br>{{c.Cliente?.Nome}}</div>
+              <div>Contratante<br>{{c.Customer?.Name}}</div>
               <div>Contratada<br>{{cfg?.NomeFantasia ?? cfg?.RazaoSocial ?? ""}}</div>
             </div>
             """;
 
-        return HtmlDocumentoBase.WrapDocument($"CONTRATO {c.Numero:D3}", corpo, cfg, apiBase);
+        return HtmlDocumentoBase.WrapDocument($"CONTRATO {c.Number:D3}", corpo, cfg, apiBase);
     }
 
-    private static List<DateOnly> CalcularVencimentos(Contrato contrato, DateOnly de, DateOnly ate)
+    private static List<DateOnly> CalcularVencimentos(Contract contrato, DateOnly de, DateOnly ate)
     {
-        var dia = contrato.DiaVencimento;
+        var dia = contrato.DueDay;
         var daysInStartMonth = DateTime.DaysInMonth(de.Year, de.Month);
         var primeiro = new DateOnly(de.Year, de.Month, Math.Min(dia, daysInStartMonth));
         if (primeiro < de)
-            primeiro = AvançarPeriodo(primeiro, contrato.Periodicidade, dia);
+            primeiro = AvançarPeriodo(primeiro, contrato.Frequency, dia);
 
         var vencimentos = new List<DateOnly>();
         var cursor = primeiro;
-        var limite = contrato.DataFim.HasValue && contrato.DataFim.Value < ate
-            ? contrato.DataFim.Value
+        var limite = contrato.EndDate.HasValue && contrato.EndDate.Value < ate
+            ? contrato.EndDate.Value
             : ate;
 
         while (cursor <= limite)
         {
             vencimentos.Add(cursor);
-            cursor = AvançarPeriodo(cursor, contrato.Periodicidade, dia);
+            cursor = AvançarPeriodo(cursor, contrato.Frequency, dia);
         }
 
         return vencimentos;
@@ -276,10 +276,10 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         return new DateOnly(next.Year, next.Month, Math.Min(dia, DateTime.DaysInMonth(next.Year, next.Month)));
     }
 
-    private static string GerarReferenciaRecorrente(Contrato contrato, DateOnly vencimento)
+    private static string GerarReferenciaRecorrente(Contract contrato, DateOnly vencimento)
     {
         var cultura = new System.Globalization.CultureInfo("pt-BR");
-        var periodo = contrato.Periodicidade switch
+        var periodo = contrato.Frequency switch
         {
             Periodicidade.Mensal => $"Mensalidade {vencimento.ToString("MMM/yyyy", cultura)}",
             Periodicidade.Trimestral => $"Trimestral {vencimento.ToString("MMM/yyyy", cultura)}",
@@ -287,7 +287,7 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
             Periodicidade.Anual => $"Anuidade {vencimento.Year}",
             _ => vencimento.ToString("MMM/yyyy", cultura)
         };
-        return $"{periodo} — {contrato.Titulo}";
+        return $"{periodo} — {contrato.Title}";
     }
 
     public async Task<ContratoResponse> RenovarAsync(Guid id, CancellationToken ct)
@@ -296,38 +296,38 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         if (original.Status != ContratoStatus.Ativo)
             throw new AppException("Apenas contratos ativos podem ser renovados.", 400);
 
-        var novaDataInicio = original.DataFim.HasValue
-            ? original.DataFim.Value.AddDays(1)
+        var novaDataInicio = original.EndDate.HasValue
+            ? original.EndDate.Value.AddDays(1)
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var numero = (await db.Contratos.MaxAsync(c => (int?)c.Numero, ct) ?? 0) + 1;
+        var numero = (await db.Contracts.MaxAsync(c => (int?)c.Number, ct) ?? 0) + 1;
 
-        var novo = new Contrato
+        var novo = new Contract
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Numero = numero,
-            ClienteId = original.ClienteId,
-            Titulo = original.Titulo,
-            Objeto = original.Objeto,
-            TipoCobranca = original.TipoCobranca,
-            Valor = original.Valor,
-            DataInicio = novaDataInicio,
-            DataFim = null,
-            Periodicidade = original.Periodicidade,
-            DiaVencimento = original.DiaVencimento,
-            Observacao = original.Observacao,
+            CompanyId = tenantContext.CompanyId,
+            Number = numero,
+            CustomerId = original.CustomerId,
+            Title = original.Title,
+            Subject = original.Subject,
+            ChargeType = original.ChargeType,
+            Amount = original.Amount,
+            StartDate = novaDataInicio,
+            EndDate = null,
+            Frequency = original.Frequency,
+            DueDay = original.DueDay,
+            Notes = original.Notes,
             Status = ContratoStatus.Rascunho,
         };
 
-        foreach (var item in original.Itens)
-            novo.Itens.Add(new ContratoItem
+        foreach (var item in original.Items)
+            novo.Items.Add(new ContractItem
             {
-                Descricao = item.Descricao,
-                Quantidade = item.Quantidade,
-                ValorUnitario = item.ValorUnitario,
+                Description = item.Description,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
             });
 
-        db.Contratos.Add(novo);
+        db.Contracts.Add(novo);
         await db.SaveChangesAsync(ct);
         return await GetAsync(novo.Id, ct);
     }
@@ -337,38 +337,38 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
         var limite = hoje.AddDays(dias);
 
-        return await db.Contratos
-            .Include(c => c.Cliente)
+        return await db.Contracts
+            .Include(c => c.Customer)
             .Where(c => c.Status == ContratoStatus.Ativo
-                     && c.DataFim.HasValue
-                     && c.DataFim.Value >= hoje
-                     && c.DataFim.Value <= limite)
+                     && c.EndDate.HasValue
+                     && c.EndDate.Value >= hoje
+                     && c.EndDate.Value <= limite)
             .Select(c => new ContratoVencendoItem(
-                c.Id, c.Numero, c.Cliente!.Nome, c.Titulo, c.DataFim!.Value, c.Valor))
+                c.Id, c.Number, c.Customer!.Name, c.Title, c.EndDate!.Value, c.Amount))
             .ToListAsync(ct);
     }
 
-    private async Task<Contrato> FindAsync(Guid id, CancellationToken ct)
+    private async Task<Contract> FindAsync(Guid id, CancellationToken ct)
     {
-        return await db.Contratos
-            .Include(c => c.Cliente)
-            .Include(c => c.Itens)
+        return await db.Contracts
+            .Include(c => c.Customer)
+            .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Contrato não encontrado.", 404);
+            ?? throw new AppException("Contract não encontrado.", 404);
     }
 
-    private static ContratoListItem ToListItem(Contrato c) => new(
-        c.Id, c.Numero, c.Cliente?.Nome ?? "", c.Titulo,
-        c.TipoCobranca.ToString(), c.Valor, c.Status.ToString(),
-        c.DataInicio, c.DataFim);
+    private static ContratoListItem ToListItem(Contract c) => new(
+        c.Id, c.Number, c.Customer?.Name ?? "", c.Title,
+        c.ChargeType.ToString(), c.Amount, c.Status.ToString(),
+        c.StartDate, c.EndDate);
 
-    private static ContratoResponse ToResponse(Contrato c) => new(
-        c.Id, c.Numero, c.Cliente?.Nome ?? "", c.Cliente?.Whatsapp ?? "",
-        c.Titulo, c.Objeto, c.TipoCobranca.ToString(), c.Valor,
-        c.DataInicio, c.DataFim, c.Periodicidade.ToString(),
-        c.DiaVencimento, c.Status.ToString(), c.Observacao, c.CriadoEm,
-        c.Itens.Select(i => new ContratoItemResponse(i.Id, i.Descricao, i.Quantidade, i.ValorUnitario)).ToList(),
-        c.Itens.Sum(i => i.Quantidade * i.ValorUnitario),
+    private static ContratoResponse ToResponse(Contract c) => new(
+        c.Id, c.Number, c.Customer?.Name ?? "", c.Customer?.WhatsApp ?? "",
+        c.Title, c.Subject, c.ChargeType.ToString(), c.Amount,
+        c.StartDate, c.EndDate, c.Frequency.ToString(),
+        c.DueDay, c.Status.ToString(), c.Notes, c.CreatedAt,
+        c.Items.Select(i => new ContratoItemResponse(i.Id, i.Description, i.Quantity, i.UnitPrice)).ToList(),
+        c.Items.Sum(i => i.Quantity * i.UnitPrice),
         c.ClickSignStatus,
         c.ClickSignViewerUrl);
 
@@ -379,7 +379,7 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         if (contrato.Status != ContratoStatus.Ativo)
             throw new AppException("Apenas contratos ativos podem ser enviados para assinatura.", 400);
 
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct)
             ?? throw new AppException("Configuração da empresa não encontrada.", 404);
 
         if (string.IsNullOrWhiteSpace(config.ClickSignApiKey))
@@ -388,13 +388,13 @@ public class ContratoService(AppDbContext db, TenantContext tenantContext)
         var html = await GetPdfHtmlAsync(id, "", ct);
         var pdfBytes = await GerarPdfAsync(html);
 
-        var nomeArquivo = $"contrato-{contrato.Numero:D3}.pdf";
+        var nomeArquivo = $"contrato-{contrato.Number:D3}.pdf";
         var docResult = await clickSignService.CriarDocumentoAsync(
             config.ClickSignApiKey, config.ClickSignSandbox, nomeArquivo, pdfBytes, ct);
 
         await clickSignService.AdicionarSignatarioAsync(
             config.ClickSignApiKey, config.ClickSignSandbox,
-            docResult.DocKey, contrato.Cliente!.Nome, req.EmailSignatario, ct);
+            docResult.DocKey, contrato.Customer!.Name, req.EmailSignatario, ct);
 
         contrato.ClickSignDocKey = docResult.DocKey;
         contrato.ClickSignStatus = "Pendente";

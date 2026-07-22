@@ -16,7 +16,7 @@ public class LancamentoServiceTests
 
     private (AppDbContext db, LancamentoService service) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -35,8 +35,8 @@ public class LancamentoServiceTests
 
         var result = await service.CreateAsync(req, default);
 
-        Assert.Equal("Despesa", result.Tipo);
-        Assert.Equal(1500m, result.Valor);
+        Assert.Equal("Despesa", result.Type);
+        Assert.Equal(1500m, result.Amount);
         Assert.Equal("Pendente", result.Status);
         Assert.False(result.Vencido);
     }
@@ -45,13 +45,13 @@ public class LancamentoServiceTests
     public async Task PagarAsync_SetaStatusPagoEDataPagamento()
     {
         var (db, service) = Setup();
-        var lancamento = new Lancamento
+        var lancamento = new Transaction
         {
-            EmpresaId = _empresaId, Tipo = TipoLancamento.Despesa,
-            Descricao = "Água", Valor = 100m,
-            DataVencimento = DateTime.Today.AddDays(-1),
+            CompanyId = _empresaId, Type = TipoLancamento.Despesa,
+            Description = "Água", Amount = 100m,
+            DueDate = DateTime.Today.AddDays(-1),
             Status = StatusLancamento.Pendente,
-            Categoria = "Utilidades"
+            Category = "Utilidades"
         };
         db.Lancamentos.Add(lancamento);
         await db.SaveChangesAsync();
@@ -60,21 +60,21 @@ public class LancamentoServiceTests
         var result = await service.PagarAsync(lancamento.Id, new PagarLancamentoRequest(dataPagamento), default);
 
         Assert.Equal("Pago", result.Status);
-        Assert.Equal(dataPagamento, result.DataPagamento!.Value.Date);
+        Assert.Equal(dataPagamento, result.PaymentDate!.Value.Date);
     }
 
     [Fact]
     public async Task PagarAsync_ThrowsSeJaPago()
     {
         var (db, service) = Setup();
-        var lancamento = new Lancamento
+        var lancamento = new Transaction
         {
-            EmpresaId = _empresaId, Tipo = TipoLancamento.Despesa,
-            Descricao = "Já pago", Valor = 50m,
-            DataVencimento = DateTime.Today,
-            DataPagamento = DateTime.Today,
+            CompanyId = _empresaId, Type = TipoLancamento.Despesa,
+            Description = "Já pago", Amount = 50m,
+            DueDate = DateTime.Today,
+            PaymentDate = DateTime.Today,
             Status = StatusLancamento.Pago,
-            Categoria = "Outros"
+            Category = "Outros"
         };
         db.Lancamentos.Add(lancamento);
         await db.SaveChangesAsync();
@@ -87,13 +87,13 @@ public class LancamentoServiceTests
     public async Task ListAsync_VencidoCalculadoPorQuery()
     {
         var (db, service) = Setup();
-        db.Lancamentos.Add(new Lancamento
+        db.Lancamentos.Add(new Transaction
         {
-            EmpresaId = _empresaId, Tipo = TipoLancamento.Despesa,
-            Descricao = "Vencida", Valor = 200m,
-            DataVencimento = DateTime.Today.AddDays(-3),
+            CompanyId = _empresaId, Type = TipoLancamento.Despesa,
+            Description = "Vencida", Amount = 200m,
+            DueDate = DateTime.Today.AddDays(-3),
             Status = StatusLancamento.Pendente,
-            Categoria = "Outros"
+            Category = "Outros"
         });
         await db.SaveChangesAsync();
 
@@ -109,19 +109,19 @@ public class LancamentoServiceTests
         var (db, service) = Setup();
         var hoje = DateTime.Today;
         db.Lancamentos.AddRange(
-            new Lancamento
+            new Transaction
             {
-                EmpresaId = _empresaId, Tipo = TipoLancamento.Receita,
-                Descricao = "Venda", Valor = 500m,
-                DataVencimento = hoje, DataPagamento = hoje,
-                Status = StatusLancamento.Pago, Categoria = "Venda"
+                CompanyId = _empresaId, Type = TipoLancamento.Receita,
+                Description = "Sale", Amount = 500m,
+                DueDate = hoje, PaymentDate = hoje,
+                Status = StatusLancamento.Pago, Category = "Sale"
             },
-            new Lancamento
+            new Transaction
             {
-                EmpresaId = _empresaId, Tipo = TipoLancamento.Despesa,
-                Descricao = "Fornecedor", Valor = 200m,
-                DataVencimento = hoje, DataPagamento = hoje,
-                Status = StatusLancamento.Pago, Categoria = "Compras"
+                CompanyId = _empresaId, Type = TipoLancamento.Despesa,
+                Description = "Supplier", Amount = 200m,
+                DueDate = hoje, PaymentDate = hoje,
+                Status = StatusLancamento.Pago, Category = "Compras"
             });
         await db.SaveChangesAsync();
 

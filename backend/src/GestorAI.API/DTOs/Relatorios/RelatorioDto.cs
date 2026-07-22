@@ -28,10 +28,10 @@ public record KpisGeralResponse(
     List<RankingClienteResponse> TopClientes);
 
 // Vendas
-public record TendenciaVendasResponse(DateTime Data, decimal Total, int Quantidade);
-public record RankingProdutoResponse(string Nome, decimal Quantidade, decimal Total);
-public record RankingClienteResponse(string Nome, int Compras, decimal Total);
-public record VendasPorPagamentoResponse(string FormaPagamento, int Quantidade, decimal Total);
+public record TendenciaVendasResponse(DateTime Data, decimal Total, int Quantity);
+public record RankingProdutoResponse(string Name, decimal Quantity, decimal Total);
+public record RankingClienteResponse(string Name, int Compras, decimal Total);
+public record VendasPorPagamentoResponse(string PaymentMethod, int Quantity, decimal Total);
 
 public record RelatorioVendasResponse(
     List<TendenciaVendasResponse> Tendencia,
@@ -41,15 +41,15 @@ public record RelatorioVendasResponse(
 
 // Financeiro
 public record FluxoCaixaDiaResponse(DateTime Data, decimal Receitas, decimal Despesas, decimal Saldo);
-public record CategoriaDespesaResponse(string Categoria, decimal Total);
+public record CategoriaDespesaResponse(string Category, decimal Total);
 public record LancamentoAnaliticoResponse(
     Guid Id,
-    string Tipo,
-    string Descricao,
-    string Categoria,
-    decimal Valor,
-    DateTime DataVencimento,
-    DateTime? DataPagamento,
+    string Type,
+    string Description,
+    string Category,
+    decimal Amount,
+    DateTime DueDate,
+    DateTime? PaymentDate,
     string Status);
 
 public record RelatorioFinanceiroResponse(
@@ -61,8 +61,8 @@ public record RelatorioFinanceiroResponse(
     List<LancamentoAnaliticoResponse> Analitico);
 
 // Estoque
-public record GiroProdutoResponse(string Nome, decimal Entradas, decimal Saidas, decimal GiroLiquido);
-public record ProdutoSemMovimentacaoResponse(string Nome, decimal EstoqueAtual, decimal ValorEmEstoque);
+public record GiroProdutoResponse(string Name, decimal Entradas, decimal Saidas, decimal GiroLiquido);
+public record ProdutoSemMovimentacaoResponse(string Name, decimal CurrentStock, decimal ValorEmEstoque);
 
 public record RelatorioEstoqueResponse(
     decimal ValorTotalEstoque,
@@ -72,7 +72,7 @@ public record RelatorioEstoqueResponse(
     List<ProdutoSemMovimentacaoResponse> SemMovimentacao);
 
 // Clientes
-public record ClienteRankingResponse(string Nome, string Whatsapp, int Compras, decimal TotalGasto);
+public record ClienteRankingResponse(string Name, string WhatsApp, int Compras, decimal TotalGasto);
 
 public record RelatorioClientesResponse(
     int TotalClientes,
@@ -82,9 +82,9 @@ public record RelatorioClientesResponse(
 
 // Histórico de Clientes (lifetime)
 public record HistoricoClienteItemResponse(
-    Guid ClienteId,
-    string Nome,
-    string Whatsapp,
+    Guid CustomerId,
+    string Name,
+    string WhatsApp,
     int QtdPedidos,
     decimal TotalGasto,
     decimal TicketMedio,
@@ -106,19 +106,19 @@ public record HistoricoClientesResponse(
     List<HistoricoClienteItemResponse> Clientes);
 
 public record CompraHistoricoItemResponse(
-    Guid VendaId,
-    DateTime DataHora,
+    Guid SaleId,
+    DateTime SaleDate,
     int QtdItens,
     decimal Total,
-    string FormaPagamento,
+    string PaymentMethod,
     string Status);
 
 public record HistoricoClienteDetalheResponse(
-    Guid ClienteId,
-    string Nome,
-    string Whatsapp,
+    Guid CustomerId,
+    string Name,
+    string WhatsApp,
     string? Email,
-    DateTime DataCadastro,
+    DateTime CreatedAt,
     int QtdPedidos,
     decimal TotalGasto,
     decimal TicketMedio,
@@ -130,19 +130,19 @@ public record HistoricoClienteDetalheResponse(
 
 // Curva ABC
 public record CurvaAbcItemResponse(
-    string Nome,
-    decimal Quantidade,
+    string Name,
+    decimal Quantity,
     decimal Total,
     decimal Percentual,
     decimal PercentualAcumulado,
     string Classe);
 
 public record CurvaAbcResponse(
-    List<CurvaAbcItemResponse> Itens,
+    List<CurvaAbcItemResponse> Items,
     decimal TotalGeral);
 
 // DRE
-public record DreLinhaResponse(string Descricao, decimal Valor);
+public record DreLinhaResponse(string Description, decimal Amount);
 
 public record DreResponse(
     decimal ReceitaBrutaVendas,
@@ -157,7 +157,7 @@ public record DreResponse(
     decimal ResultadoOperacional,
     decimal MargemOperacional);
 
-// Agendamentos
+// Appointments
 public record RelatorioAgendamentosResponse(
     int TotalNoPeriodo,
     int Concluidos,
@@ -168,7 +168,7 @@ public record RelatorioAgendamentosResponse(
     List<AgendamentoProfissionalItemRel> PorProfissional);
 
 public record AgendamentoStatusItemRel(string Status, int Count);
-public record AgendamentoProfissionalItemRel(string Profissional, int Total, int Concluidos, decimal TaxaConclusao);
+public record AgendamentoProfissionalItemRel(string Professional, int Total, int Concluidos, decimal TaxaConclusao);
 
 // Contratos
 public record RelatorioContratosResponse(
@@ -177,7 +177,7 @@ public record RelatorioContratosResponse(
     int VencendoEm30,
     List<ContratoDetalheRel> Contratos);
 
-public record ContratoDetalheRel(string Titulo, string ClienteNome, decimal Valor, string Periodicidade, DateOnly? DataFim, string Status);
+public record ContratoDetalheRel(string Title, string CustomerName, decimal Amount, string Frequency, DateOnly? EndDate, string Status);
 
 // Cobranças
 public record RelatorioCobrancasResponse(
@@ -186,10 +186,10 @@ public record RelatorioCobrancasResponse(
     int VencidosCount,
     decimal TaxaInadimplencia,
     List<AgingFaixaRel> Aging,
-    List<CobrancaDetalheRel> Cobrancas);
+    List<CobrancaDetalheRel> Charges);
 
 public record AgingFaixaRel(string Faixa, int Count, decimal Total);
-public record CobrancaDetalheRel(string Referencia, string ClienteNome, decimal Valor, DateOnly DataVencimento, string Status, int DiasAtraso);
+public record CobrancaDetalheRel(string Reference, string CustomerName, decimal Amount, DateOnly DueDate, string Status, int DiasAtraso);
 
 // Orçamentos
 public record RelatorioOrcamentosResponse(
@@ -199,8 +199,8 @@ public record RelatorioOrcamentosResponse(
     List<OrcamentoStatusItemRel> PorStatus,
     List<OrcamentoDetalheRel> Orcamentos);
 
-public record OrcamentoStatusItemRel(string Status, int Count, decimal ValorTotal);
-public record OrcamentoDetalheRel(int Numero, string Titulo, string ClienteNome, decimal ValorTotal, string Status, DateTime CriadoEm);
+public record OrcamentoStatusItemRel(string Status, int Count, decimal TotalAmount);
+public record OrcamentoDetalheRel(int Number, string Title, string CustomerName, decimal TotalAmount, string Status, DateTime CreatedAt);
 
 // Assinaturas
 public record RelatorioAssinaturasResponse(
@@ -212,4 +212,4 @@ public record RelatorioAssinaturasResponse(
     List<AssinaturaDetalheRel> Assinaturas);
 
 public record EvolucaoAssinaturaMesRel(string Mes, int Ativas, int Novas, int Canceladas);
-public record AssinaturaDetalheRel(string ClienteNome, string Plano, decimal Valor, string Periodicidade, DateOnly DataInicio, DateOnly DataRenovacao, string Status);
+public record AssinaturaDetalheRel(string CustomerName, string Plan, decimal Amount, string Frequency, DateOnly StartDate, DateOnly RenewalDate, string Status);

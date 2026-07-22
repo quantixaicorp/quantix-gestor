@@ -12,77 +12,77 @@ public class CategoriaLancamentoService(AppDbContext db, TenantContext tenantCon
 {
     public async Task<List<CategoriaLancamentoResponse>> ListAsync(string? tipo, CancellationToken ct)
     {
-        var query = db.CategoriasLancamento.AsQueryable();
+        var query = db.TransactionCategories.AsQueryable();
 
         if (!string.IsNullOrEmpty(tipo) && Enum.TryParse<TipoLancamento>(tipo, out var t))
-            query = query.Where(c => c.Tipo == t);
+            query = query.Where(c => c.Type == t);
 
         return await query
-            .OrderBy(c => c.Nome)
-            .Select(c => new CategoriaLancamentoResponse(c.Id, c.Nome, c.Tipo.ToString()))
+            .OrderBy(c => c.Name)
+            .Select(c => new CategoriaLancamentoResponse(c.Id, c.Name, c.Type.ToString()))
             .ToListAsync(ct);
     }
 
     public async Task<CategoriaLancamentoResponse> CreateAsync(
         CreateCategoriaLancamentoRequest req, CancellationToken ct)
     {
-        if (!Enum.TryParse<TipoLancamento>(req.Tipo, out var tipo))
-            throw new AppException($"Tipo inválido: {req.Tipo}.", 400);
+        if (!Enum.TryParse<TipoLancamento>(req.Type, out var tipo))
+            throw new AppException($"Type inválido: {req.Type}.", 400);
 
-        var existe = await db.CategoriasLancamento
-            .AnyAsync(c => c.Nome == req.Nome && c.Tipo == tipo, ct);
+        var existe = await db.TransactionCategories
+            .AnyAsync(c => c.Name == req.Name && c.Type == tipo, ct);
         if (existe)
             throw new AppException("Já existe uma categoria com este nome para o tipo informado.", 400);
 
-        var cat = new CategoriaLancamento
+        var cat = new TransactionCategory
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Nome = req.Nome,
-            Tipo = tipo
+            CompanyId = tenantContext.CompanyId,
+            Name = req.Name,
+            Type = tipo
         };
-        db.CategoriasLancamento.Add(cat);
+        db.TransactionCategories.Add(cat);
         await db.SaveChangesAsync(ct);
-        return new CategoriaLancamentoResponse(cat.Id, cat.Nome, cat.Tipo.ToString());
+        return new CategoriaLancamentoResponse(cat.Id, cat.Name, cat.Type.ToString());
     }
 
     public async Task<CategoriaLancamentoResponse> UpdateAsync(
         Guid id, UpdateCategoriaLancamentoRequest req, CancellationToken ct)
     {
-        var cat = await db.CategoriasLancamento.FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Categoria não encontrada.", 404);
+        var cat = await db.TransactionCategories.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Category não encontrada.", 404);
 
-        var nomeAntigo = cat.Nome;
+        var nomeAntigo = cat.Name;
 
-        var duplicado = await db.CategoriasLancamento
-            .AnyAsync(c => c.Id != id && c.Nome == req.Nome && c.Tipo == cat.Tipo, ct);
+        var duplicado = await db.TransactionCategories
+            .AnyAsync(c => c.Id != id && c.Name == req.Name && c.Type == cat.Type, ct);
         if (duplicado)
             throw new AppException("Já existe uma categoria com este nome para o tipo informado.", 400);
 
-        cat.Nome = req.Nome;
+        cat.Name = req.Name;
 
-        var lancamentosParaAtualizar = await db.Lancamentos
-            .Where(l => l.Categoria == nomeAntigo)
+        var lancamentosParaAtualizar = await db.Transactions
+            .Where(l => l.Category == nomeAntigo)
             .ToListAsync(ct);
         foreach (var l in lancamentosParaAtualizar)
-            l.Categoria = req.Nome;
+            l.Category = req.Name;
 
         await db.SaveChangesAsync(ct);
 
-        return new CategoriaLancamentoResponse(cat.Id, cat.Nome, cat.Tipo.ToString());
+        return new CategoriaLancamentoResponse(cat.Id, cat.Name, cat.Type.ToString());
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var cat = await db.CategoriasLancamento.FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Categoria não encontrada.", 404);
+        var cat = await db.TransactionCategories.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new AppException("Category não encontrada.", 404);
 
-        var emUso = await db.Lancamentos
-            .AnyAsync(l => l.Categoria == cat.Nome, ct);
+        var emUso = await db.Transactions
+            .AnyAsync(l => l.Category == cat.Name, ct);
         if (emUso)
             throw new AppException(
                 "Esta categoria está em uso em lançamentos e não pode ser excluída.", 400);
 
-        db.CategoriasLancamento.Remove(cat);
+        db.TransactionCategories.Remove(cat);
         await db.SaveChangesAsync(ct);
     }
 }

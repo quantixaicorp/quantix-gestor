@@ -13,7 +13,7 @@ public class CobrancaAutoEncerramentoTests
 
     private (AppDbContext db, CobrancaService svc) Setup()
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
@@ -21,52 +21,52 @@ public class CobrancaAutoEncerramentoTests
         return (db, svc);
     }
 
-    private async Task<(Contrato contrato, Cobranca c1, Cobranca c2)> CriarSetupParceladoAsync(AppDbContext db)
+    private async Task<(Contract contrato, Charge c1, Charge c2)> CriarSetupParceladoAsync(AppDbContext db)
     {
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Fernanda", Whatsapp = "11966660000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Fernanda", WhatsApp = "11966660000" };
         db.Clientes.Add(cliente);
 
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             Numero = 1,
-            Titulo = "Projeto X",
-            Objeto = "Desenvolvimento",
+            Title = "Projeto X",
+            Subject = "Desenvolvimento",
             TipoCobranca = TipoCobranca.ParceladoPrazoFixo,
-            Valor = 200m,
-            DataInicio = new DateOnly(2026, 1, 1),
-            DataFim = new DateOnly(2026, 2, 28),
+            Amount = 200m,
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 2, 28),
             Periodicidade = Periodicidade.Mensal,
-            DiaVencimento = 1,
-            Status = ContratoStatus.Ativo,
+            DueDay = 1,
+            Status = ContratoStatus.IsActive,
         };
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
-        var c1 = new Cobranca
+        var c1 = new Charge
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             ContratoId = contrato.Id,
-            Referencia = "Parcela 1/2",
-            Valor = 100m,
-            DataVencimento = new DateOnly(2026, 1, 1),
+            Reference = "Parcela 1/2",
+            Amount = 100m,
+            DueDate = new DateOnly(2026, 1, 1),
             Status = CobrancaStatus.Pago,
-            DataPagamento = DateTime.UtcNow,
+            PaymentDate = DateTime.UtcNow,
             FormaPagamento = FormaPagamento.Dinheiro,
         };
-        var c2 = new Cobranca
+        var c2 = new Charge
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             ContratoId = contrato.Id,
-            Referencia = "Parcela 2/2",
-            Valor = 100m,
-            DataVencimento = new DateOnly(2026, 2, 1),
+            Reference = "Parcela 2/2",
+            Amount = 100m,
+            DueDate = new DateOnly(2026, 2, 1),
             Status = CobrancaStatus.Pendente,
         };
-        db.Cobrancas.AddRange(c1, c2);
+        db.Charges.AddRange(c1, c2);
         await db.SaveChangesAsync();
 
         return (contrato, c1, c2);
@@ -89,73 +89,73 @@ public class CobrancaAutoEncerramentoTests
     public async Task PagarAsync_NaoEncerraContrato_RecorrenteQuitado()
     {
         var (db, svc) = Setup();
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Lucas", Whatsapp = "11955550000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Lucas", WhatsApp = "11955550000" };
         db.Clientes.Add(cliente);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             Numero = 2,
-            Titulo = "Mensalidade",
-            Objeto = "Serviços",
+            Title = "Mensalidade",
+            Subject = "Serviços",
             TipoCobranca = TipoCobranca.Recorrente,
-            Valor = 100m,
-            DataInicio = new DateOnly(2026, 1, 1),
+            Amount = 100m,
+            StartDate = new DateOnly(2026, 1, 1),
             Periodicidade = Periodicidade.Mensal,
-            DiaVencimento = 1,
-            Status = ContratoStatus.Ativo,
+            DueDay = 1,
+            Status = ContratoStatus.IsActive,
         };
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             ContratoId = contrato.Id,
-            Referencia = "Mensalidade Jan",
-            Valor = 100m,
-            DataVencimento = new DateOnly(2026, 1, 1),
+            Reference = "Mensalidade Jan",
+            Amount = 100m,
+            DueDate = new DateOnly(2026, 1, 1),
             Status = CobrancaStatus.Pendente,
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         await svc.PagarAsync(cobranca.Id, new GestorAI.API.DTOs.Cobrancas.PagarCobrancaRequest(
             DateTime.UtcNow, "Dinheiro"), default);
 
         var contratoAtualizado = await db.Contratos.IgnoreQueryFilters().FirstAsync(c => c.Id == contrato.Id);
-        Assert.Equal(ContratoStatus.Ativo, contratoAtualizado.Status);
+        Assert.Equal(ContratoStatus.IsActive, contratoAtualizado.Status);
     }
 
     [Fact]
     public async Task PagarAsync_EncerraContrato_QuandoUmaParcelaEstaoCancelada()
     {
         var (db, svc) = Setup();
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Beatriz", Whatsapp = "11944440000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Beatriz", WhatsApp = "11944440000" };
         db.Clientes.Add(cliente);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             Numero = 3,
-            Titulo = "Projeto Y",
-            Objeto = "Design",
+            Title = "Projeto Y",
+            Subject = "Design",
             TipoCobranca = TipoCobranca.ParceladoPrazoFixo,
-            Valor = 300m,
-            DataInicio = new DateOnly(2026, 1, 1),
-            DataFim = new DateOnly(2026, 3, 31),
+            Amount = 300m,
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 3, 31),
             Periodicidade = Periodicidade.Mensal,
-            DiaVencimento = 1,
-            Status = ContratoStatus.Ativo,
+            DueDay = 1,
+            Status = ContratoStatus.IsActive,
         };
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
-        var c1 = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela 1/3", Valor = 100m, DataVencimento = new DateOnly(2026, 1, 1), Status = CobrancaStatus.Pago, DataPagamento = DateTime.UtcNow, FormaPagamento = FormaPagamento.Dinheiro };
-        var c2 = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela 2/3", Valor = 100m, DataVencimento = new DateOnly(2026, 2, 1), Status = CobrancaStatus.Cancelado };
-        var c3 = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela 3/3", Valor = 100m, DataVencimento = new DateOnly(2026, 3, 1), Status = CobrancaStatus.Pendente };
-        db.Cobrancas.AddRange(c1, c2, c3);
+        var c1 = new Charge { CompanyId = _empresaId, CustomerId = cliente.Id, ContratoId = contrato.Id, Reference = "Parcela 1/3", Amount = 100m, DueDate = new DateOnly(2026, 1, 1), Status = CobrancaStatus.Pago, PaymentDate = DateTime.UtcNow, FormaPagamento = FormaPagamento.Dinheiro };
+        var c2 = new Charge { CompanyId = _empresaId, CustomerId = cliente.Id, ContratoId = contrato.Id, Reference = "Parcela 2/3", Amount = 100m, DueDate = new DateOnly(2026, 2, 1), Status = CobrancaStatus.Cancelado };
+        var c3 = new Charge { CompanyId = _empresaId, CustomerId = cliente.Id, ContratoId = contrato.Id, Reference = "Parcela 3/3", Amount = 100m, DueDate = new DateOnly(2026, 3, 1), Status = CobrancaStatus.Pendente };
+        db.Charges.AddRange(c1, c2, c3);
         await db.SaveChangesAsync();
 
         await svc.PagarAsync(c3.Id, new GestorAI.API.DTOs.Cobrancas.PagarCobrancaRequest(DateTime.UtcNow, "Dinheiro"), default);
@@ -168,28 +168,28 @@ public class CobrancaAutoEncerramentoTests
     public async Task PagarAsync_NaoReprocessa_ContratoJaEncerrado()
     {
         var (db, svc) = Setup();
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Ricardo", Whatsapp = "11933330000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Ricardo", WhatsApp = "11933330000" };
         db.Clientes.Add(cliente);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             Numero = 4,
-            Titulo = "Projeto Encerrado",
-            Objeto = "Consultoria",
+            Title = "Projeto Encerrado",
+            Subject = "Consultoria",
             TipoCobranca = TipoCobranca.ParceladoPrazoFixo,
-            Valor = 100m,
-            DataInicio = new DateOnly(2026, 1, 1),
-            DataFim = new DateOnly(2026, 1, 31),
+            Amount = 100m,
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 1, 31),
             Periodicidade = Periodicidade.Mensal,
-            DiaVencimento = 1,
+            DueDay = 1,
             Status = ContratoStatus.Encerrado,
         };
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
-        var cobranca = new Cobranca { EmpresaId = _empresaId, ClienteId = cliente.Id, ContratoId = contrato.Id, Referencia = "Parcela única", Valor = 100m, DataVencimento = new DateOnly(2026, 1, 1), Status = CobrancaStatus.Pendente };
-        db.Cobrancas.Add(cobranca);
+        var cobranca = new Charge { CompanyId = _empresaId, CustomerId = cliente.Id, ContratoId = contrato.Id, Reference = "Parcela única", Amount = 100m, DueDate = new DateOnly(2026, 1, 1), Status = CobrancaStatus.Pendente };
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync();
 
         await svc.PagarAsync(cobranca.Id, new GestorAI.API.DTOs.Cobrancas.PagarCobrancaRequest(DateTime.UtcNow, "Dinheiro"), default);

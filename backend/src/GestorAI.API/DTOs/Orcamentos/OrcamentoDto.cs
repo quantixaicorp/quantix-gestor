@@ -2,65 +2,65 @@
 namespace GestorAI.API.DTOs.Orcamentos;
 
 public record OrcamentoItemRequest(
-    string Tipo,
-    Guid? ProdutoId,
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorUnitario);
+    string Type,
+    Guid? ProductId,
+    string Description,
+    decimal Quantity,
+    decimal UnitPrice);
 
 public record CreateOrcamentoRequest(
-    Guid? ClienteId,
-    string Titulo,
-    DateTime DataValidade,
-    string? Observacao,
-    List<OrcamentoItemRequest> Itens);
+    Guid? CustomerId,
+    string Title,
+    DateTime ExpirationDate,
+    string? Notes,
+    List<OrcamentoItemRequest> Items);
 
 public record OrcamentoItemResponse(
     Guid Id,
-    string Tipo,
-    Guid? ProdutoId,
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorUnitario);
+    string Type,
+    Guid? ProductId,
+    string Description,
+    decimal Quantity,
+    decimal UnitPrice);
 
 public record OrcamentoResponse(
     Guid Id,
-    int Numero,
-    string Titulo,
-    Guid? ClienteId,
-    string? ClienteNome,
+    int Number,
+    string Title,
+    Guid? CustomerId,
+    string? CustomerName,
     string? ClienteWhatsapp,
-    DateTime DataValidade,
+    DateTime ExpirationDate,
     string Status,
-    string? Observacao,
-    Guid? VendaId,
-    Guid? TokenPublico,
-    DateTime CriadoEm,
-    List<OrcamentoItemResponse> Itens,
+    string? Notes,
+    Guid? SaleId,
+    Guid? PublicToken,
+    DateTime CreatedAt,
+    List<OrcamentoItemResponse> Items,
     decimal Total);
 
 public record OrcamentoListItem(
     Guid Id,
-    int Numero,
-    string Titulo,
-    string? ClienteNome,
-    DateTime DataValidade,
+    int Number,
+    string Title,
+    string? CustomerName,
+    DateTime ExpirationDate,
     string Status,
     decimal Total);
 
 public record OrcamentoPublicoResponse(
-    string Titulo,
-    string? ClienteNome,
-    DateTime DataValidade,
+    string Title,
+    string? CustomerName,
+    DateTime ExpirationDate,
     string Status,
-    string? Observacao,
-    List<OrcamentoItemPublicoResponse> Itens,
+    string? Notes,
+    List<OrcamentoItemPublicoResponse> Items,
     decimal Total);
 
 public record OrcamentoItemPublicoResponse(
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorUnitario,
+    string Description,
+    decimal Quantity,
+    decimal UnitPrice,
     decimal Total);
 
-public record GerarCobrancaOrcamentoRequest(DateOnly DataVencimento);
+public record GerarCobrancaOrcamentoRequest(DateOnly DueDate);

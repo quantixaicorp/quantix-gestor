@@ -15,25 +15,25 @@ public static class AutomacaoEndpoints
             AppDbContext db, CancellationToken ct,
             bool? apenasErros = null) =>
         {
-            var query = from l in db.AutomacaoLogs
-                        join c in db.Cobrancas on l.CobrancaId equals c.Id
-                        join cl in db.Clientes on c.ClienteId equals cl.Id
+            var query = from l in db.AutomationLogs
+                        join c in db.Charges on l.ChargeId equals c.Id
+                        join cl in db.Customers on c.CustomerId equals cl.Id
                         select new { l, c, cl };
 
             if (apenasErros == true)
-                query = query.Where(x => !x.l.Sucesso);
+                query = query.Where(x => !x.l.Success);
 
             var logs = await query
-                .OrderByDescending(x => x.l.CriadoEm)
+                .OrderByDescending(x => x.l.CreatedAt)
                 .Take(100)
                 .Select(x => new AutomacaoLogResponse(
                     x.l.Id,
-                    x.l.CriadoEm,
-                    x.cl.Nome,
-                    x.c.Referencia,
-                    x.l.TipoEvento,
-                    x.l.Sucesso,
-                    x.l.ErroMsg))
+                    x.l.CreatedAt,
+                    x.cl.Name,
+                    x.c.Reference,
+                    x.l.EventType,
+                    x.l.Success,
+                    x.l.ErrorMessage))
                 .ToListAsync(ct);
 
             return Results.Ok(logs);

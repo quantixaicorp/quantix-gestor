@@ -15,17 +15,17 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
         string? tipo, string? status, DateTime? vencimentoAte, CancellationToken ct)
     {
         var hoje = DateTime.UtcNow.Date;
-        var query = db.Lancamentos.AsQueryable();
+        var query = db.Transactions.AsQueryable();
 
         if (!string.IsNullOrEmpty(tipo) && Enum.TryParse<TipoLancamento>(tipo, out var t))
-            query = query.Where(l => l.Tipo == t);
+            query = query.Where(l => l.Type == t);
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusLancamento>(status, out var s))
             query = query.Where(l => l.Status == s);
         if (vencimentoAte.HasValue)
-            query = query.Where(l => l.DataVencimento <= vencimentoAte.Value);
+            query = query.Where(l => l.DueDate <= vencimentoAte.Value);
 
         return await query
-            .OrderBy(l => l.DataVencimento)
+            .OrderBy(l => l.DueDate)
             .Select(l => ToResponse(l, hoje))
             .ToListAsync(ct);
     }
@@ -33,33 +33,33 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
     public async Task<LancamentoResponse> GetAsync(Guid id, CancellationToken ct)
     {
         var hoje = DateTime.UtcNow.Date;
-        var l = await db.Lancamentos.FindAsync([id], ct)
+        var l = await db.Transactions.FindAsync([id], ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
         return ToResponse(l, hoje);
     }
 
     public async Task<LancamentoResponse> CreateAsync(CreateLancamentoRequest req, CancellationToken ct)
     {
-        if (!Enum.TryParse<TipoLancamento>(req.Tipo, out var tipo))
-            throw new AppException("Tipo inválido.");
+        if (!Enum.TryParse<TipoLancamento>(req.Type, out var tipo))
+            throw new AppException("Type inválido.");
 
-        var lancamento = new Lancamento
+        var lancamento = new Transaction
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Tipo = tipo,
-            Descricao = req.Descricao,
-            Valor = req.Valor,
-            DataVencimento = req.DataVencimento,
+            CompanyId = tenantContext.CompanyId,
+            Type = tipo,
+            Description = req.Description,
+            Amount = req.Amount,
+            DueDate = req.DueDate,
             Status = StatusLancamento.Pendente,
-            DataPagamento = null,
-            Categoria = req.Categoria,
-            Observacao = req.Observacao,
+            PaymentDate = null,
+            Category = req.Category,
+            Notes = req.Notes,
         };
 
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? tx = null;
         try { tx = await db.Database.BeginTransactionAsync(ct); } catch { }
 
-        db.Lancamentos.Add(lancamento);
+        db.Transactions.Add(lancamento);
         await db.SaveChangesAsync(ct);
         if (tx is not null) await tx.CommitAsync(ct);
 
@@ -68,40 +68,40 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
 
     public async Task<Guid> CreateParceladoAsync(CreateParceladoRequest req, CancellationToken ct)
     {
-        if (!Enum.TryParse<TipoLancamento>(req.Tipo, out var tipo))
-            throw new AppException("Tipo inválido.");
-        if (req.Parcelas.Count < 2)
-            throw new AppException("Parcelamento deve ter ao menos 2 parcelas.");
+        if (!Enum.TryParse<TipoLancamento>(req.Type, out var tipo))
+            throw new AppException("Type inválido.");
+        if (req.Installments.Count < 2)
+            throw new AppException("InstallmentPlan deve ter ao menos 2 parcelas.");
 
         var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
-            var n = req.Parcelas.Count;
-            var valorTotal = req.Parcelas.Sum(p => p.Valor);
-            var parcelamento = new Parcelamento
+            var n = req.Installments.Count;
+            var valorTotal = req.Installments.Sum(p => p.Amount);
+            var parcelamento = new InstallmentPlan
             {
-                EmpresaId = tenantContext.EmpresaId,
-                Descricao = req.Descricao,
-                ValorTotal = valorTotal,
-                QtdParcelas = n,
+                CompanyId = tenantContext.CompanyId,
+                Description = req.Description,
+                TotalAmount = valorTotal,
+                InstallmentCount = n,
                 Status = Domain.Enums.StatusParcelamento.EmAberto,
             };
-            db.Parcelamentos.Add(parcelamento);
+            db.InstallmentPlans.Add(parcelamento);
 
             for (var i = 0; i < n; i++)
             {
-                db.Lancamentos.Add(new Lancamento
+                db.Transactions.Add(new Transaction
                 {
-                    EmpresaId = tenantContext.EmpresaId,
-                    Tipo = tipo,
-                    Descricao = $"{req.Descricao} - Parcela {i + 1}/{n}",
-                    Valor = req.Parcelas[i].Valor,
-                    DataVencimento = req.Parcelas[i].DataVencimento,
+                    CompanyId = tenantContext.CompanyId,
+                    Type = tipo,
+                    Description = $"{req.Description} - Parcela {i + 1}/{n}",
+                    Amount = req.Installments[i].Amount,
+                    DueDate = req.Installments[i].DueDate,
                     Status = StatusLancamento.Pendente,
-                    Categoria = req.Categoria,
-                    Observacao = req.Observacao,
-                    ParcelamentoId = parcelamento.Id,
-                    NumeroParcela = i + 1,
+                    Category = req.Category,
+                    Notes = req.Notes,
+                    InstallmentPlanId = parcelamento.Id,
+                    InstallmentNumber = i + 1,
                 });
             }
 
@@ -115,7 +115,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
     public async Task<LancamentoResponse> PagarAsync(
         Guid id, PagarLancamentoRequest req, CancellationToken ct)
     {
-        var lancamento = await db.Lancamentos.FindAsync([id], ct)
+        var lancamento = await db.Transactions.FindAsync([id], ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
         if (lancamento.Status == StatusLancamento.Pago)
@@ -127,12 +127,12 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
         try { tx = await db.Database.BeginTransactionAsync(ct); } catch { }
 
         lancamento.Status = StatusLancamento.Pago;
-        lancamento.DataPagamento = req.DataPagamento;
+        lancamento.PaymentDate = req.PaymentDate;
 
         await db.SaveChangesAsync(ct);
 
-        if (lancamento.ParcelamentoId.HasValue)
-            await parcelamentoService.RecalcularStatusAsync(lancamento.ParcelamentoId.Value, ct);
+        if (lancamento.InstallmentPlanId.HasValue)
+            await parcelamentoService.RecalcularStatusAsync(lancamento.InstallmentPlanId.Value, ct);
 
         await db.SaveChangesAsync(ct);
         if (tx is not null) await tx.CommitAsync(ct);
@@ -142,7 +142,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
 
     public async Task<LancamentoResponse> CancelarAsync(Guid id, CancellationToken ct)
     {
-        var lancamento = await db.Lancamentos.FindAsync([id], ct)
+        var lancamento = await db.Transactions.FindAsync([id], ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
         if (lancamento.Status == StatusLancamento.Pago)
@@ -160,39 +160,39 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var lancamento = await db.Lancamentos.FindAsync([id], ct)
+        var lancamento = await db.Transactions.FindAsync([id], ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
-        if (lancamento.VendaId.HasValue)
+        if (lancamento.SaleId.HasValue)
             throw new AppException("Lançamentos gerados por vendas não podem ser excluídos diretamente.", 400);
 
-        db.Lancamentos.Remove(lancamento);
+        db.Transactions.Remove(lancamento);
         await db.SaveChangesAsync(ct);
     }
 
     public async Task<FluxoCaixaResponse> GetFluxoCaixaAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var lancamentos = await db.Lancamentos
+        var lancamentos = await db.Transactions
             .Where(l => l.Status == StatusLancamento.Pago
-                && l.DataPagamento.HasValue
-                && l.DataPagamento.Value.Date >= de.Date
-                && l.DataPagamento.Value.Date <= ate.Date)
+                && l.PaymentDate.HasValue
+                && l.PaymentDate.Value.Date >= de.Date
+                && l.PaymentDate.Value.Date <= ate.Date)
             .ToListAsync(ct);
 
         var agrupados = lancamentos
-            .GroupBy(l => l.DataPagamento!.Value.Date)
+            .GroupBy(l => l.PaymentDate!.Value.Date)
             .OrderBy(g => g.Key)
             .Select(g =>
             {
-                var r = g.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
-                var d = g.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
+                var r = g.Where(l => l.Type == TipoLancamento.Receita).Sum(l => l.Amount);
+                var d = g.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
                 return new FluxoCaixaItemResponse(g.Key, r, d, r - d);
             })
             .ToList();
 
-        var totalR = lancamentos.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
-        var totalD = lancamentos.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
+        var totalR = lancamentos.Where(l => l.Type == TipoLancamento.Receita).Sum(l => l.Amount);
+        var totalD = lancamentos.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
 
         return new FluxoCaixaResponse(totalR, totalD, totalR - totalD, agrupados);
     }
@@ -202,57 +202,57 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
         var hoje = DateTime.UtcNow.Date;
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-        var totalReceitas = await db.Lancamentos
+        var totalReceitas = await db.Transactions
             .Where(l => l.Status == StatusLancamento.Pago
-                     && l.Tipo == TipoLancamento.Receita
-                     && l.DataPagamento.HasValue
-                     && l.DataPagamento.Value >= inicioMes)
-            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+                     && l.Type == TipoLancamento.Receita
+                     && l.PaymentDate.HasValue
+                     && l.PaymentDate.Value >= inicioMes)
+            .SumAsync(l => (decimal?)l.Amount, ct) ?? 0m;
 
-        var totalDespesas = await db.Lancamentos
+        var totalDespesas = await db.Transactions
             .Where(l => l.Status == StatusLancamento.Pago
-                     && l.Tipo == TipoLancamento.Despesa
-                     && l.DataPagamento.HasValue
-                     && l.DataPagamento.Value >= inicioMes)
-            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+                     && l.Type == TipoLancamento.Despesa
+                     && l.PaymentDate.HasValue
+                     && l.PaymentDate.Value >= inicioMes)
+            .SumAsync(l => (decimal?)l.Amount, ct) ?? 0m;
 
-        var totalPendente = await db.Lancamentos
+        var totalPendente = await db.Transactions
             .Where(l => l.Status == StatusLancamento.Pendente
-                     && l.DataVencimento >= hoje)
-            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+                     && l.DueDate >= hoje)
+            .SumAsync(l => (decimal?)l.Amount, ct) ?? 0m;
 
         return new LancamentoResumo(totalReceitas, totalDespesas, totalReceitas - totalDespesas, totalPendente);
     }
 
     public async Task<LancamentoResponse> UpdateAsync(Guid id, UpdateLancamentoRequest req, CancellationToken ct)
     {
-        var l = await db.Lancamentos.FindAsync([id], ct)
+        var l = await db.Transactions.FindAsync([id], ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
         if (l.Status != StatusLancamento.Pendente)
             throw new AppException("Apenas lançamentos pendentes podem ser editados.", 400);
 
-        if (l.VendaId.HasValue)
+        if (l.SaleId.HasValue)
             throw new AppException("Lançamentos gerados por vendas não podem ser editados.", 400);
 
-        if (!Enum.TryParse<TipoLancamento>(req.Tipo, out var tipo))
-            throw new AppException($"Tipo inválido: {req.Tipo}.", 400);
+        if (!Enum.TryParse<TipoLancamento>(req.Type, out var tipo))
+            throw new AppException($"Type inválido: {req.Type}.", 400);
 
-        l.Tipo = tipo;
-        l.Descricao = req.Descricao;
-        l.Valor = req.Valor;
-        l.DataVencimento = req.DataVencimento;
-        l.Categoria = req.Categoria;
-        l.Observacao = req.Observacao;
+        l.Type = tipo;
+        l.Description = req.Description;
+        l.Amount = req.Amount;
+        l.DueDate = req.DueDate;
+        l.Category = req.Category;
+        l.Notes = req.Notes;
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
     }
 
-    private static LancamentoResponse ToResponse(Lancamento l, DateTime hoje) => new(
-        l.Id, l.Tipo.ToString(), l.Descricao, l.Valor,
-        l.DataVencimento, l.DataPagamento, l.Status.ToString(),
-        l.Categoria, l.VendaId, l.Observacao,
-        l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < hoje,
-        l.ParcelamentoId, l.NumeroParcela);
+    private static LancamentoResponse ToResponse(Transaction l, DateTime hoje) => new(
+        l.Id, l.Type.ToString(), l.Description, l.Amount,
+        l.DueDate, l.PaymentDate, l.Status.ToString(),
+        l.Category, l.SaleId, l.Notes,
+        l.Status == StatusLancamento.Pendente && l.DueDate.Date < hoje,
+        l.InstallmentPlanId, l.InstallmentNumber);
 }

@@ -145,6 +145,12 @@ builder.Services.AddScoped<IValidator<CreatePedidoCompraRequest>, CreatePedidoCo
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 // Garante que wwwroot existe e configura static files com PhysicalFileProvider explícito
 var webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(webRoot);

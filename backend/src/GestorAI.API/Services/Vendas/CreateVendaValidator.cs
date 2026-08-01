@@ -7,17 +7,17 @@ public class CreateVendaValidator : AbstractValidator<CreateVendaRequest>
 {
     public CreateVendaValidator()
     {
-        RuleFor(x => x.Itens).NotEmpty().WithMessage("A venda precisa ter ao menos um item.");
-        RuleForEach(x => x.Itens).ChildRules(item =>
+        RuleFor(x => x.Items).NotEmpty().WithMessage("A venda precisa ter ao menos um item.");
+        RuleForEach(x => x.Items).ChildRules(item =>
         {
-            item.RuleFor(i => i.ProdutoId).NotEmpty();
-            item.RuleFor(i => i.Quantidade).GreaterThan(0);
-            item.RuleFor(i => i.Desconto).GreaterThanOrEqualTo(0);
+            item.RuleFor(i => i.ProductId).NotEmpty();
+            item.RuleFor(i => i.Quantity).GreaterThan(0);
+            item.RuleFor(i => i.Discount).GreaterThanOrEqualTo(0);
         });
-        RuleFor(x => x.Desconto).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.FormaPagamento)
+        RuleFor(x => x.Discount).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.PaymentMethod)
             .Must(f => new[] { "Dinheiro", "Pix", "Cartao", "Outro" }.Contains(f))
             .WithMessage("Forma de pagamento inválida.");
-        RuleFor(x => x.Parcelas).GreaterThan(0).When(x => x.Parcelas.HasValue);
+        RuleFor(x => x.Installments).GreaterThan(0).When(x => x.Installments.HasValue);
     }
 }

@@ -15,7 +15,7 @@ public class PlanoAssinaturaServiceTests
 
     private (AppDbContext db, PlanoAssinaturaService svc) Setup()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tenant);
@@ -27,15 +27,15 @@ public class PlanoAssinaturaServiceTests
     {
         var (db, svc) = Setup();
         var req = new CreatePlanoAssinaturaRequest(
-            "Básico", "Plano simples", "Barbearia", 79m, "Mensal", false,
+            "Básico", "Plan simples", "Barbearia", 79m, "Mensal", false,
             [new PlanoItemRequest("Corte", null, 2, "Servico", null)]);
 
         var result = await svc.CreateAsync(req, default);
 
-        Assert.Equal("Básico", result.Nome);
-        Assert.Equal(79m, result.Preco);
-        Assert.Single(result.Itens);
-        Assert.Equal("Corte", result.Itens[0].Descricao);
+        Assert.Equal("Básico", result.Name);
+        Assert.Equal(79m, result.Price);
+        Assert.Single(result.Items);
+        Assert.Equal("Corte", result.Items[0].Description);
     }
 
     [Fact]
@@ -51,9 +51,9 @@ public class PlanoAssinaturaServiceTests
     public async Task UpdateAsync_AlteraAtivo()
     {
         var (db, svc) = Setup();
-        var plano = new PlanoAssinatura
+        var plano = new SubscriptionPlan
         {
-            EmpresaId = _empresaId, Nome = "Original", Preco = 50m,
+            CompanyId = _empresaId, Name = "Original", Price = 50m,
             Periodicidade = Periodicidade.Mensal
         };
         db.PlanosAssinatura.Add(plano);
@@ -62,33 +62,33 @@ public class PlanoAssinaturaServiceTests
         var req = new UpdatePlanoAssinaturaRequest("Atualizado", null, "X", 60m, "Mensal", false, false, []);
         var result = await svc.UpdateAsync(plano.Id, req, default);
 
-        Assert.Equal("Atualizado", result.Nome);
-        Assert.False(result.Ativo);
+        Assert.Equal("Atualizado", result.Name);
+        Assert.False(result.IsActive);
     }
 
     [Fact]
     public async Task DeleteAsync_PlanoComAssinantes_LancaExcecao()
     {
         var (db, svc) = Setup();
-        var plano = new PlanoAssinatura { EmpresaId = _empresaId, Nome = "P", Preco = 99m, Periodicidade = Periodicidade.Mensal };
+        var plano = new SubscriptionPlan { CompanyId = _empresaId, Name = "P", Price = 99m, Periodicidade = Periodicidade.Mensal };
         db.PlanosAssinatura.Add(plano);
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "C", Whatsapp = "11999990000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "C", WhatsApp = "11999990000" };
         db.Clientes.Add(cliente);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id, Titulo = "T", Objeto = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Valor = 99m, Numero = 1,
-            DataInicio = DateOnly.FromDateTime(DateTime.Today),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 1, Status = ContratoStatus.Ativo
+            CompanyId = _empresaId, CustomerId = cliente.Id, Title = "T", Subject = "O",
+            TipoCobranca = TipoCobranca.Recorrente, Amount = 99m, Numero = 1,
+            StartDate = DateOnly.FromDateTime(DateTime.Today),
+            Periodicidade = Periodicidade.Mensal, DueDay = 1, Status = ContratoStatus.IsActive
         };
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
-        db.AssinaturasCliente.Add(new AssinaturaCliente
+        db.AssinaturasCliente.Add(new CustomerSubscription
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            PlanoAssinaturaId = plano.Id, ContratoId = contrato.Id,
-            DataInicio = DateOnly.FromDateTime(DateTime.Today),
-            DataRenovacao = DateOnly.FromDateTime(DateTime.Today.AddMonths(1))
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            SubscriptionPlanId = plano.Id, ContratoId = contrato.Id,
+            StartDate = DateOnly.FromDateTime(DateTime.Today),
+            RenewalDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(1))
         });
         await db.SaveChangesAsync();
 

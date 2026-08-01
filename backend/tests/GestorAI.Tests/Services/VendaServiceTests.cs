@@ -15,7 +15,7 @@ public class VendaServiceTests
 
     private (AppDbContext db, VendaService service) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -23,16 +23,16 @@ public class VendaServiceTests
         return (db, new VendaService(db, tenantContext));
     }
 
-    private async Task<Produto> SeedProdutoAsync(AppDbContext db, decimal preco = 50m,
+    private async Task<Product> SeedProdutoAsync(AppDbContext db, decimal preco = 50m,
         decimal custo = 20m, decimal estoque = 10m)
     {
-        var cat = new Categoria { EmpresaId = _empresaId, Nome = "Cat" };
+        var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
         db.Categorias.Add(cat);
-        var p = new Produto
+        var p = new Product
         {
-            EmpresaId = _empresaId, CategoriaId = cat.Id,
-            Nome = "Produto Teste", PrecoVenda = preco,
-            CustoMedio = custo, EstoqueAtual = estoque, EstoqueMinimo = 1m
+            CompanyId = _empresaId, CategoryId = cat.Id,
+            Name = "Product Teste", SalePrice = preco,
+            AverageCost = custo, CurrentStock = estoque, MinimumStock = 1m
         };
         db.Produtos.Add(p);
         await db.SaveChangesAsync();
@@ -53,14 +53,14 @@ public class VendaServiceTests
 
         Assert.Equal(StatusVenda.Concluida.ToString(), result.Status);
         Assert.Equal(100m, result.Total); // 2 * 50
-        Assert.Single(result.Itens);
+        Assert.Single(result.Items);
 
         var produto2 = await db.Produtos.FindAsync(produto.Id);
-        Assert.Equal(8m, produto2!.EstoqueAtual); // 10 - 2
+        Assert.Equal(8m, produto2!.CurrentStock); // 10 - 2
 
         var mov = await db.MovimentacoesEstoque.IgnoreQueryFilters().FirstAsync();
-        Assert.Equal(TipoMovimentacao.Saida, mov.Tipo);
-        Assert.Equal(OrigemMovimentacao.Venda, mov.Origem);
+        Assert.Equal(TipoMovimentacao.Saida, mov.Type);
+        Assert.Equal(OrigemMovimentacao.Sale, mov.Source);
     }
 
     [Fact]
@@ -76,8 +76,8 @@ public class VendaServiceTests
         await service.CreateAsync(req, default);
 
         var lancamento = await db.Lancamentos.IgnoreQueryFilters().FirstAsync();
-        Assert.Equal(TipoLancamento.Receita, lancamento.Tipo);
-        Assert.Equal(50m, lancamento.Valor);
+        Assert.Equal(TipoLancamento.Receita, lancamento.Type);
+        Assert.Equal(50m, lancamento.Amount);
         Assert.Equal(StatusLancamento.Pago, lancamento.Status);
     }
 
@@ -120,12 +120,12 @@ public class VendaServiceTests
             [new ItemVendaRequest(produto.Id, 3m, 0m)],
             0m, "Pix", null, null);
         var venda = await service.CreateAsync(req, default);
-        Assert.Equal(7m, (await db.Produtos.FindAsync(produto.Id))!.EstoqueAtual);
+        Assert.Equal(7m, (await db.Produtos.FindAsync(produto.Id))!.CurrentStock);
 
         await service.CancelarAsync(venda.Id, default);
 
         var produtoAtualizado = await db.Produtos.FindAsync(produto.Id);
-        Assert.Equal(10m, produtoAtualizado!.EstoqueAtual); // estorno
+        Assert.Equal(10m, produtoAtualizado!.CurrentStock); // estorno
 
         var vendaAtualizada = await db.Vendas.FindAsync(venda.Id);
         Assert.Equal(StatusVenda.Cancelada, vendaAtualizada!.Status);

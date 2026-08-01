@@ -1,75 +1,75 @@
 namespace GestorAI.API.DTOs.Assinaturas;
 
 public record PlanoItemRequest(
-    string Descricao,
-    Guid? ServicoId,
-    int QuantidadePorCiclo,
-    string Tipo,
-    decimal? PercentualDesconto);
+    string Description,
+    Guid? ServiceId,
+    int QuantityPerCycle,
+    string Type,
+    decimal? DiscountPercentage);
 
 public record CreatePlanoAssinaturaRequest(
-    string Nome,
-    string? Descricao,
-    string Nicho,
-    decimal Preco,
-    string Periodicidade,
-    bool MaisVendido,
-    List<PlanoItemRequest> Itens);
+    string Name,
+    string? Description,
+    string Niche,
+    decimal Price,
+    string Frequency,
+    bool BestSeller,
+    List<PlanoItemRequest> Items);
 
 public record UpdatePlanoAssinaturaRequest(
-    string Nome,
-    string? Descricao,
-    string Nicho,
-    decimal Preco,
-    string Periodicidade,
-    bool MaisVendido,
-    bool Ativo,
-    List<PlanoItemRequest> Itens);
+    string Name,
+    string? Description,
+    string Niche,
+    decimal Price,
+    string Frequency,
+    bool BestSeller,
+    bool IsActive,
+    List<PlanoItemRequest> Items);
 
 public record PlanoItemResponse(
     Guid Id,
-    string Descricao,
-    Guid? ServicoId,
-    int QuantidadePorCiclo,
-    string Tipo,
-    decimal? PercentualDesconto);
+    string Description,
+    Guid? ServiceId,
+    int QuantityPerCycle,
+    string Type,
+    decimal? DiscountPercentage);
 
 public record PlanoAssinaturaResponse(
     Guid Id,
-    string Nome,
-    string? Descricao,
-    string Nicho,
-    decimal Preco,
-    string Periodicidade,
-    bool Ativo,
-    bool MaisVendido,
+    string Name,
+    string? Description,
+    string Niche,
+    decimal Price,
+    string Frequency,
+    bool IsActive,
+    bool BestSeller,
     int TotalAssinantes,
-    List<PlanoItemResponse> Itens,
-    DateTime CriadoEm);
+    List<PlanoItemResponse> Items,
+    DateTime CreatedAt);
 
 public record PlanoAssinaturaListItem(
     Guid Id,
-    string Nome,
-    string Nicho,
-    decimal Preco,
-    string Periodicidade,
-    bool Ativo,
-    bool MaisVendido,
+    string Name,
+    string Niche,
+    decimal Price,
+    string Frequency,
+    bool IsActive,
+    bool BestSeller,
     int TotalAssinantes);
 
 public record NichoTemplateItemResponse(
     Guid Id,
-    string Descricao,
-    int QuantidadePorCiclo,
-    string Tipo,
-    decimal? PercentualDesconto);
+    string Description,
+    int QuantityPerCycle,
+    string Type,
+    decimal? DiscountPercentage);
 
 public record NichoTemplateResponse(
     Guid Id,
-    string Nicho,
-    string NomePlano,
-    string? Descricao,
-    decimal PrecoSugerido,
-    bool MaisVendido,
-    string Periodicidade,
-    List<NichoTemplateItemResponse> Itens);
+    string Niche,
+    string PlanName,
+    string? Description,
+    decimal SuggestedPrice,
+    bool BestSeller,
+    string Frequency,
+    List<NichoTemplateItemResponse> Items);

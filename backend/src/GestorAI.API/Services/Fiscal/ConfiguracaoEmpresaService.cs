@@ -14,18 +14,18 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
 {
     public async Task<ConfiguracaoEmpresaResponse> ObterAsync(CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa
+        var config = await db.CompanySettings
             .FirstOrDefaultAsync(ct);
 
         if (config is null)
         {
-            config = new ConfiguracaoEmpresa
+            config = new CompanySettings
             {
                 Id = Guid.NewGuid(),
-                EmpresaId = tenantContext.EmpresaId,
+                CompanyId = tenantContext.CompanyId,
                 Ambiente = 2,
             };
-            db.ConfiguracoesEmpresa.Add(config);
+            db.CompanySettings.Add(config);
             await db.SaveChangesAsync(ct);
         }
 
@@ -35,17 +35,17 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
     public async Task<ConfiguracaoEmpresaResponse> AtualizarAsync(
         AtualizarConfiguracaoEmpresaRequest req, CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct);
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct);
 
         if (config is null)
         {
-            config = new ConfiguracaoEmpresa
+            config = new CompanySettings
             {
                 Id = Guid.NewGuid(),
-                EmpresaId = tenantContext.EmpresaId,
+                CompanyId = tenantContext.CompanyId,
                 Ambiente = 2,
             };
-            db.ConfiguracoesEmpresa.Add(config);
+            db.CompanySettings.Add(config);
         }
 
         if (req.RazaoSocial is not null) config.RazaoSocial = req.RazaoSocial;
@@ -68,7 +68,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         if (req.SerieNfe is not null) config.SerieNfe = req.SerieNfe;
         if (req.SerieNfce is not null) config.SerieNfce = req.SerieNfce;
         if (req.FocusNfeToken is not null) config.FocusNfeToken = req.FocusNfeToken;
-        if (req.Telefone is not null) config.Telefone = req.Telefone;
+        if (req.Phone is not null) config.Phone = req.Phone;
         if (req.Email is not null) config.Email = req.Email;
         if (req.TipoNegocio is not null) config.TipoNegocio = req.TipoNegocio;
 
@@ -76,14 +76,14 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         return ToResponse(config);
     }
 
-    private static ConfiguracaoEmpresaResponse ToResponse(ConfiguracaoEmpresa c) => new(
+    private static ConfiguracaoEmpresaResponse ToResponse(CompanySettings c) => new(
         c.Id,
         c.RazaoSocial,
         c.NomeFantasia,
         c.Cnpj,
         c.InscricaoEstadual,
         c.InscricaoMunicipal,
-        c.Telefone,
+        c.Phone,
         c.Email,
         c.Logradouro,
         c.Numero,
@@ -100,8 +100,8 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.FocusNfeToken is not null,
         c.Slug,
         c.LogoUrl,
-        c.CorPrimaria,
-        c.DescricaoPublica,
+        c.PrimaryColor,
+        c.PublicDescription,
         c.AsaasApiKey,
         c.AsaasSandbox,
         c.ClickSignApiKey,
@@ -109,97 +109,97 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         c.EvolutionApiUrl,
         c.EvolutionApiKey is not null,
         c.EvolutionInstance,
-        c.Lembrete3dAntes,
-        c.Lembrete1dAntes,
-        c.LembreteNoDia,
-        c.Lembrete1dDepois,
-        c.Lembrete3dDepois,
-        c.Lembrete7dDepois,
-        c.DominioCustomizado,
-        c.AprovarAutomaticamente,
-        c.ValorSinal,
-        c.HorasLimiteCancelamento,
+        c.Reminder3DaysBefore,
+        c.Reminder1DayBefore,
+        c.ReminderOnDueDate,
+        c.Reminder1DayAfter,
+        c.Reminder3DaysAfter,
+        c.Reminder7DaysAfter,
+        c.CustomDomain,
+        c.AutoApprove,
+        c.DepositAmount,
+        c.CancellationLimitHours,
         c.TipoNegocio);
 
     public async Task<ConfiguracaoEmpresaResponse> SalvarBrandingAsync(
         ConfigurarBrandingRequest req, CancellationToken ct)
     {
-        var slugEmUso = await db.ConfiguracoesEmpresa
+        var slugEmUso = await db.CompanySettings
             .IgnoreQueryFilters()
-            .AnyAsync(c => c.Slug == req.Slug && c.EmpresaId != tenantContext.EmpresaId, ct);
+            .AnyAsync(c => c.Slug == req.Slug && c.CompanyId != tenantContext.CompanyId, ct);
         if (slugEmUso)
             throw new AppException("Este slug já está em uso.", 400);
 
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
-            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? new CompanySettings { CompanyId = tenantContext.CompanyId };
 
         var isNew = config.Id == Guid.Empty;
         config.Slug = req.Slug;
         if (req.NomeExibicao is not null) config.NomeFantasia = req.NomeExibicao;
-        config.CorPrimaria = req.CorPrimaria;
-        config.DescricaoPublica = req.DescricaoPublica;
+        config.PrimaryColor = req.PrimaryColor;
+        config.PublicDescription = req.PublicDescription;
 
-        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        if (isNew) db.CompanySettings.Add(config);
         await db.SaveChangesAsync(ct);
         return await ObterAsync(ct);
     }
 
     public async Task SalvarAgendamentoAsync(SalvarAgendamentoConfigRequest req, CancellationToken ct)
     {
-        var existing = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct);
+        var existing = await db.CompanySettings.FirstOrDefaultAsync(ct);
         if (existing is null)
         {
-            existing = new ConfiguracaoEmpresa { Id = Guid.NewGuid(), EmpresaId = tenantContext.EmpresaId };
-            db.ConfiguracoesEmpresa.Add(existing);
+            existing = new CompanySettings { Id = Guid.NewGuid(), CompanyId = tenantContext.CompanyId };
+            db.CompanySettings.Add(existing);
         }
-        existing.AprovarAutomaticamente = req.AprovarAutomaticamente;
-        existing.ValorSinal = req.ValorSinal;
-        existing.HorasLimiteCancelamento = req.HorasLimiteCancelamento;
+        existing.AutoApprove = req.AutoApprove;
+        existing.DepositAmount = req.DepositAmount;
+        existing.CancellationLimitHours = req.CancellationLimitHours;
         await db.SaveChangesAsync(ct);
     }
 
     public async Task SalvarIntegracoesAsync(SalvarIntegracoesRequest req, CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
-            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? new CompanySettings { CompanyId = tenantContext.CompanyId };
         var isNew = config.Id == Guid.Empty;
         config.AsaasApiKey = req.AsaasApiKey;
         config.AsaasSandbox = req.AsaasSandbox;
         config.ClickSignApiKey = req.ClickSignApiKey;
         config.ClickSignSandbox = req.ClickSignSandbox;
-        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        if (isNew) db.CompanySettings.Add(config);
         await db.SaveChangesAsync(ct);
     }
 
     public async Task SalvarWhiteLabelAsync(SalvarWhiteLabelRequest req, CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
-            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? new CompanySettings { CompanyId = tenantContext.CompanyId };
         var isNew = config.Id == Guid.Empty;
         if (req.Slug is not null) config.Slug = req.Slug;
         if (req.LogoUrl is not null) config.LogoUrl = req.LogoUrl;
-        if (req.CorPrimaria is not null) config.CorPrimaria = req.CorPrimaria;
-        if (req.DescricaoPublica is not null) config.DescricaoPublica = req.DescricaoPublica;
-        config.DominioCustomizado = req.DominioCustomizado;
-        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        if (req.PrimaryColor is not null) config.PrimaryColor = req.PrimaryColor;
+        if (req.PublicDescription is not null) config.PublicDescription = req.PublicDescription;
+        config.CustomDomain = req.CustomDomain;
+        if (isNew) db.CompanySettings.Add(config);
         await db.SaveChangesAsync(ct);
     }
 
     public async Task SalvarAutomacaoConfigAsync(SalvarAutomacaoConfigRequest req, CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
-            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? new CompanySettings { CompanyId = tenantContext.CompanyId };
         var isNew = config.Id == Guid.Empty;
         config.EvolutionApiUrl = req.EvolutionApiUrl;
         if (!string.IsNullOrWhiteSpace(req.EvolutionApiKey)) config.EvolutionApiKey = req.EvolutionApiKey;
         config.EvolutionInstance = req.EvolutionInstance;
-        config.Lembrete3dAntes = req.Lembrete3dAntes;
-        config.Lembrete1dAntes = req.Lembrete1dAntes;
-        config.LembreteNoDia = req.LembreteNoDia;
-        config.Lembrete1dDepois = req.Lembrete1dDepois;
-        config.Lembrete3dDepois = req.Lembrete3dDepois;
-        config.Lembrete7dDepois = req.Lembrete7dDepois;
-        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        config.Reminder3DaysBefore = req.Reminder3DaysBefore;
+        config.Reminder1DayBefore = req.Reminder1DayBefore;
+        config.ReminderOnDueDate = req.ReminderOnDueDate;
+        config.Reminder1DayAfter = req.Reminder1DayAfter;
+        config.Reminder3DaysAfter = req.Reminder3DaysAfter;
+        config.Reminder7DaysAfter = req.Reminder7DaysAfter;
+        if (isNew) db.CompanySettings.Add(config);
         await db.SaveChangesAsync(ct);
     }
 
@@ -215,7 +215,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
         var dir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "logos");
         Directory.CreateDirectory(dir);
 
-        var fileName = $"{tenantContext.EmpresaId}{ext}";
+        var fileName = $"{tenantContext.CompanyId}{ext}";
         var fullPath = Path.Combine(dir, fileName);
 
         await using var stream = File.Create(fullPath);
@@ -223,12 +223,12 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
 
         var logoUrl = $"/logos/{fileName}";
 
-        var config = await db.ConfiguracoesEmpresa.FirstOrDefaultAsync(ct)
-            ?? new ConfiguracaoEmpresa { EmpresaId = tenantContext.EmpresaId };
+        var config = await db.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? new CompanySettings { CompanyId = tenantContext.CompanyId };
 
         var isNew = config.Id == Guid.Empty;
         config.LogoUrl = logoUrl;
-        if (isNew) db.ConfiguracoesEmpresa.Add(config);
+        if (isNew) db.CompanySettings.Add(config);
         await db.SaveChangesAsync(ct);
 
         return logoUrl;

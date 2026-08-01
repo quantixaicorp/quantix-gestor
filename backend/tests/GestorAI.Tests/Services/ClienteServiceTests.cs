@@ -14,7 +14,7 @@ public class ClienteServiceTests
 
     private (AppDbContext db, ClienteService service) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -30,8 +30,8 @@ public class ClienteServiceTests
 
         var result = await service.CreateAsync(req, default);
 
-        Assert.Equal("Maria", result.Nome);
-        Assert.Equal("11999990001", result.Whatsapp);
+        Assert.Equal("Maria", result.Name);
+        Assert.Equal("11999990001", result.WhatsApp);
     }
 
     [Fact]
@@ -47,13 +47,13 @@ public class ClienteServiceTests
     {
         var (db, service) = Setup();
         db.Clientes.AddRange(
-            new Cliente { EmpresaId = _empresaId, Nome = "Ana Silva", Whatsapp = "11999990001" },
-            new Cliente { EmpresaId = _empresaId, Nome = "Carlos", Whatsapp = "11999990002" });
+            new Customer { CompanyId = _empresaId, Name = "Ana Silva", WhatsApp = "11999990001" },
+            new Customer { CompanyId = _empresaId, Name = "Carlos", WhatsApp = "11999990002" });
         await db.SaveChangesAsync();
 
         var result = await service.ListAsync("Ana", default);
 
         Assert.Single(result);
-        Assert.Equal("Ana Silva", result[0].Nome);
+        Assert.Equal("Ana Silva", result[0].Name);
     }
 }

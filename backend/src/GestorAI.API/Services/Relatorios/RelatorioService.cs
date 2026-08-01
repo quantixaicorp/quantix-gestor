@@ -13,114 +13,114 @@ public class RelatorioService(AppDbContext db)
         DateTime de, DateTime ate, CancellationToken ct)
     {
         // ── Vendas ──────────────────────────────────────────────────────────
-        var vendasPeriodo = await db.Vendas
+        var vendasPeriodo = await db.Sales
             .Where(v => v.Status == StatusVenda.Concluida
-                && v.DataHora.Date >= de.Date && v.DataHora.Date <= ate.Date)
-            .Include(v => v.Cliente)
+                && v.SaleDate.Date >= de.Date && v.SaleDate.Date <= ate.Date)
+            .Include(v => v.Customer)
             .ToListAsync(ct);
 
         var faturamento = vendasPeriodo.Sum(v => v.Total);
         var totalVendas = vendasPeriodo.Count;
         var ticketMedio = totalVendas > 0 ? faturamento / totalVendas : 0m;
-        var clientesAtendidos = vendasPeriodo.Where(v => v.ClienteId != null)
-            .Select(v => v.ClienteId).Distinct().Count();
+        var clientesAtendidos = vendasPeriodo.Where(v => v.CustomerId != null)
+            .Select(v => v.CustomerId).Distinct().Count();
 
-        var itens = await db.ItensVenda
-            .Where(i => i.Venda!.Status == StatusVenda.Concluida
-                && i.Venda.DataHora.Date >= de.Date && i.Venda.DataHora.Date <= ate.Date)
-            .Include(i => i.Produto)
+        var itens = await db.SaleItems
+            .Where(i => i.Sale!.Status == StatusVenda.Concluida
+                && i.Sale.SaleDate.Date >= de.Date && i.Sale.SaleDate.Date <= ate.Date)
+            .Include(i => i.Product)
             .ToListAsync(ct);
 
-        var lucro = itens.Sum(i => (i.PrecoUnitario - (i.Produto?.CustoMedio ?? 0m)) * i.Quantidade);
+        var lucro = itens.Sum(i => (i.UnitPrice - (i.Product?.AverageCost ?? 0m)) * i.Quantity);
         var margem = faturamento > 0 ? Math.Round(lucro / faturamento * 100m, 1) : 0m;
 
         // ── Financeiro (período) ─────────────────────────────────────────────
-        var lancamentosPagos = await db.Lancamentos
+        var lancamentosPagos = await db.Transactions
             .Where(l => l.Status == StatusLancamento.Pago
-                && l.DataPagamento.HasValue
-                && l.DataPagamento!.Value.Date >= de.Date
-                && l.DataPagamento.Value.Date <= ate.Date)
+                && l.PaymentDate.HasValue
+                && l.PaymentDate!.Value.Date >= de.Date
+                && l.PaymentDate.Value.Date <= ate.Date)
             .ToListAsync(ct);
 
-        var totalReceitas = lancamentosPagos.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
-        var totalDespesas = lancamentosPagos.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
+        var totalReceitas = lancamentosPagos.Where(l => l.Type == TipoLancamento.Receita).Sum(l => l.Amount);
+        var totalDespesas = lancamentosPagos.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
         var saldoPeriodo = totalReceitas - totalDespesas;
 
-        var totalReceberPeriodo = await db.Lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Receita
-                && l.DataVencimento.Date >= de.Date && l.DataVencimento.Date <= ate.Date)
-            .SumAsync(l => l.Valor, ct);
+        var totalReceberPeriodo = await db.Transactions
+            .Where(l => l.Type == TipoLancamento.Receita
+                && l.DueDate.Date >= de.Date && l.DueDate.Date <= ate.Date)
+            .SumAsync(l => l.Amount, ct);
 
-        var lancamentosVencidos = await db.Lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Receita
+        var lancamentosVencidos = await db.Transactions
+            .Where(l => l.Type == TipoLancamento.Receita
                 && l.Status == StatusLancamento.Pendente
-                && l.DataVencimento.Date < DateTime.UtcNow.Date)
-            .SumAsync(l => l.Valor, ct);
+                && l.DueDate.Date < DateTime.UtcNow.Date)
+            .SumAsync(l => l.Amount, ct);
 
         var inadimplencia = totalReceberPeriodo > 0
             ? Math.Round(lancamentosVencidos / totalReceberPeriodo * 100m, 1) : 0m;
 
         // ── Situação atual ───────────────────────────────────────────────────
-        var contasReceber = await db.Lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pendente)
-            .SumAsync(l => l.Valor, ct);
+        var contasReceber = await db.Transactions
+            .Where(l => l.Type == TipoLancamento.Receita && l.Status == StatusLancamento.Pendente)
+            .SumAsync(l => l.Amount, ct);
 
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-        var cobrancasPendentes = await db.Cobrancas
+        var cobrancasPendentes = await db.Charges
             .Where(c => c.Status == CobrancaStatus.Pendente)
             .ToListAsync(ct);
-        var cobrancasVencidas = cobrancasPendentes.Where(c => c.DataVencimento < hoje).ToList();
-        var totalVencidoCobrancas = cobrancasVencidas.Sum(c => c.Valor);
+        var cobrancasVencidas = cobrancasPendentes.Where(c => c.DueDate < hoje).ToList();
+        var totalVencidoCobrancas = cobrancasVencidas.Sum(c => c.Amount);
 
-        var contratos = await db.Contratos
+        var contratos = await db.Contracts
             .Where(c => c.Status == ContratoStatus.Ativo)
             .ToListAsync(ct);
-        var mrrContratos = contratos.Sum(c => c.Periodicidade switch
+        var mrrContratos = contratos.Sum(c => c.Frequency switch
         {
-            Periodicidade.Mensal => c.Valor,
-            Periodicidade.Trimestral => c.Valor / 3m,
-            Periodicidade.Semestral => c.Valor / 6m,
-            Periodicidade.Anual => c.Valor / 12m,
+            Periodicidade.Mensal => c.Amount,
+            Periodicidade.Trimestral => c.Amount / 3m,
+            Periodicidade.Semestral => c.Amount / 6m,
+            Periodicidade.Anual => c.Amount / 12m,
             _ => 0m,
         });
 
-        var orcamentosAbertos = await db.Orcamentos
+        var orcamentosAbertos = await db.Quotes
             .Where(o => o.Status == OrcamentoStatus.Enviado || o.Status == OrcamentoStatus.Aprovado)
             .CountAsync(ct);
 
-        var agendamentosNoPeriodo = await db.Agendamentos
-            .Where(a => a.DataHoraInicio.Date >= de.Date && a.DataHoraInicio.Date <= ate.Date)
+        var agendamentosNoPeriodo = await db.Appointments
+            .Where(a => a.StartAt.Date >= de.Date && a.StartAt.Date <= ate.Date)
             .CountAsync(ct);
 
         var tendenciaVendas = vendasPeriodo
-            .GroupBy(v => v.DataHora.Date)
+            .GroupBy(v => v.SaleDate.Date)
             .OrderBy(g => g.Key)
             .Select(g => new TendenciaVendasResponse(g.Key, g.Sum(v => v.Total), g.Count()))
             .ToList();
 
         var fluxoPorDia = lancamentosPagos
-            .GroupBy(l => l.DataPagamento!.Value.Date)
+            .GroupBy(l => l.PaymentDate!.Value.Date)
             .OrderBy(g => g.Key)
             .Select(g =>
             {
-                var r = g.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
-                var d = g.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
+                var r = g.Where(l => l.Type == TipoLancamento.Receita).Sum(l => l.Amount);
+                var d = g.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
                 return new FluxoCaixaDiaResponse(g.Key, r, d, r - d);
             })
             .ToList();
 
         var topProdutos = itens
-            .GroupBy(i => new { i.ProdutoId, Nome = i.Produto?.Nome ?? "" })
-            .Select(g => new RankingProdutoResponse(g.Key.Nome, g.Sum(i => i.Quantidade), g.Sum(i => i.Total)))
+            .GroupBy(i => new { i.ProductId, Name = i.Product?.Name ?? "" })
+            .Select(g => new RankingProdutoResponse(g.Key.Name, g.Sum(i => i.Quantity), g.Sum(i => i.Total)))
             .OrderByDescending(p => p.Total)
             .Take(5)
             .ToList();
 
         var topClientes = vendasPeriodo
-            .Where(v => v.ClienteId != null)
-            .GroupBy(v => new { v.ClienteId, Nome = v.Cliente?.Nome ?? "" })
-            .Select(g => new RankingClienteResponse(g.Key.Nome, g.Count(), g.Sum(v => v.Total)))
+            .Where(v => v.CustomerId != null)
+            .GroupBy(v => new { v.CustomerId, Name = v.Customer?.Name ?? "" })
+            .Select(g => new RankingClienteResponse(g.Key.Name, g.Count(), g.Sum(v => v.Total)))
             .OrderByDescending(c => c.Total)
             .Take(5)
             .ToList();
@@ -136,41 +136,41 @@ public class RelatorioService(AppDbContext db)
     public async Task<RelatorioVendasResponse> GetVendasAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var vendas = await db.Vendas
+        var vendas = await db.Sales
             .Where(v => v.Status == StatusVenda.Concluida
-                && v.DataHora.Date >= de.Date && v.DataHora.Date <= ate.Date)
-            .Include(v => v.Cliente)
+                && v.SaleDate.Date >= de.Date && v.SaleDate.Date <= ate.Date)
+            .Include(v => v.Customer)
             .ToListAsync(ct);
 
         var tendencia = vendas
-            .GroupBy(v => v.DataHora.Date)
+            .GroupBy(v => v.SaleDate.Date)
             .OrderBy(g => g.Key)
             .Select(g => new TendenciaVendasResponse(g.Key, g.Sum(v => v.Total), g.Count()))
             .ToList();
 
-        var itens = await db.ItensVenda
-            .Where(i => i.Venda!.Status == StatusVenda.Concluida
-                && i.Venda.DataHora.Date >= de.Date && i.Venda.DataHora.Date <= ate.Date)
-            .Include(i => i.Produto)
+        var itens = await db.SaleItems
+            .Where(i => i.Sale!.Status == StatusVenda.Concluida
+                && i.Sale.SaleDate.Date >= de.Date && i.Sale.SaleDate.Date <= ate.Date)
+            .Include(i => i.Product)
             .ToListAsync(ct);
 
         var topProdutos = itens
-            .GroupBy(i => new { i.ProdutoId, Nome = i.Produto?.Nome ?? "" })
-            .Select(g => new RankingProdutoResponse(g.Key.Nome, g.Sum(i => i.Quantidade), g.Sum(i => i.Total)))
+            .GroupBy(i => new { i.ProductId, Name = i.Product?.Name ?? "" })
+            .Select(g => new RankingProdutoResponse(g.Key.Name, g.Sum(i => i.Quantity), g.Sum(i => i.Total)))
             .OrderByDescending(p => p.Total)
             .Take(10)
             .ToList();
 
         var topClientes = vendas
-            .Where(v => v.ClienteId != null)
-            .GroupBy(v => new { v.ClienteId, Nome = v.Cliente?.Nome ?? "" })
-            .Select(g => new RankingClienteResponse(g.Key.Nome, g.Count(), g.Sum(v => v.Total)))
+            .Where(v => v.CustomerId != null)
+            .GroupBy(v => new { v.CustomerId, Name = v.Customer?.Name ?? "" })
+            .Select(g => new RankingClienteResponse(g.Key.Name, g.Count(), g.Sum(v => v.Total)))
             .OrderByDescending(c => c.Total)
             .Take(10)
             .ToList();
 
         var porPagamento = vendas
-            .GroupBy(v => v.FormaPagamento)
+            .GroupBy(v => v.PaymentMethod)
             .Select(g => new VendasPorPagamentoResponse(g.Key.ToString(), g.Count(), g.Sum(v => v.Total)))
             .ToList();
 
@@ -180,60 +180,60 @@ public class RelatorioService(AppDbContext db)
     public async Task<RelatorioFinanceiroResponse> GetFinanceiroAsync(
         DateTime de, DateTime ate, string tipoData, CancellationToken ct)
     {
-        IQueryable<Lancamento> query;
+        IQueryable<Transaction> query;
         if (tipoData == "vencimento")
         {
-            query = db.Lancamentos.Where(l =>
-                l.DataVencimento.Date >= de.Date && l.DataVencimento.Date <= ate.Date);
+            query = db.Transactions.Where(l =>
+                l.DueDate.Date >= de.Date && l.DueDate.Date <= ate.Date);
         }
         else
         {
             // default: pagamento
-            query = db.Lancamentos.Where(l =>
+            query = db.Transactions.Where(l =>
                 l.Status == StatusLancamento.Pago
-                && l.DataPagamento.HasValue
-                && l.DataPagamento!.Value.Date >= de.Date
-                && l.DataPagamento.Value.Date <= ate.Date);
+                && l.PaymentDate.HasValue
+                && l.PaymentDate!.Value.Date >= de.Date
+                && l.PaymentDate.Value.Date <= ate.Date);
         }
 
         var lancamentos = await query.ToListAsync(ct);
 
-        var dataRef = (Lancamento l) => tipoData == "vencimento"
-            ? l.DataVencimento.Date
-            : l.DataPagamento!.Value.Date;
+        var dataRef = (Transaction l) => tipoData == "vencimento"
+            ? l.DueDate.Date
+            : l.PaymentDate!.Value.Date;
 
         var fluxoPorDia = lancamentos
-            .Where(l => tipoData != "pagamento" || l.DataPagamento.HasValue)
+            .Where(l => tipoData != "pagamento" || l.PaymentDate.HasValue)
             .GroupBy(dataRef)
             .OrderBy(g => g.Key)
             .Select(g =>
             {
-                var r = g.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
-                var d = g.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
+                var r = g.Where(l => l.Type == TipoLancamento.Receita).Sum(l => l.Amount);
+                var d = g.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
                 return new FluxoCaixaDiaResponse(g.Key, r, d, r - d);
             })
             .ToList();
 
         var categoriasDespesas = lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Despesa)
-            .GroupBy(l => l.Categoria)
-            .Select(g => new CategoriaDespesaResponse(g.Key, g.Sum(l => l.Valor)))
+            .Where(l => l.Type == TipoLancamento.Despesa)
+            .GroupBy(l => l.Category)
+            .Select(g => new CategoriaDespesaResponse(g.Key, g.Sum(l => l.Amount)))
             .OrderByDescending(c => c.Total)
             .ToList();
 
-        var totalReceitas = lancamentos.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
-        var totalDespesas = lancamentos.Where(l => l.Tipo == TipoLancamento.Despesa).Sum(l => l.Valor);
+        var totalReceitas = lancamentos.Where(l => l.Type == TipoLancamento.Receita).Sum(l => l.Amount);
+        var totalDespesas = lancamentos.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
 
         var analitico = lancamentos
-            .OrderBy(l => l.DataVencimento)
+            .OrderBy(l => l.DueDate)
             .Select(l => new LancamentoAnaliticoResponse(
                 l.Id,
-                l.Tipo.ToString(),
-                l.Descricao,
-                l.Categoria,
-                l.Valor,
-                l.DataVencimento,
-                l.DataPagamento,
+                l.Type.ToString(),
+                l.Description,
+                l.Category,
+                l.Amount,
+                l.DueDate,
+                l.PaymentDate,
                 l.Status.ToString()))
             .ToList();
 
@@ -245,32 +245,32 @@ public class RelatorioService(AppDbContext db)
     public async Task<RelatorioEstoqueResponse> GetEstoqueAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var produtos = await db.Produtos.Where(p => p.Ativo).ToListAsync(ct);
-        var valorTotal = produtos.Sum(p => p.EstoqueAtual * p.CustoMedio);
-        var estoqueBaixo = produtos.Count(p => p.EstoqueAtual <= p.EstoqueMinimo);
+        var produtos = await db.Products.Where(p => p.IsActive).ToListAsync(ct);
+        var valorTotal = produtos.Sum(p => p.CurrentStock * p.AverageCost);
+        var estoqueBaixo = produtos.Count(p => p.CurrentStock <= p.MinimumStock);
 
-        var movimentos = await db.MovimentacoesEstoque
-            .Include(m => m.Produto)
-            .Where(m => m.DataHora.Date >= de.Date && m.DataHora.Date <= ate.Date)
+        var movimentos = await db.StockMovements
+            .Include(m => m.Product)
+            .Where(m => m.MovementDate.Date >= de.Date && m.MovementDate.Date <= ate.Date)
             .ToListAsync(ct);
 
         var giro = movimentos
-            .GroupBy(m => new { m.ProdutoId, Nome = m.Produto?.Nome ?? "" })
+            .GroupBy(m => new { m.ProductId, Name = m.Product?.Name ?? "" })
             .Select(g =>
             {
-                var entradas = g.Where(m => m.Tipo == TipoMovimentacao.Entrada).Sum(m => m.Quantidade);
-                var saidas = g.Where(m => m.Tipo == TipoMovimentacao.Saida).Sum(m => m.Quantidade);
-                return new GiroProdutoResponse(g.Key.Nome, entradas, saidas, saidas - entradas);
+                var entradas = g.Where(m => m.Type == TipoMovimentacao.Entrada).Sum(m => m.Quantity);
+                var saidas = g.Where(m => m.Type == TipoMovimentacao.Saida).Sum(m => m.Quantity);
+                return new GiroProdutoResponse(g.Key.Name, entradas, saidas, saidas - entradas);
             })
             .OrderByDescending(g => g.Saidas)
             .Take(20)
             .ToList();
 
-        var produtosMovimentadosIds = movimentos.Select(m => m.ProdutoId).Distinct().ToHashSet();
+        var produtosMovimentadosIds = movimentos.Select(m => m.ProductId).Distinct().ToHashSet();
         var semMovimentacao = produtos
             .Where(p => !produtosMovimentadosIds.Contains(p.Id))
             .Select(p => new ProdutoSemMovimentacaoResponse(
-                p.Nome, p.EstoqueAtual, p.EstoqueAtual * p.CustoMedio))
+                p.Name, p.CurrentStock, p.CurrentStock * p.AverageCost))
             .OrderByDescending(p => p.ValorEmEstoque)
             .Take(20)
             .ToList();
@@ -282,17 +282,17 @@ public class RelatorioService(AppDbContext db)
     public async Task<CurvaAbcResponse> GetCurvaAbcProdutosAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var itens = await db.ItensVenda
-            .Where(i => i.Venda!.Status == StatusVenda.Concluida
-                && i.Venda.DataHora.Date >= de.Date && i.Venda.DataHora.Date <= ate.Date)
-            .Include(i => i.Produto)
+        var itens = await db.SaleItems
+            .Where(i => i.Sale!.Status == StatusVenda.Concluida
+                && i.Sale.SaleDate.Date >= de.Date && i.Sale.SaleDate.Date <= ate.Date)
+            .Include(i => i.Product)
             .ToListAsync(ct);
 
         var totalGeral = itens.Sum(i => i.Total);
 
         var agrupados = itens
-            .GroupBy(i => new { i.ProdutoId, Nome = i.Produto?.Nome ?? "Sem nome" })
-            .Select(g => new { g.Key.Nome, Total = g.Sum(i => i.Total), Quantidade = g.Sum(i => i.Quantidade) })
+            .GroupBy(i => new { i.ProductId, Name = i.Product?.Name ?? "Sem nome" })
+            .Select(g => new { g.Key.Name, Total = g.Sum(i => i.Total), Quantity = g.Sum(i => i.Quantity) })
             .OrderByDescending(p => p.Total)
             .ToList();
 
@@ -303,7 +303,7 @@ public class RelatorioService(AppDbContext db)
             var pct = totalGeral > 0 ? Math.Round(p.Total / totalGeral * 100m, 2) : 0m;
             var pctAcum = totalGeral > 0 ? Math.Round(acumulado / totalGeral * 100m, 2) : 0m;
             var classe = pctAcum <= 80m ? "A" : pctAcum <= 95m ? "B" : "C";
-            return new CurvaAbcItemResponse(p.Nome, p.Quantidade, p.Total, pct, pctAcum, classe);
+            return new CurvaAbcItemResponse(p.Name, p.Quantity, p.Total, pct, pctAcum, classe);
         }).ToList();
 
         return new CurvaAbcResponse(resultado, totalGeral);
@@ -312,17 +312,17 @@ public class RelatorioService(AppDbContext db)
     public async Task<CurvaAbcResponse> GetCurvaAbcClientesAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var vendas = await db.Vendas
+        var vendas = await db.Sales
             .Where(v => v.Status == StatusVenda.Concluida
-                && v.DataHora.Date >= de.Date && v.DataHora.Date <= ate.Date)
-            .Include(v => v.Cliente)
+                && v.SaleDate.Date >= de.Date && v.SaleDate.Date <= ate.Date)
+            .Include(v => v.Customer)
             .ToListAsync(ct);
 
         var totalGeral = vendas.Sum(v => v.Total);
 
         var agrupados = vendas
-            .GroupBy(v => new { v.ClienteId, Nome = v.Cliente?.Nome ?? "Sem identificação" })
-            .Select(g => new { g.Key.Nome, Total = g.Sum(v => v.Total), Quantidade = (decimal)g.Count() })
+            .GroupBy(v => new { v.CustomerId, Name = v.Customer?.Name ?? "Sem identificação" })
+            .Select(g => new { g.Key.Name, Total = g.Sum(v => v.Total), Quantity = (decimal)g.Count() })
             .OrderByDescending(c => c.Total)
             .ToList();
 
@@ -333,7 +333,7 @@ public class RelatorioService(AppDbContext db)
             var pct = totalGeral > 0 ? Math.Round(c.Total / totalGeral * 100m, 2) : 0m;
             var pctAcum = totalGeral > 0 ? Math.Round(acumulado / totalGeral * 100m, 2) : 0m;
             var classe = pctAcum <= 80m ? "A" : pctAcum <= 95m ? "B" : "C";
-            return new CurvaAbcItemResponse(c.Nome, c.Quantidade, c.Total, pct, pctAcum, classe);
+            return new CurvaAbcItemResponse(c.Name, c.Quantity, c.Total, pct, pctAcum, classe);
         }).ToList();
 
         return new CurvaAbcResponse(resultado, totalGeral);
@@ -342,47 +342,47 @@ public class RelatorioService(AppDbContext db)
     public async Task<DreResponse> GetDreAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var vendas = await db.Vendas
+        var vendas = await db.Sales
             .Where(v => v.Status == StatusVenda.Concluida
-                && v.DataHora.Date >= de.Date && v.DataHora.Date <= ate.Date)
+                && v.SaleDate.Date >= de.Date && v.SaleDate.Date <= ate.Date)
             .ToListAsync(ct);
 
         var receitaBrutaVendas = vendas.Sum(v => v.Total);
-        var totalDescontos = vendas.Sum(v => v.Desconto);
+        var totalDescontos = vendas.Sum(v => v.Discount);
 
-        var outrasReceitas = await db.Lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Receita
+        var outrasReceitas = await db.Transactions
+            .Where(l => l.Type == TipoLancamento.Receita
                 && l.Status == StatusLancamento.Pago
-                && l.VendaId == null
-                && l.DataPagamento.HasValue
-                && l.DataPagamento!.Value.Date >= de.Date
-                && l.DataPagamento.Value.Date <= ate.Date)
-            .SumAsync(l => l.Valor, ct);
+                && l.SaleId == null
+                && l.PaymentDate.HasValue
+                && l.PaymentDate!.Value.Date >= de.Date
+                && l.PaymentDate.Value.Date <= ate.Date)
+            .SumAsync(l => l.Amount, ct);
 
-        var itens = await db.ItensVenda
-            .Where(i => i.Venda!.Status == StatusVenda.Concluida
-                && i.Venda.DataHora.Date >= de.Date && i.Venda.DataHora.Date <= ate.Date
-                && i.Produto!.Tipo == TipoProduto.Produto)
-            .Include(i => i.Produto)
+        var itens = await db.SaleItems
+            .Where(i => i.Sale!.Status == StatusVenda.Concluida
+                && i.Sale.SaleDate.Date >= de.Date && i.Sale.SaleDate.Date <= ate.Date
+                && i.Product!.Type == TipoProduto.Produto)
+            .Include(i => i.Product)
             .ToListAsync(ct);
 
-        var cmv = itens.Sum(i => (i.Produto?.CustoMedio ?? 0m) * i.Quantidade);
+        var cmv = itens.Sum(i => (i.Product?.AverageCost ?? 0m) * i.Quantity);
 
-        var lancamentosDespesa = await db.Lancamentos
-            .Where(l => l.Tipo == TipoLancamento.Despesa
+        var lancamentosDespesa = await db.Transactions
+            .Where(l => l.Type == TipoLancamento.Despesa
                 && l.Status == StatusLancamento.Pago
-                && l.DataPagamento.HasValue
-                && l.DataPagamento!.Value.Date >= de.Date
-                && l.DataPagamento.Value.Date <= ate.Date)
+                && l.PaymentDate.HasValue
+                && l.PaymentDate!.Value.Date >= de.Date
+                && l.PaymentDate.Value.Date <= ate.Date)
             .ToListAsync(ct);
 
         var despesas = lancamentosDespesa
-            .GroupBy(l => string.IsNullOrEmpty(l.Categoria) ? "Sem categoria" : l.Categoria)
-            .Select(g => new DreLinhaResponse(g.Key, g.Sum(l => l.Valor)))
-            .OrderByDescending(d => d.Valor)
+            .GroupBy(l => string.IsNullOrEmpty(l.Category) ? "Sem categoria" : l.Category)
+            .Select(g => new DreLinhaResponse(g.Key, g.Sum(l => l.Amount)))
+            .OrderByDescending(d => d.Amount)
             .ToList();
 
-        var totalDespesas = despesas.Sum(d => d.Valor);
+        var totalDespesas = despesas.Sum(d => d.Amount);
         var receitaLiquida = receitaBrutaVendas - totalDescontos + outrasReceitas;
         var lucroBruto = receitaLiquida - cmv;
         var resultadoOperacional = lucroBruto - totalDespesas;
@@ -404,23 +404,23 @@ public class RelatorioService(AppDbContext db)
     public async Task<RelatorioClientesResponse> GetClientesAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var totalClientes = await db.Clientes.CountAsync(ct);
+        var totalClientes = await db.Customers.CountAsync(ct);
 
-        var vendas = await db.Vendas
+        var vendas = await db.Sales
             .Where(v => v.Status == StatusVenda.Concluida
-                && v.ClienteId != null
-                && v.DataHora.Date >= de.Date && v.DataHora.Date <= ate.Date)
-            .Include(v => v.Cliente)
+                && v.CustomerId != null
+                && v.SaleDate.Date >= de.Date && v.SaleDate.Date <= ate.Date)
+            .Include(v => v.Customer)
             .ToListAsync(ct);
 
-        var clientesCompraram = vendas.Select(v => v.ClienteId).Distinct().Count();
+        var clientesCompraram = vendas.Select(v => v.CustomerId).Distinct().Count();
         var totalFaturado = vendas.Sum(v => v.Total);
         var ticketMedio = clientesCompraram > 0 ? totalFaturado / clientesCompraram : 0m;
 
         var topClientes = vendas
-            .GroupBy(v => new { v.ClienteId, Nome = v.Cliente?.Nome ?? "", Whatsapp = v.Cliente?.Whatsapp ?? "" })
+            .GroupBy(v => new { v.CustomerId, Name = v.Customer?.Name ?? "", WhatsApp = v.Customer?.WhatsApp ?? "" })
             .Select(g => new ClienteRankingResponse(
-                g.Key.Nome, g.Key.Whatsapp, g.Count(), g.Sum(v => v.Total)))
+                g.Key.Name, g.Key.WhatsApp, g.Count(), g.Sum(v => v.Total)))
             .OrderByDescending(c => c.TotalGasto)
             .Take(10)
             .ToList();
@@ -432,9 +432,9 @@ public class RelatorioService(AppDbContext db)
     public async Task<RelatorioAgendamentosResponse> GetAgendamentosAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var agendamentos = await db.Agendamentos
-            .Where(a => a.DataHoraInicio.Date >= de.Date && a.DataHoraInicio.Date <= ate.Date)
-            .Include(a => a.Profissional)
+        var agendamentos = await db.Appointments
+            .Where(a => a.StartAt.Date >= de.Date && a.StartAt.Date <= ate.Date)
+            .Include(a => a.Professional)
             .ToListAsync(ct);
 
         var total = agendamentos.Count;
@@ -451,7 +451,7 @@ public class RelatorioService(AppDbContext db)
             .ToList();
 
         var porProfissional = agendamentos
-            .GroupBy(a => a.Profissional?.Nome ?? "Sem profissional")
+            .GroupBy(a => a.Professional?.Name ?? "Sem profissional")
             .Select(g =>
             {
                 var tot = g.Count();
@@ -472,31 +472,31 @@ public class RelatorioService(AppDbContext db)
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow.Date);
         var em30Dias = hoje.AddDays(30);
 
-        var contratos = await db.Contratos
-            .Include(c => c.Cliente)
+        var contratos = await db.Contracts
+            .Include(c => c.Customer)
             .ToListAsync(ct);
 
         var ativos = contratos.Where(c => c.Status == ContratoStatus.Ativo).ToList();
 
-        var mrr = ativos.Sum(c => c.Periodicidade switch
+        var mrr = ativos.Sum(c => c.Frequency switch
         {
-            Periodicidade.Mensal => c.Valor,
-            Periodicidade.Trimestral => c.Valor / 3m,
-            Periodicidade.Semestral => c.Valor / 6m,
-            Periodicidade.Anual => c.Valor / 12m,
+            Periodicidade.Mensal => c.Amount,
+            Periodicidade.Trimestral => c.Amount / 3m,
+            Periodicidade.Semestral => c.Amount / 6m,
+            Periodicidade.Anual => c.Amount / 12m,
             _ => 0m,
         });
 
         var vencendoEm30 = ativos.Count(c =>
-            c.DataFim.HasValue && c.DataFim.Value >= hoje && c.DataFim.Value <= em30Dias);
+            c.EndDate.HasValue && c.EndDate.Value >= hoje && c.EndDate.Value <= em30Dias);
 
         var detalhe = contratos
             .Select(c => new ContratoDetalheRel(
-                c.Titulo,
-                c.Cliente?.Nome ?? "",
-                c.Valor,
-                c.Periodicidade.ToString(),
-                c.DataFim,
+                c.Title,
+                c.Customer?.Name ?? "",
+                c.Amount,
+                c.Frequency.ToString(),
+                c.EndDate,
                 c.Status.ToString()))
             .ToList();
 
@@ -507,30 +507,30 @@ public class RelatorioService(AppDbContext db)
     {
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-        var cobrancas = await db.Cobrancas
+        var cobrancas = await db.Charges
             .Where(c => c.Status == CobrancaStatus.Pendente || c.Status == CobrancaStatus.Pago)
-            .Include(c => c.Cliente)
-            .OrderBy(c => c.DataVencimento)
+            .Include(c => c.Customer)
+            .OrderBy(c => c.DueDate)
             .ToListAsync(ct);
 
         var pendentes = cobrancas.Where(c => c.Status == CobrancaStatus.Pendente).ToList();
-        var totalReceber = pendentes.Sum(c => c.Valor);
-        var vencidas = pendentes.Where(c => c.DataVencimento < hoje).ToList();
-        var totalVencido = vencidas.Sum(c => c.Valor);
+        var totalReceber = pendentes.Sum(c => c.Amount);
+        var vencidas = pendentes.Where(c => c.DueDate < hoje).ToList();
+        var totalVencido = vencidas.Sum(c => c.Amount);
         var taxaInadimplencia = totalReceber > 0
             ? Math.Round(totalVencido / totalReceber * 100m, 1) : 0m;
 
         var cobrancasDetalhe = cobrancas
             .Select(c =>
             {
-                var diasAtraso = c.Status == CobrancaStatus.Pendente && c.DataVencimento < hoje
-                    ? (int)(hoje.ToDateTime(TimeOnly.MinValue) - c.DataVencimento.ToDateTime(TimeOnly.MinValue)).TotalDays
+                var diasAtraso = c.Status == CobrancaStatus.Pendente && c.DueDate < hoje
+                    ? (int)(hoje.ToDateTime(TimeOnly.MinValue) - c.DueDate.ToDateTime(TimeOnly.MinValue)).TotalDays
                     : 0;
                 return new CobrancaDetalheRel(
-                    c.Referencia,
-                    c.Cliente?.Nome ?? "",
-                    c.Valor,
-                    c.DataVencimento,
+                    c.Reference,
+                    c.Customer?.Name ?? "",
+                    c.Amount,
+                    c.DueDate,
                     c.Status.ToString(),
                     diasAtraso);
             })
@@ -542,16 +542,16 @@ public class RelatorioService(AppDbContext db)
         {
             new("1-7 dias",
                 vencidasDetalhe.Count(v => v.DiasAtraso >= 1 && v.DiasAtraso <= 7),
-                vencidasDetalhe.Where(v => v.DiasAtraso >= 1 && v.DiasAtraso <= 7).Sum(v => v.Valor)),
+                vencidasDetalhe.Where(v => v.DiasAtraso >= 1 && v.DiasAtraso <= 7).Sum(v => v.Amount)),
             new("8-30 dias",
                 vencidasDetalhe.Count(v => v.DiasAtraso >= 8 && v.DiasAtraso <= 30),
-                vencidasDetalhe.Where(v => v.DiasAtraso >= 8 && v.DiasAtraso <= 30).Sum(v => v.Valor)),
+                vencidasDetalhe.Where(v => v.DiasAtraso >= 8 && v.DiasAtraso <= 30).Sum(v => v.Amount)),
             new("31-60 dias",
                 vencidasDetalhe.Count(v => v.DiasAtraso >= 31 && v.DiasAtraso <= 60),
-                vencidasDetalhe.Where(v => v.DiasAtraso >= 31 && v.DiasAtraso <= 60).Sum(v => v.Valor)),
+                vencidasDetalhe.Where(v => v.DiasAtraso >= 31 && v.DiasAtraso <= 60).Sum(v => v.Amount)),
             new("+60 dias",
                 vencidasDetalhe.Count(v => v.DiasAtraso > 60),
-                vencidasDetalhe.Where(v => v.DiasAtraso > 60).Sum(v => v.Valor)),
+                vencidasDetalhe.Where(v => v.DiasAtraso > 60).Sum(v => v.Amount)),
         };
 
         return new RelatorioCobrancasResponse(
@@ -562,10 +562,10 @@ public class RelatorioService(AppDbContext db)
     public async Task<RelatorioOrcamentosResponse> GetOrcamentosAsync(
         DateTime de, DateTime ate, CancellationToken ct)
     {
-        var orcamentos = await db.Orcamentos
-            .Where(o => o.CriadoEm.Date >= de.Date && o.CriadoEm.Date <= ate.Date)
-            .Include(o => o.Itens)
-            .Include(o => o.Cliente)
+        var orcamentos = await db.Quotes
+            .Where(o => o.CreatedAt.Date >= de.Date && o.CreatedAt.Date <= ate.Date)
+            .Include(o => o.Items)
+            .Include(o => o.Customer)
             .ToListAsync(ct);
 
         var total = orcamentos.Count;
@@ -578,25 +578,25 @@ public class RelatorioService(AppDbContext db)
 
         var abertos = orcamentos
             .Where(o => o.Status == OrcamentoStatus.Enviado || o.Status == OrcamentoStatus.Aprovado);
-        var valorPipeline = abertos.Sum(o => o.Itens.Sum(i => i.ValorUnitario * i.Quantidade));
+        var valorPipeline = abertos.Sum(o => o.Items.Sum(i => i.UnitPrice * i.Quantity));
 
         var porStatus = orcamentos
             .GroupBy(o => o.Status.ToString())
             .Select(g => new OrcamentoStatusItemRel(
                 g.Key,
                 g.Count(),
-                g.Sum(o => o.Itens.Sum(i => i.ValorUnitario * i.Quantidade))))
+                g.Sum(o => o.Items.Sum(i => i.UnitPrice * i.Quantity))))
             .ToList();
 
         var detalhe = orcamentos
             .Select(o => new OrcamentoDetalheRel(
-                o.Numero,
-                o.Titulo,
-                o.Cliente?.Nome ?? "",
-                o.Itens.Sum(i => i.ValorUnitario * i.Quantidade),
+                o.Number,
+                o.Title,
+                o.Customer?.Name ?? "",
+                o.Items.Sum(i => i.UnitPrice * i.Quantity),
                 o.Status.ToString(),
-                o.CriadoEm))
-            .OrderByDescending(o => o.CriadoEm)
+                o.CreatedAt))
+            .OrderByDescending(o => o.CreatedAt)
             .ToList();
 
         return new RelatorioOrcamentosResponse(
@@ -610,25 +610,25 @@ public class RelatorioService(AppDbContext db)
         var ptBr = CultureInfo.GetCultureInfo("pt-BR");
         var hoje = DateTime.UtcNow.Date;
 
-        var assinaturas = await db.AssinaturasCliente
-            .Include(a => a.Cliente)
-            .Include(a => a.Plano)
+        var assinaturas = await db.CustomerSubscriptions
+            .Include(a => a.Customer)
+            .Include(a => a.Plan)
             .ToListAsync(ct);
 
         var ativas = assinaturas.Where(a => a.Status == AssinaturaStatus.Ativa).ToList();
 
-        var mrr = ativas.Sum(a => a.Plano is null ? 0m : a.Plano.Periodicidade switch
+        var mrr = ativas.Sum(a => a.Plan is null ? 0m : a.Plan.Frequency switch
         {
-            Periodicidade.Mensal => a.Plano.Preco,
-            Periodicidade.Trimestral => a.Plano.Preco / 3m,
-            Periodicidade.Semestral => a.Plano.Preco / 6m,
-            Periodicidade.Anual => a.Plano.Preco / 12m,
+            Periodicidade.Mensal => a.Plan.Price,
+            Periodicidade.Trimestral => a.Plan.Price / 3m,
+            Periodicidade.Semestral => a.Plan.Price / 6m,
+            Periodicidade.Anual => a.Plan.Price / 12m,
             _ => 0m,
         });
 
         var canceladasNoPeriodo = assinaturas.Count(a =>
             (a.Status == AssinaturaStatus.Cancelada || a.Status == AssinaturaStatus.Expirada)
-            && a.CriadoEm.Date >= de.Date && a.CriadoEm.Date <= ate.Date);
+            && a.CreatedAt.Date >= de.Date && a.CreatedAt.Date <= ate.Date);
 
         var taxaChurn = ativas.Count > 0
             ? Math.Round((decimal)canceladasNoPeriodo / (ativas.Count + canceladasNoPeriodo) * 100m, 1) : 0m;
@@ -641,15 +641,15 @@ public class RelatorioService(AppDbContext db)
             var ultimoDiaMes = inicioM.AddMonths(1).AddDays(-1);
 
             var ativasNoMes = assinaturas.Count(a =>
-                a.Status == AssinaturaStatus.Ativa && a.CriadoEm.Date <= ultimoDiaMes);
+                a.Status == AssinaturaStatus.Ativa && a.CreatedAt.Date <= ultimoDiaMes);
 
             var novasNoMes = assinaturas.Count(a =>
                 a.Status == AssinaturaStatus.Ativa
-                && a.CriadoEm >= inicioM && a.CriadoEm <= ultimoDiaMes);
+                && a.CreatedAt >= inicioM && a.CreatedAt <= ultimoDiaMes);
 
             var canceladasNoMes = assinaturas.Count(a =>
                 (a.Status == AssinaturaStatus.Cancelada || a.Status == AssinaturaStatus.Expirada)
-                && a.CriadoEm >= inicioM);
+                && a.CreatedAt >= inicioM);
 
             evolucao.Add(new EvolucaoAssinaturaMesRel(
                 inicioM.ToString("MMM/yy", ptBr),
@@ -660,12 +660,12 @@ public class RelatorioService(AppDbContext db)
 
         var detalhe = assinaturas
             .Select(a => new AssinaturaDetalheRel(
-                a.Cliente?.Nome ?? "",
-                a.Plano?.Nome ?? "",
-                a.Plano?.Preco ?? 0m,
-                a.Plano?.Periodicidade.ToString() ?? "",
-                a.DataInicio,
-                a.DataRenovacao,
+                a.Customer?.Name ?? "",
+                a.Plan?.Name ?? "",
+                a.Plan?.Price ?? 0m,
+                a.Plan?.Frequency.ToString() ?? "",
+                a.StartDate,
+                a.RenewalDate,
                 a.Status.ToString()))
             .ToList();
 
@@ -691,23 +691,23 @@ public class RelatorioService(AppDbContext db)
         var hoje = DateTime.UtcNow.Date;
 
         // Agregação no banco (GROUP BY) — não materializa todas as vendas.
-        var agregados = await db.Vendas
-            .Where(v => v.Status == StatusVenda.Concluida && v.ClienteId != null)
-            .GroupBy(v => v.ClienteId!.Value)
+        var agregados = await db.Sales
+            .Where(v => v.Status == StatusVenda.Concluida && v.CustomerId != null)
+            .GroupBy(v => v.CustomerId!.Value)
             .Select(g => new
             {
-                ClienteId = g.Key,
+                CustomerId = g.Key,
                 Qtd = g.Count(),
                 Total = g.Sum(v => v.Total),
-                Primeira = g.Min(v => v.DataHora),
-                Ultima = g.Max(v => v.DataHora),
+                Primeira = g.Min(v => v.SaleDate),
+                Ultima = g.Max(v => v.SaleDate),
             })
             .ToListAsync(ct);
 
-        var ids = agregados.Select(a => a.ClienteId).ToList();
-        var clientes = await db.Clientes
+        var ids = agregados.Select(a => a.CustomerId).ToList();
+        var clientes = await db.Customers
             .Where(c => ids.Contains(c.Id))
-            .Select(c => new { c.Id, c.Nome, c.Whatsapp })
+            .Select(c => new { c.Id, c.Name, c.WhatsApp })
             .ToListAsync(ct);
         var clienteMap = clientes.ToDictionary(c => c.Id);
 
@@ -716,11 +716,11 @@ public class RelatorioService(AppDbContext db)
             {
                 var diasDesdeUltima = (int)(hoje - a.Ultima.Date).TotalDays;
                 var (classificacao, _) = Classificar(a.Qtd, diasDesdeUltima);
-                clienteMap.TryGetValue(a.ClienteId, out var c);
+                clienteMap.TryGetValue(a.CustomerId, out var c);
                 return new HistoricoClienteItemResponse(
-                    a.ClienteId,
-                    c?.Nome ?? "Sem identificação",
-                    c?.Whatsapp ?? "",
+                    a.CustomerId,
+                    c?.Name ?? "Sem identificação",
+                    c?.WhatsApp ?? "",
                     a.Qtd,
                     a.Total,
                     a.Qtd > 0 ? a.Total / a.Qtd : 0m,
@@ -759,38 +759,38 @@ public class RelatorioService(AppDbContext db)
     public async Task<HistoricoClienteDetalheResponse?> GetHistoricoClienteDetalheAsync(
         Guid clienteId, CancellationToken ct)
     {
-        var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, ct);
+        var cliente = await db.Customers.FirstOrDefaultAsync(c => c.Id == clienteId, ct);
         if (cliente is null) return null;
 
-        var vendas = await db.Vendas
-            .Where(v => v.ClienteId == clienteId && v.Status == StatusVenda.Concluida)
-            .Include(v => v.Itens)
-            .OrderByDescending(v => v.DataHora)
+        var vendas = await db.Sales
+            .Where(v => v.CustomerId == clienteId && v.Status == StatusVenda.Concluida)
+            .Include(v => v.Items)
+            .OrderByDescending(v => v.SaleDate)
             .ToListAsync(ct);
 
         var compras = vendas
             .Select(v => new CompraHistoricoItemResponse(
                 v.Id,
-                v.DataHora,
-                v.Itens.Count,
+                v.SaleDate,
+                v.Items.Count,
                 v.Total,
-                v.FormaPagamento.ToString(),
+                v.PaymentMethod.ToString(),
                 v.Status.ToString()))
             .ToList();
 
         var qtd = vendas.Count;
         var total = vendas.Sum(v => v.Total);
-        var primeira = qtd > 0 ? vendas.Min(v => v.DataHora) : cliente.DataCadastro;
-        var ultima = qtd > 0 ? vendas.Max(v => v.DataHora) : cliente.DataCadastro;
+        var primeira = qtd > 0 ? vendas.Min(v => v.SaleDate) : cliente.CreatedAt;
+        var ultima = qtd > 0 ? vendas.Max(v => v.SaleDate) : cliente.CreatedAt;
         var diasDesdeUltima = (int)(DateTime.UtcNow.Date - ultima.Date).TotalDays;
         var classificacao = qtd > 0 ? Classificar(qtd, diasDesdeUltima).Classificacao : "Sem compras";
 
         return new HistoricoClienteDetalheResponse(
             cliente.Id,
-            cliente.Nome,
-            cliente.Whatsapp,
+            cliente.Name,
+            cliente.WhatsApp,
             cliente.Email,
-            cliente.DataCadastro,
+            cliente.CreatedAt,
             qtd,
             total,
             qtd > 0 ? total / qtd : 0m,

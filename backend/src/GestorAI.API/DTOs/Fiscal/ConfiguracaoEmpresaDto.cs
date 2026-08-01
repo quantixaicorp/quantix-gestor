@@ -7,7 +7,7 @@ public record ConfiguracaoEmpresaResponse(
     string? Cnpj,
     string? InscricaoEstadual,
     string? InscricaoMunicipal,
-    string? Telefone,
+    string? Phone,
     string? Email,
     string? Logradouro,
     string? Numero,
@@ -24,8 +24,8 @@ public record ConfiguracaoEmpresaResponse(
     bool TemToken,
     string? Slug,
     string? LogoUrl,
-    string? CorPrimaria,
-    string? DescricaoPublica,
+    string? PrimaryColor,
+    string? PublicDescription,
     string? AsaasApiKey,
     bool AsaasSandbox,
     string? ClickSignApiKey,
@@ -33,16 +33,16 @@ public record ConfiguracaoEmpresaResponse(
     string? EvolutionApiUrl,
     bool TemEvolutionKey,
     string? EvolutionInstance,
-    bool Lembrete3dAntes,
-    bool Lembrete1dAntes,
-    bool LembreteNoDia,
-    bool Lembrete1dDepois,
-    bool Lembrete3dDepois,
-    bool Lembrete7dDepois,
-    string? DominioCustomizado,
-    bool AprovarAutomaticamente,
-    decimal? ValorSinal,
-    int? HorasLimiteCancelamento,
+    bool Reminder3DaysBefore,
+    bool Reminder1DayBefore,
+    bool ReminderOnDueDate,
+    bool Reminder1DayAfter,
+    bool Reminder3DaysAfter,
+    bool Reminder7DaysAfter,
+    string? CustomDomain,
+    bool AutoApprove,
+    decimal? DepositAmount,
+    int? CancellationLimitHours,
     string TipoNegocio = "Lojista");
 
 public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox, string? ClickSignApiKey, bool ClickSignSandbox);
@@ -50,25 +50,25 @@ public record SalvarIntegracoesRequest(string? AsaasApiKey, bool AsaasSandbox, s
 public record SalvarWhiteLabelRequest(
     string? Slug,
     string? LogoUrl,
-    string? CorPrimaria,
-    string? DescricaoPublica,
-    string? DominioCustomizado);
+    string? PrimaryColor,
+    string? PublicDescription,
+    string? CustomDomain);
 
 public record SalvarAutomacaoConfigRequest(
     string? EvolutionApiUrl,
     string? EvolutionApiKey,
     string? EvolutionInstance,
-    bool Lembrete3dAntes,
-    bool Lembrete1dAntes,
-    bool LembreteNoDia,
-    bool Lembrete1dDepois,
-    bool Lembrete3dDepois,
-    bool Lembrete7dDepois);
+    bool Reminder3DaysBefore,
+    bool Reminder1DayBefore,
+    bool ReminderOnDueDate,
+    bool Reminder1DayAfter,
+    bool Reminder3DaysAfter,
+    bool Reminder7DaysAfter);
 
 public record SalvarAgendamentoConfigRequest(
-    bool AprovarAutomaticamente,
-    decimal? ValorSinal,
-    int? HorasLimiteCancelamento);
+    bool AutoApprove,
+    decimal? DepositAmount,
+    int? CancellationLimitHours);
 
 public record AtualizarConfiguracaoEmpresaRequest(
     string? RazaoSocial,
@@ -91,6 +91,6 @@ public record AtualizarConfiguracaoEmpresaRequest(
     int? SerieNfe,
     int? SerieNfce,
     string? FocusNfeToken,
-    string? Telefone = null,
+    string? Phone = null,
     string? Email = null,
     string? TipoNegocio = null);

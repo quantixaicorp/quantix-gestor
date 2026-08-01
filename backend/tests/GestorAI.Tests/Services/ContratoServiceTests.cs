@@ -15,7 +15,7 @@ public class ContratoServiceTests
 
     private (AppDbContext db, ContratoService svc) Setup()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -23,9 +23,9 @@ public class ContratoServiceTests
         return (db, new ContratoService(db, tenant));
     }
 
-    private Cliente CriarCliente(AppDbContext db)
+    private Customer CriarCliente(AppDbContext db)
     {
-        var c = new Cliente { EmpresaId = _empresaId, Nome = "João", Whatsapp = "11999990000" };
+        var c = new Customer { CompanyId = _empresaId, Name = "João", WhatsApp = "11999990000" };
         db.Clientes.Add(c);
         db.SaveChanges();
         return c;
@@ -37,7 +37,7 @@ public class ContratoServiceTests
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
         var req = new CreateContratoRequest(
-            cliente.Id, "Plano Mensal", "Serviços mensais", "Recorrente",
+            cliente.Id, "Plan Mensal", "Serviços mensais", "Recorrente",
             500m, DateOnly.FromDateTime(DateTime.Today), null,
             "Mensal", 10, null,
             [new ContratoItemRequest("Consulta", 1, 500m)]);
@@ -54,22 +54,22 @@ public class ContratoServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Numero = 1, Titulo = "T", Objeto = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Valor = 100m,
-            DataInicio = DateOnly.FromDateTime(DateTime.Today),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 5,
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Numero = 1, Title = "T", Subject = "O",
+            TipoCobranca = TipoCobranca.Recorrente, Amount = 100m,
+            StartDate = DateOnly.FromDateTime(DateTime.Today),
+            Periodicidade = Periodicidade.Mensal, DueDay = 5,
             Status = ContratoStatus.Rascunho
         };
-        contrato.Itens.Add(new ContratoItem { Descricao = "Serviço", Quantidade = 1, ValorUnitario = 100m });
+        contrato.Items.Add(new ContractItem { Description = "Serviço", Quantity = 1, UnitPrice = 100m });
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
         var result = await svc.AtivarAsync(contrato.Id, default);
 
-        Assert.Equal("Ativo", result.Status);
+        Assert.Equal("IsActive", result.Status);
     }
 
     [Fact]
@@ -77,13 +77,13 @@ public class ContratoServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Numero = 1, Titulo = "T", Objeto = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Valor = 100m,
-            DataInicio = DateOnly.FromDateTime(DateTime.Today),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 5,
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Numero = 1, Title = "T", Subject = "O",
+            TipoCobranca = TipoCobranca.Recorrente, Amount = 100m,
+            StartDate = DateOnly.FromDateTime(DateTime.Today),
+            Periodicidade = Periodicidade.Mensal, DueDay = 5,
             Status = ContratoStatus.Rascunho
         };
         db.Contratos.Add(contrato);
@@ -97,16 +97,16 @@ public class ContratoServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Numero = 1, Titulo = "Mensal", Objeto = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Valor = 200m,
-            DataInicio = new DateOnly(2026, 1, 1),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 10,
-            Status = ContratoStatus.Ativo
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Numero = 1, Title = "Mensal", Subject = "O",
+            TipoCobranca = TipoCobranca.Recorrente, Amount = 200m,
+            StartDate = new DateOnly(2026, 1, 1),
+            Periodicidade = Periodicidade.Mensal, DueDay = 10,
+            Status = ContratoStatus.IsActive
         };
-        contrato.Itens.Add(new ContratoItem { Descricao = "S", Quantidade = 1, ValorUnitario = 200m });
+        contrato.Items.Add(new ContractItem { Description = "S", Quantity = 1, UnitPrice = 200m });
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
@@ -114,10 +114,10 @@ public class ContratoServiceTests
         var result = await svc.GerarCobrancasAsync(contrato.Id, req, default);
 
         Assert.Equal(3, result.Count); // Jan, Fev, Mar
-        Assert.All(result, c => Assert.Equal(200m, c.Valor));
-        Assert.Equal(new DateOnly(2026, 1, 10), result[0].DataVencimento);
-        Assert.Equal(new DateOnly(2026, 2, 10), result[1].DataVencimento);
-        Assert.Equal(new DateOnly(2026, 3, 10), result[2].DataVencimento);
+        Assert.All(result, c => Assert.Equal(200m, c.Amount));
+        Assert.Equal(new DateOnly(2026, 1, 10), result[0].DueDate);
+        Assert.Equal(new DateOnly(2026, 2, 10), result[1].DueDate);
+        Assert.Equal(new DateOnly(2026, 3, 10), result[2].DueDate);
     }
 
     [Fact]
@@ -125,16 +125,16 @@ public class ContratoServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Numero = 1, Titulo = "Mensal", Objeto = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Valor = 200m,
-            DataInicio = new DateOnly(2026, 1, 1),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 10,
-            Status = ContratoStatus.Ativo
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Numero = 1, Title = "Mensal", Subject = "O",
+            TipoCobranca = TipoCobranca.Recorrente, Amount = 200m,
+            StartDate = new DateOnly(2026, 1, 1),
+            Periodicidade = Periodicidade.Mensal, DueDay = 10,
+            Status = ContratoStatus.IsActive
         };
-        contrato.Itens.Add(new ContratoItem { Descricao = "S", Quantidade = 1, ValorUnitario = 200m });
+        contrato.Items.Add(new ContractItem { Description = "S", Quantity = 1, UnitPrice = 200m });
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
@@ -143,7 +143,7 @@ public class ContratoServiceTests
         var result2 = await svc.GerarCobrancasAsync(contrato.Id, req, default);
 
         Assert.Empty(result2); // already exist, no duplicates
-        Assert.Equal(2, db.Cobrancas.Count());
+        Assert.Equal(2, db.Charges.Count());
     }
 
     [Fact]
@@ -152,17 +152,17 @@ public class ContratoServiceTests
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
         // 3 parcelas de R$ 100,00 — cada uma R$ 33,33 exceto a última (R$ 33,34)
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Numero = 1, Titulo = "Parcelado", Objeto = "O",
-            TipoCobranca = TipoCobranca.ParceladoPrazoFixo, Valor = 100m,
-            DataInicio = new DateOnly(2026, 1, 1),
-            DataFim = new DateOnly(2026, 3, 31),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 10,
-            Status = ContratoStatus.Ativo
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Numero = 1, Title = "Parcelado", Subject = "O",
+            TipoCobranca = TipoCobranca.ParceladoPrazoFixo, Amount = 100m,
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 3, 31),
+            Periodicidade = Periodicidade.Mensal, DueDay = 10,
+            Status = ContratoStatus.IsActive
         };
-        contrato.Itens.Add(new ContratoItem { Descricao = "S", Quantidade = 1, ValorUnitario = 100m });
+        contrato.Items.Add(new ContractItem { Description = "S", Quantity = 1, UnitPrice = 100m });
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 
@@ -170,9 +170,9 @@ public class ContratoServiceTests
         var result = await svc.GerarCobrancasAsync(contrato.Id, req, default);
 
         Assert.Equal(3, result.Count);
-        Assert.Equal(100m, result.Sum(c => c.Valor)); // total must equal contract value exactly
-        Assert.Contains(result, c => c.Referencia.StartsWith("Parcela 1/3"));
-        Assert.Contains(result, c => c.Referencia.StartsWith("Parcela 3/3"));
+        Assert.Equal(100m, result.Sum(c => c.Amount)); // total must equal contract value exactly
+        Assert.Contains(result, c => c.Reference.StartsWith("Parcela 1/3"));
+        Assert.Contains(result, c => c.Reference.StartsWith("Parcela 3/3"));
     }
 
     [Fact]
@@ -180,16 +180,16 @@ public class ContratoServiceTests
     {
         var (db, svc) = Setup();
         var cliente = CriarCliente(db);
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId, ClienteId = cliente.Id,
-            Numero = 1, Titulo = "T", Objeto = "O",
-            TipoCobranca = TipoCobranca.ParceladoPrazoFixo, Valor = 100m,
-            DataInicio = DateOnly.FromDateTime(DateTime.Today),
-            Periodicidade = Periodicidade.Mensal, DiaVencimento = 5,
+            CompanyId = _empresaId, CustomerId = cliente.Id,
+            Numero = 1, Title = "T", Subject = "O",
+            TipoCobranca = TipoCobranca.ParceladoPrazoFixo, Amount = 100m,
+            StartDate = DateOnly.FromDateTime(DateTime.Today),
+            Periodicidade = Periodicidade.Mensal, DueDay = 5,
             Status = ContratoStatus.Rascunho
         };
-        contrato.Itens.Add(new ContratoItem { Descricao = "S", Quantidade = 1, ValorUnitario = 100m });
+        contrato.Items.Add(new ContractItem { Description = "S", Quantity = 1, UnitPrice = 100m });
         db.Contratos.Add(contrato);
         await db.SaveChangesAsync();
 

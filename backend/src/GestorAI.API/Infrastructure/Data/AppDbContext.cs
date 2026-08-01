@@ -7,41 +7,41 @@ namespace GestorAI.API.Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext tenantContext)
     : DbContext(options)
 {
-    public DbSet<Produto> Produtos => Set<Produto>();
-    public DbSet<Categoria> Categorias => Set<Categoria>();
-    public DbSet<MovimentacaoEstoque> MovimentacoesEstoque => Set<MovimentacaoEstoque>();
-    public DbSet<Venda> Vendas => Set<Venda>();
-    public DbSet<ItemVenda> ItensVenda => Set<ItemVenda>();
-    public DbSet<Cliente> Clientes => Set<Cliente>();
-    public DbSet<Lancamento> Lancamentos => Set<Lancamento>();
-    public DbSet<CategoriaLancamento> CategoriasLancamento => Set<CategoriaLancamento>();
-    public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
-    public DbSet<OrcamentoItem> OrcamentoItens => Set<OrcamentoItem>();
-    public DbSet<Profissional> Profissionais => Set<Profissional>();
-    public DbSet<DisponibilidadeSemanal> DisponibilidadeSemanais => Set<DisponibilidadeSemanal>();
-    public DbSet<BloqueioAgenda> BloqueiosAgenda => Set<BloqueioAgenda>();
-    public DbSet<Agendamento> Agendamentos => Set<Agendamento>();
-    public DbSet<NotaFiscal> NotasFiscais => Set<NotaFiscal>();
-    public DbSet<NotaFiscalItem> NotaFiscalItens => Set<NotaFiscalItem>();
-    public DbSet<ConfiguracaoEmpresa> ConfiguracoesEmpresa => Set<ConfiguracaoEmpresa>();
-    public DbSet<Contrato> Contratos => Set<Contrato>();
-    public DbSet<Cobranca> Cobrancas => Set<Cobranca>();
-    public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
-    public DbSet<ContratoTemplate> ContratoTemplates => Set<ContratoTemplate>();
-    public DbSet<ContratoTemplateItem> ContratoTemplateItens => Set<ContratoTemplateItem>();
-    public DbSet<AutomacaoLog> AutomacaoLogs => Set<AutomacaoLog>();
-    public DbSet<PlanoAssinatura> PlanosAssinatura => Set<PlanoAssinatura>();
-    public DbSet<PlanoAssinaturaItem> PlanosAssinaturaItens => Set<PlanoAssinaturaItem>();
-    public DbSet<AssinaturaCliente> AssinaturasCliente => Set<AssinaturaCliente>();
-    public DbSet<NichoTemplate> NichoTemplates => Set<NichoTemplate>();
-    public DbSet<NichoTemplateItem> NichoTemplateItens => Set<NichoTemplateItem>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();
+    public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<QuoteItem> QuoteItems => Set<QuoteItem>();
+    public DbSet<Professional> Professionals => Set<Professional>();
+    public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
+    public DbSet<ScheduleBlock> ScheduleBlocks => Set<ScheduleBlock>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
+    public DbSet<Contract> Contracts => Set<Contract>();
+    public DbSet<Charge> Charges => Set<Charge>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<ContractTemplate> ContractTemplates => Set<ContractTemplate>();
+    public DbSet<ContractTemplateItem> ContractTemplateItems => Set<ContractTemplateItem>();
+    public DbSet<AutomationLog> AutomationLogs => Set<AutomationLog>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<SubscriptionPlanItem> SubscriptionPlanItems => Set<SubscriptionPlanItem>();
+    public DbSet<CustomerSubscription> CustomerSubscriptions => Set<CustomerSubscription>();
+    public DbSet<NicheTemplate> NicheTemplates => Set<NicheTemplate>();
+    public DbSet<NicheTemplateItem> NicheTemplateItems => Set<NicheTemplateItem>();
     public DbSet<DashboardLayout> DashboardLayouts => Set<DashboardLayout>();
-    public DbSet<RelatorioLayout> RelatorioLayouts => Set<RelatorioLayout>();
-    public DbSet<Parcelamento> Parcelamentos => Set<Parcelamento>();
-    public DbSet<Compra> Compras => Set<Compra>();
-    public DbSet<ItemCompra> ItensCompra => Set<ItemCompra>();
-    public DbSet<PedidoCompra> PedidosCompra => Set<PedidoCompra>();
-    public DbSet<ItemPedidoCompra> ItensPedidoCompra => Set<ItemPedidoCompra>();
+    public DbSet<ReportLayout> ReportLayouts => Set<ReportLayout>();
+    public DbSet<InstallmentPlan> InstallmentPlans => Set<InstallmentPlan>();
+    public DbSet<Purchase> Purchases => Set<Purchase>();
+    public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,163 +49,153 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
 
         modelBuilder.HasDefaultSchema("gestor");
 
-        modelBuilder.Entity<Cliente>()
-            .HasIndex(c => new { c.EmpresaId, c.Whatsapp })
+        modelBuilder.Entity<Customer>()
+            .HasIndex(c => new { c.CompanyId, c.WhatsApp })
             .IsUnique();
 
-        modelBuilder.Entity<Venda>()
-            .HasOne(v => v.Lancamento)
-            .WithOne(l => l.Venda)
-            .HasForeignKey<Lancamento>(l => l.VendaId);
+        modelBuilder.Entity<Sale>()
+            .HasOne(v => v.Transaction)
+            .WithOne(l => l.Sale)
+            .HasForeignKey<Transaction>(l => l.SaleId);
 
-        modelBuilder.Entity<Produto>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Categoria>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<MovimentacaoEstoque>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Venda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Cliente>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Lancamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<CategoriaLancamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<CategoriaLancamento>()
-            .HasIndex(c => new { c.EmpresaId, c.Tipo, c.Nome })
+        modelBuilder.Entity<Product>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Category>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<StockMovement>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Sale>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Customer>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Transaction>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<TransactionCategory>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<TransactionCategory>()
+            .HasIndex(c => new { c.CompanyId, c.Type, c.Name })
             .IsUnique();
-        modelBuilder.Entity<Orcamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Profissional>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<BloqueioAgenda>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Agendamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<NotaFiscal>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<NotaFiscalItem>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<ConfiguracaoEmpresa>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Contrato>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Cobranca>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<Quote>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Professional>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<ScheduleBlock>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Appointment>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Invoice>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<InvoiceItem>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<CompanySettings>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Contract>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Charge>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
 
-        modelBuilder.Entity<ContratoItem>().ToTable("ContratoItens");
-
-        modelBuilder.Entity<Contrato>()
-            .HasOne(c => c.Cliente)
+        modelBuilder.Entity<Contract>()
+            .HasOne(c => c.Customer)
             .WithMany()
-            .HasForeignKey(c => c.ClienteId)
+            .HasForeignKey(c => c.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<Cobranca>()
-            .HasOne(c => c.Cliente)
+        modelBuilder.Entity<Charge>()
+            .HasOne(c => c.Customer)
             .WithMany()
-            .HasForeignKey(c => c.ClienteId)
+            .HasForeignKey(c => c.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<ConfiguracaoEmpresa>()
+        modelBuilder.Entity<CompanySettings>()
             .HasIndex(c => c.Slug)
             .IsUnique()
             .HasFilter("\"Slug\" IS NOT NULL");
 
-        modelBuilder.Entity<Fornecedor>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Fornecedor>()
-            .HasIndex(f => new { f.EmpresaId, f.CnpjCpf })
+        modelBuilder.Entity<Supplier>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<AutomationLog>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Supplier>()
+            .HasIndex(f => new { f.CompanyId, f.CnpjCpf })
             .IsUnique()
             .HasFilter("\"CnpjCpf\" IS NOT NULL");
 
-        modelBuilder.Entity<ContratoTemplate>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<ContratoTemplateItem>().ToTable("ContratoTemplateItens");
-        modelBuilder.Entity<AutomacaoLog>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<AutomacaoLog>()
-            .HasIndex(l => new { l.CobrancaId, l.TipoEvento });
+        modelBuilder.Entity<ContractTemplate>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<AutomationLog>()
+            .HasIndex(l => new { l.ChargeId, l.EventType });
 
-        modelBuilder.Entity<PlanoAssinatura>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<AssinaturaCliente>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<SubscriptionPlan>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<CustomerSubscription>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
 
-        modelBuilder.Entity<PlanoAssinaturaItem>().ToTable("PlanoAssinaturaItens");
-        modelBuilder.Entity<NichoTemplateItem>().ToTable("NichoTemplateItens");
-
-        modelBuilder.Entity<PlanoAssinaturaItem>()
-            .HasOne(i => i.Plano)
-            .WithMany(p => p.Itens)
-            .HasForeignKey(i => i.PlanoAssinaturaId)
+        modelBuilder.Entity<SubscriptionPlanItem>()
+            .HasOne(i => i.Plan)
+            .WithMany(p => p.Items)
+            .HasForeignKey(i => i.SubscriptionPlanId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<AssinaturaCliente>()
-            .HasOne(a => a.Cliente)
+        modelBuilder.Entity<CustomerSubscription>()
+            .HasOne(a => a.Customer)
             .WithMany()
-            .HasForeignKey(a => a.ClienteId)
+            .HasForeignKey(a => a.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<AssinaturaCliente>()
-            .HasOne(a => a.Plano)
-            .WithMany(p => p.Assinantes)
-            .HasForeignKey(a => a.PlanoAssinaturaId)
+        modelBuilder.Entity<CustomerSubscription>()
+            .HasOne(a => a.Plan)
+            .WithMany(p => p.Subscribers)
+            .HasForeignKey(a => a.SubscriptionPlanId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<AssinaturaCliente>()
-            .HasOne(a => a.Contrato)
+        modelBuilder.Entity<CustomerSubscription>()
+            .HasOne(a => a.Contract)
             .WithMany()
-            .HasForeignKey(a => a.ContratoId)
+            .HasForeignKey(a => a.ContractId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<NichoTemplateItem>()
+        modelBuilder.Entity<NicheTemplateItem>()
             .HasOne(i => i.Template)
-            .WithMany(t => t.Itens)
-            .HasForeignKey(i => i.NichoTemplateId)
+            .WithMany(t => t.Items)
+            .HasForeignKey(i => i.NicheTemplateId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<DashboardLayout>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        modelBuilder.Entity<DashboardLayout>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
         modelBuilder.Entity<DashboardLayout>()
-            .HasIndex(d => d.EmpresaId)
+            .HasIndex(d => d.CompanyId)
             .IsUnique();
 
-        modelBuilder.Entity<RelatorioLayout>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<RelatorioLayout>()
-            .HasIndex(r => r.EmpresaId)
+        modelBuilder.Entity<ReportLayout>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<ReportLayout>()
+            .HasIndex(r => r.CompanyId)
             .IsUnique();
 
-        // Compras
-        modelBuilder.Entity<Parcelamento>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<Compra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<ItemCompra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<PedidoCompra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
-        modelBuilder.Entity<ItemPedidoCompra>().HasQueryFilter(e => e.EmpresaId == tenantContext.EmpresaId);
+        // Purchases
+        modelBuilder.Entity<InstallmentPlan>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<Purchase>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<PurchaseItem>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<PurchaseOrder>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<PurchaseOrderItem>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
 
-        modelBuilder.Entity<ItemCompra>().ToTable("ItensCompra");
-        modelBuilder.Entity<ItemPedidoCompra>().ToTable("ItensPedidoCompra");
-
-        modelBuilder.Entity<Lancamento>()
-            .HasOne(l => l.Parcelamento)
-            .WithMany(p => p.Parcelas)
-            .HasForeignKey(l => l.ParcelamentoId)
+        modelBuilder.Entity<Transaction>()
+            .HasOne(l => l.InstallmentPlan)
+            .WithMany(p => p.Installments)
+            .HasForeignKey(l => l.InstallmentPlanId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<Compra>()
-            .HasOne(c => c.Fornecedor)
+        modelBuilder.Entity<Purchase>()
+            .HasOne(c => c.Supplier)
             .WithMany()
-            .HasForeignKey(c => c.FornecedorId)
+            .HasForeignKey(c => c.SupplierId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<Compra>()
-            .HasOne(c => c.PedidoCompra)
+        modelBuilder.Entity<Purchase>()
+            .HasOne(c => c.PurchaseOrder)
             .WithMany()
-            .HasForeignKey(c => c.PedidoCompraId)
+            .HasForeignKey(c => c.PurchaseOrderId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<Compra>()
-            .HasMany(c => c.Itens)
-            .WithOne(i => i.Compra)
-            .HasForeignKey(i => i.CompraId)
+        modelBuilder.Entity<Purchase>()
+            .HasMany(c => c.Items)
+            .WithOne(i => i.Purchase)
+            .HasForeignKey(i => i.PurchaseId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Parcelamento>()
-            .HasOne(p => p.Compra)
-            .WithOne(c => c.Parcelamento)
-            .HasForeignKey<Parcelamento>(p => p.CompraId)
+        modelBuilder.Entity<InstallmentPlan>()
+            .HasOne(p => p.Purchase)
+            .WithOne(c => c.InstallmentPlan)
+            .HasForeignKey<InstallmentPlan>(p => p.PurchaseId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<PedidoCompra>()
-            .HasOne(p => p.Fornecedor)
+        modelBuilder.Entity<PurchaseOrder>()
+            .HasOne(p => p.Supplier)
             .WithMany()
-            .HasForeignKey(p => p.FornecedorId)
+            .HasForeignKey(p => p.SupplierId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<PedidoCompra>()
-            .HasMany(p => p.Itens)
-            .WithOne(i => i.PedidoCompra)
-            .HasForeignKey(i => i.PedidoCompraId)
+        modelBuilder.Entity<PurchaseOrder>()
+            .HasMany(p => p.Items)
+            .WithOne(i => i.PurchaseOrder)
+            .HasForeignKey(i => i.PurchaseOrderId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,5 +1,5 @@
 namespace GestorAI.API.DTOs.Financeiro;
 
-public record CategoriaLancamentoResponse(Guid Id, string Nome, string Tipo);
-public record CreateCategoriaLancamentoRequest(string Nome, string Tipo);
-public record UpdateCategoriaLancamentoRequest(string Nome);
+public record CategoriaLancamentoResponse(Guid Id, string Name, string Type);
+public record CreateCategoriaLancamentoRequest(string Name, string Type);
+public record UpdateCategoriaLancamentoRequest(string Name);

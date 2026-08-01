@@ -14,7 +14,7 @@ public class ClienteDeleteServiceTests
 
     private (AppDbContext db, ClienteService service) Setup()
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
@@ -25,7 +25,7 @@ public class ClienteDeleteServiceTests
     public async Task DeleteAsync_RemoveCliente_QuandoSemVinculos()
     {
         var (db, svc) = Setup();
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Ana", Whatsapp = "11999990000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Ana", WhatsApp = "11999990000" };
         db.Clientes.Add(cliente);
         await db.SaveChangesAsync();
 
@@ -39,12 +39,12 @@ public class ClienteDeleteServiceTests
     public async Task DeleteAsync_LancaExcecao_QuandoTemVenda()
     {
         var (db, svc) = Setup();
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Bob", Whatsapp = "11888880000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Bob", WhatsApp = "11888880000" };
         db.Clientes.Add(cliente);
-        db.Vendas.Add(new Venda
+        db.Vendas.Add(new Sale
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
             Status = StatusVenda.Concluida,
             FormaPagamento = FormaPagamento.Pix,
         });

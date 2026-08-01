@@ -1,85 +1,85 @@
 namespace GestorAI.API.DTOs.Compras;
 
 public record ItemCompraRequest(
-    Guid? ProdutoId,
-    string Descricao,
-    string DestinoCompra,
-    decimal Quantidade,
-    decimal ValorUnitario,
-    decimal Desconto,
-    decimal FreteRateado,
-    decimal Impostos,
-    string? CategoriaFinanceira,
-    string? CentroCusto);
+    Guid? ProductId,
+    string Description,
+    string Destination,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal Discount,
+    decimal AllocatedFreight,
+    decimal Taxes,
+    string? FinancialCategory,
+    string? CostCenter);
 
 public record ItemCompraResponse(
     Guid Id,
-    Guid? ProdutoId,
-    string Descricao,
-    string DestinoCompra,
-    decimal Quantidade,
-    decimal ValorUnitario,
-    decimal Desconto,
-    decimal FreteRateado,
-    decimal Impostos,
-    decimal ValorTotal,
-    string? CategoriaFinanceira,
-    string? CentroCusto);
+    Guid? ProductId,
+    string Description,
+    string Destination,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal Discount,
+    decimal AllocatedFreight,
+    decimal Taxes,
+    decimal TotalAmount,
+    string? FinancialCategory,
+    string? CostCenter);
 
 public record ParcelaPreviewRequest(
-    int Numero,
-    DateTime DataVencimento,
-    decimal Valor);
+    int Number,
+    DateTime DueDate,
+    decimal Amount);
 
 public record CreateCompraRequest(
-    Guid FornecedorId,
-    DateTime Data,
-    string? NumeroNota,
-    string TipoCompra,
-    Guid? PedidoCompraId,
-    string? Observacoes,
-    List<ItemCompraRequest> Itens,
-    string CondicaoPagamento,
-    string FormaPagamento,
-    int? QtdParcelas,
+    Guid SupplierId,
+    DateTime Date,
+    string? NoteNumber,
+    string PurchaseType,
+    Guid? PurchaseOrderId,
+    string? Notes,
+    List<ItemCompraRequest> Items,
+    string PaymentTerms,
+    string PaymentMethod,
+    int? InstallmentCount,
     List<ParcelaPreviewRequest>? ParcelasPersonalizadas);
 
 public record UpdateCompraRequest(
-    Guid FornecedorId,
-    DateTime Data,
-    string? NumeroNota,
-    string TipoCompra,
-    Guid? PedidoCompraId,
-    string? Observacoes,
-    List<ItemCompraRequest> Itens,
-    string CondicaoPagamento,
-    string FormaPagamento,
-    int? QtdParcelas,
+    Guid SupplierId,
+    DateTime Date,
+    string? NoteNumber,
+    string PurchaseType,
+    Guid? PurchaseOrderId,
+    string? Notes,
+    List<ItemCompraRequest> Items,
+    string PaymentTerms,
+    string PaymentMethod,
+    int? InstallmentCount,
     List<ParcelaPreviewRequest>? ParcelasPersonalizadas);
 
 public record CompraResponse(
     Guid Id,
-    int Numero,
-    DateTime Data,
-    Guid FornecedorId,
+    int Number,
+    DateTime Date,
+    Guid SupplierId,
     string FornecedorNome,
-    Guid? PedidoCompraId,
-    string TipoCompra,
-    string? NumeroNota,
-    string CondicaoPagamento,
-    string FormaPagamento,
+    Guid? PurchaseOrderId,
+    string PurchaseType,
+    string? NoteNumber,
+    string PaymentTerms,
+    string PaymentMethod,
     string Status,
-    decimal ValorTotal,
-    string? Observacoes,
-    DateTime CriadaEm,
-    List<ItemCompraResponse> Itens,
-    ParcelamentoResumoResponse? Parcelamento);
+    decimal TotalAmount,
+    string? Notes,
+    DateTime CreatedAt,
+    List<ItemCompraResponse> Items,
+    ParcelamentoResumoResponse? InstallmentPlan);
 
 public record ParcelamentoResumoResponse(
     Guid Id,
-    string Descricao,
-    decimal ValorTotal,
-    int QtdParcelas,
+    string Description,
+    decimal TotalAmount,
+    int InstallmentCount,
     string Status);
 
 public record CompraResumoResponse(

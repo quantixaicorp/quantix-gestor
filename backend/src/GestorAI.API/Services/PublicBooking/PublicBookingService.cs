@@ -12,56 +12,56 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
 {
     public async Task<Guid> ResolveEmpresaAsync(string slug, CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa
+        var config = await db.CompanySettings
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Slug == slug, ct)
             ?? throw new AppException("Empresa não encontrada.", 404);
-        return config.EmpresaId;
+        return config.CompanyId;
     }
 
     public async Task<PublicEmpresaInfo> GetInfoAsync(Guid empresaId, CancellationToken ct)
     {
-        var config = await db.ConfiguracoesEmpresa
+        var config = await db.CompanySettings
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.EmpresaId == empresaId, ct)
+            .FirstOrDefaultAsync(c => c.CompanyId == empresaId, ct)
             ?? throw new AppException("Empresa não encontrada.", 404);
         return new PublicEmpresaInfo(
             config.NomeFantasia ?? config.RazaoSocial ?? "Empresa",
             config.LogoUrl,
-            config.CorPrimaria,
-            config.DescricaoPublica);
+            config.PrimaryColor,
+            config.PublicDescription);
     }
 
     public async Task<List<PublicServicoResponse>> GetServicosAsync(Guid empresaId, CancellationToken ct) =>
-        await db.Produtos
+        await db.Products
             .IgnoreQueryFilters()
-            .Where(p => p.EmpresaId == empresaId && p.Tipo == TipoProduto.Servico && p.Ativo && p.DuracaoMinutos != null)
-            .OrderBy(p => p.Nome)
-            .Select(p => new PublicServicoResponse(p.Id, p.Nome, p.PrecoVenda, p.DuracaoMinutos))
+            .Where(p => p.CompanyId == empresaId && p.Type == TipoProduto.Servico && p.IsActive && p.DurationMinutes != null)
+            .OrderBy(p => p.Name)
+            .Select(p => new PublicServicoResponse(p.Id, p.Name, p.SalePrice, p.DurationMinutes))
             .ToListAsync(ct);
 
     public async Task<List<PublicProfissionalResponse>> GetProfissionaisAsync(Guid empresaId, CancellationToken ct) =>
-        await db.Profissionais
+        await db.Professionals
             .IgnoreQueryFilters()
-            .Where(p => p.EmpresaId == empresaId && p.Ativo)
-            .OrderBy(p => p.Nome)
-            .Select(p => new PublicProfissionalResponse(p.Id, p.Nome))
+            .Where(p => p.CompanyId == empresaId && p.IsActive)
+            .OrderBy(p => p.Name)
+            .Select(p => new PublicProfissionalResponse(p.Id, p.Name))
             .ToListAsync(ct);
 
     public async Task<List<int>> GetDiasComDisponibilidadeAsync(Guid empresaId, Guid profissionalId, CancellationToken ct)
     {
-        var profissional = await db.Profissionais
+        var profissional = await db.Professionals
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == profissionalId && p.EmpresaId == empresaId, ct)
-            ?? throw new AppException("Profissional não encontrado.", 404);
+            .FirstOrDefaultAsync(p => p.Id == profissionalId && p.CompanyId == empresaId, ct)
+            ?? throw new AppException("Professional não encontrado.", 404);
 
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await db.DisponibilidadeSemanais
+        return await db.WeeklyAvailabilities
             .IgnoreQueryFilters()
-            .Where(d => d.ProfissionalId == profissionalId
-                && d.DataInicio > DateOnly.MinValue
-                && d.DataFim >= hoje)
-            .Select(d => d.DiaSemana)
+            .Where(d => d.ProfessionalId == profissionalId
+                && d.StartDate > DateOnly.MinValue
+                && d.EndDate >= hoje)
+            .Select(d => d.WeekDay)
             .Distinct()
             .ToListAsync(ct);
     }
@@ -71,36 +71,36 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
     {
         var diaSemana = (int)data.DayOfWeek;
 
-        var faixas = await db.DisponibilidadeSemanais
+        var faixas = await db.WeeklyAvailabilities
             .IgnoreQueryFilters()
-            .Where(d => d.ProfissionalId == profissionalId
-                && d.DiaSemana == diaSemana
-                && d.DataInicio <= data && d.DataFim >= data)
+            .Where(d => d.ProfessionalId == profissionalId
+                && d.WeekDay == diaSemana
+                && d.StartDate <= data && d.EndDate >= data)
             .ToListAsync(ct);
 
         if (faixas.Count == 0) return [];
 
-        var servico = await db.Produtos
+        var servico = await db.Products
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == servicoId && p.EmpresaId == empresaId && p.DuracaoMinutos != null, ct)
+            .FirstOrDefaultAsync(p => p.Id == servicoId && p.CompanyId == empresaId && p.DurationMinutes != null, ct)
             ?? throw new AppException("Serviço não encontrado.", 404);
 
-        var duracao = TimeSpan.FromMinutes(servico.DuracaoMinutos!.Value);
+        var duracao = TimeSpan.FromMinutes(servico.DurationMinutes!.Value);
         var inicioDia = data.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
         var fimDia = inicioDia.AddDays(1);
 
-        var bloqueios = await db.BloqueiosAgenda
+        var bloqueios = await db.ScheduleBlocks
             .IgnoreQueryFilters()
-            .Where(b => b.EmpresaId == empresaId
-                && b.DataInicio < fimDia && b.DataFim > inicioDia
-                && (b.ProfissionalId == null || b.ProfissionalId == profissionalId))
+            .Where(b => b.CompanyId == empresaId
+                && b.StartDate < fimDia && b.EndDate > inicioDia
+                && (b.ProfessionalId == null || b.ProfessionalId == profissionalId))
             .ToListAsync(ct);
 
-        var ocupados = await db.Agendamentos
+        var ocupados = await db.Appointments
             .IgnoreQueryFilters()
-            .Where(a => a.EmpresaId == empresaId
-                && a.ProfissionalId == profissionalId
-                && a.DataHoraInicio >= inicioDia && a.DataHoraInicio < fimDia
+            .Where(a => a.CompanyId == empresaId
+                && a.ProfessionalId == profissionalId
+                && a.StartAt >= inicioDia && a.StartAt < fimDia
                 && a.Status != AgendamentoStatus.Cancelado)
             .ToListAsync(ct);
 
@@ -109,14 +109,14 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
 
         foreach (var faixa in faixas)
         {
-            var cursor = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraInicio), DateTimeKind.Unspecified);
-            var limite = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.HoraFim), DateTimeKind.Unspecified) - duracao;
+            var cursor = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.StartTime), DateTimeKind.Unspecified);
+            var limite = data.ToDateTime(TimeOnly.FromTimeSpan(faixa.EndTime), DateTimeKind.Unspecified) - duracao;
 
             while (cursor <= limite)
             {
                 var fim = cursor + duracao;
-                var bloqueado = bloqueios.Any(b => b.DataInicio < fim && b.DataFim > cursor);
-                var ocupado = ocupados.Any(a => a.DataHoraInicio < fim && a.DataHoraFim > cursor);
+                var bloqueado = bloqueios.Any(b => b.StartDate < fim && b.EndDate > cursor);
+                var ocupado = ocupados.Any(a => a.StartAt < fim && a.EndAt > cursor);
 
                 if (!bloqueado && !ocupado)
                     slots.Add(cursor);
@@ -131,76 +131,76 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
     public async Task<PublicAgendamentoConfirmado> CriarAgendamentoAsync(
         Guid empresaId, PublicCriarAgendamentoRequest req, CancellationToken ct)
     {
-        _ = await db.Profissionais
+        _ = await db.Professionals
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == req.ProfissionalId && p.EmpresaId == empresaId, ct)
-            ?? throw new AppException("Profissional não encontrado.", 404);
+            .FirstOrDefaultAsync(p => p.Id == req.ProfessionalId && p.CompanyId == empresaId, ct)
+            ?? throw new AppException("Professional não encontrado.", 404);
 
-        var servico = await db.Produtos
+        var servico = await db.Products
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == req.ServicoId && p.EmpresaId == empresaId && p.DuracaoMinutos != null, ct)
+            .FirstOrDefaultAsync(p => p.Id == req.ServiceId && p.CompanyId == empresaId && p.DurationMinutes != null, ct)
             ?? throw new AppException("Serviço não encontrado.", 404);
 
-        var dataHoraFim = req.DataHoraInicio.AddMinutes(servico.DuracaoMinutos!.Value);
+        var dataHoraFim = req.StartAt.AddMinutes(servico.DurationMinutes!.Value);
 
-        var conflito = await db.Agendamentos
+        var conflito = await db.Appointments
             .IgnoreQueryFilters()
-            .AnyAsync(a => a.EmpresaId == empresaId
-                && a.ProfissionalId == req.ProfissionalId
+            .AnyAsync(a => a.CompanyId == empresaId
+                && a.ProfessionalId == req.ProfessionalId
                 && a.Status != AgendamentoStatus.Cancelado
-                && a.DataHoraInicio < dataHoraFim && a.DataHoraFim > req.DataHoraInicio, ct);
+                && a.StartAt < dataHoraFim && a.EndAt > req.StartAt, ct);
 
         if (conflito)
             throw new AppException("Horário não está mais disponível.", 409);
 
-        var config = await db.ConfiguracoesEmpresa
+        var config = await db.CompanySettings
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.EmpresaId == empresaId, ct);
+            .FirstOrDefaultAsync(c => c.CompanyId == empresaId, ct);
 
-        var statusInicial = (config?.AprovarAutomaticamente ?? true)
+        var statusInicial = (config?.AutoApprove ?? true)
             ? AgendamentoStatus.Agendado
             : AgendamentoStatus.AguardandoConfirmacao;
 
-        var agendamento = new Agendamento
+        var agendamento = new Appointment
         {
-            EmpresaId = empresaId,
-            ProfissionalId = req.ProfissionalId,
-            ClienteNome = req.ClienteNome,
-            ClienteTelefone = req.ClienteTelefone,
-            ServicoId = req.ServicoId,
-            DataHoraInicio = req.DataHoraInicio,
-            DataHoraFim = dataHoraFim,
+            CompanyId = empresaId,
+            ProfessionalId = req.ProfessionalId,
+            CustomerName = req.CustomerName,
+            CustomerPhone = req.CustomerPhone,
+            ServiceId = req.ServiceId,
+            StartAt = req.StartAt,
+            EndAt = dataHoraFim,
             Status = statusInicial,
         };
 
-        db.Agendamentos.Add(agendamento);
+        db.Appointments.Add(agendamento);
         await db.SaveChangesAsync(ct);
 
         // Criar cobrança de sinal PIX se configurado — falha silenciosa para não bloquear o agendamento
         string? sinalPixQrCode = null;
         decimal? sinalValor = null;
-        if (config?.ValorSinal > 0 && !string.IsNullOrWhiteSpace(config.AsaasApiKey))
+        if (config?.DepositAmount > 0 && !string.IsNullOrWhiteSpace(config.AsaasApiKey))
         {
             try
             {
                 var customerId = await asaasService.GetOrCreateCustomerAsync(
                     config.AsaasApiKey, config.AsaasSandbox,
-                    req.ClienteNome, null, ct);
+                    req.CustomerName, null, ct);
 
-                var vencimento = DateOnly.FromDateTime(req.DataHoraInicio);
+                var vencimento = DateOnly.FromDateTime(req.StartAt);
                 var result = await asaasService.CreatePaymentAsync(
                     config.AsaasApiKey, config.AsaasSandbox,
-                    customerId, config.ValorSinal.Value,
+                    customerId, config.DepositAmount.Value,
                     vencimento,
-                    $"Sinal para agendamento em {req.DataHoraInicio:dd/MM/yyyy HH:mm}",
+                    $"Sinal para agendamento em {req.StartAt:dd/MM/yyyy HH:mm}",
                     "PIX", ct);
 
-                agendamento.SinalAsaasId = result.Id;
-                agendamento.SinalPixQrCode = result.PixQrCode?.Payload;
+                agendamento.DepositAsaasId = result.Id;
+                agendamento.DepositPixQrCode = result.PixQrCode?.Payload;
                 await db.SaveChangesAsync(ct);
 
-                sinalPixQrCode = agendamento.SinalPixQrCode;
-                sinalValor = config.ValorSinal;
+                sinalPixQrCode = agendamento.DepositPixQrCode;
+                sinalValor = config.DepositAmount;
             }
             catch
             {
@@ -208,15 +208,15 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
             }
         }
 
-        var profissionalNome = (await db.Profissionais.IgnoreQueryFilters()
-            .FirstAsync(p => p.Id == req.ProfissionalId, ct)).Nome;
+        var profissionalNome = (await db.Professionals.IgnoreQueryFilters()
+            .FirstAsync(p => p.Id == req.ProfessionalId, ct)).Name;
 
         return new PublicAgendamentoConfirmado(
             agendamento.Id,
-            servico.Nome,
+            servico.Name,
             profissionalNome,
-            agendamento.DataHoraInicio,
-            agendamento.DataHoraFim,
+            agendamento.StartAt,
+            agendamento.EndAt,
             sinalPixQrCode,
             sinalValor);
     }

@@ -21,7 +21,7 @@ public class RelatorioLayoutService(AppDbContext db, TenantContext tenantContext
 
     public async Task<RelatorioLayoutResponse> GetAsync(CancellationToken ct)
     {
-        var layout = await db.RelatorioLayouts.FirstOrDefaultAsync(ct);
+        var layout = await db.ReportLayouts.FirstOrDefaultAsync(ct);
         if (layout is null)
             return new RelatorioLayoutResponse(DefaultLayout);
 
@@ -31,14 +31,14 @@ public class RelatorioLayoutService(AppDbContext db, TenantContext tenantContext
 
     public async Task<RelatorioLayoutResponse> UpdateAsync(UpdateRelatorioLayoutRequest req, CancellationToken ct)
     {
-        var layout = await db.RelatorioLayouts.FirstOrDefaultAsync(ct);
+        var layout = await db.ReportLayouts.FirstOrDefaultAsync(ct);
         if (layout is null)
         {
-            layout = new RelatorioLayout { EmpresaId = tenantContext.EmpresaId };
-            db.RelatorioLayouts.Add(layout);
+            layout = new ReportLayout { CompanyId = tenantContext.CompanyId };
+            db.ReportLayouts.Add(layout);
         }
         layout.TabsJson = JsonSerializer.Serialize(req.Tabs);
-        layout.AtualizadoEm = DateTime.UtcNow;
+        layout.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return new RelatorioLayoutResponse(req.Tabs);
     }

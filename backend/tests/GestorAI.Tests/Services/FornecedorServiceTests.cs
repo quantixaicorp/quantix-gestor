@@ -14,7 +14,7 @@ public class FornecedorServiceTests
 
     private (AppDbContext db, FornecedorService svc) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -29,15 +29,15 @@ public class FornecedorServiceTests
         var outroTenant = Guid.NewGuid();
 
         db.Fornecedores.AddRange(
-            new Fornecedor { EmpresaId = _empresaId, Nome = "Fornecedor A" },
-            new Fornecedor { EmpresaId = outroTenant, Nome = "Fornecedor Outro Tenant" }
+            new Supplier { CompanyId = _empresaId, Name = "Supplier A" },
+            new Supplier { CompanyId = outroTenant, Name = "Supplier Outro Tenant" }
         );
         await db.SaveChangesAsync();
 
         var result = await svc.ListAsync(null, default);
 
         Assert.Single(result);
-        Assert.Equal("Fornecedor A", result[0].Nome);
+        Assert.Equal("Supplier A", result[0].Name);
     }
 
     [Fact]
@@ -46,16 +46,16 @@ public class FornecedorServiceTests
         var (db, svc) = Setup();
 
         var req = new CreateFornecedorRequest(
-            Nome: "Distribuidora XYZ",
+            Name: "Distribuidora XYZ",
             CnpjCpf: "12345678000195",
-            Telefone: "11999990000",
+            Phone: "11999990000",
             Email: "contato@xyz.com",
             Logradouro: "Rua das Flores, 100",
             Cidade: "São Paulo",
             Uf: "SP",
             Cep: "01310-100",
             Contato: "João Silva",
-            Observacoes: null);
+            Notes: null);
 
         var result = await svc.CreateAsync(req, default);
 
@@ -63,8 +63,8 @@ public class FornecedorServiceTests
         var saved = await db.Fornecedores.IgnoreQueryFilters()
             .FirstOrDefaultAsync(f => f.Id == result.Id);
         Assert.NotNull(saved);
-        Assert.Equal(_empresaId, saved.EmpresaId);
-        Assert.Equal("Distribuidora XYZ", saved.Nome);
+        Assert.Equal(_empresaId, saved.CompanyId);
+        Assert.Equal("Distribuidora XYZ", saved.Name);
     }
 
     [Fact]
@@ -73,10 +73,10 @@ public class FornecedorServiceTests
         var (_, svc) = Setup();
 
         var req = new UpdateFornecedorRequest(
-            Nome: "Novo Nome",
-            CnpjCpf: null, Telefone: null, Email: null,
+            Name: "Novo Name",
+            CnpjCpf: null, Phone: null, Email: null,
             Logradouro: null, Cidade: null, Uf: null,
-            Cep: null, Contato: null, Observacoes: null);
+            Cep: null, Contato: null, Notes: null);
 
         await Assert.ThrowsAsync<AppException>(() =>
             svc.UpdateAsync(Guid.NewGuid(), req, default));
@@ -86,7 +86,7 @@ public class FornecedorServiceTests
     public async Task DeleteAsync_RemoveFornecedor()
     {
         var (db, svc) = Setup();
-        var fornecedor = new Fornecedor { EmpresaId = _empresaId, Nome = "Para Deletar" };
+        var fornecedor = new Supplier { CompanyId = _empresaId, Name = "Para Deletar" };
         db.Fornecedores.Add(fornecedor);
         await db.SaveChangesAsync();
 

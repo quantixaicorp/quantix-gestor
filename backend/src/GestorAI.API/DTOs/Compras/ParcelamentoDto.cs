@@ -2,19 +2,19 @@ namespace GestorAI.API.DTOs.Compras;
 
 public record ParcelaResponse(
     Guid Id,
-    int NumeroParcela,
-    decimal Valor,
-    DateTime DataVencimento,
-    DateTime? DataPagamento,
+    int InstallmentNumber,
+    decimal Amount,
+    DateTime DueDate,
+    DateTime? PaymentDate,
     string Status,
     bool Vencido);
 
 public record ParcelamentoDetalheResponse(
     Guid Id,
-    Guid? CompraId,
-    string Descricao,
-    decimal ValorTotal,
-    int QtdParcelas,
+    Guid? PurchaseId,
+    string Description,
+    decimal TotalAmount,
+    int InstallmentCount,
     string Status,
-    string Categoria,
-    List<ParcelaResponse> Parcelas);
+    string Category,
+    List<ParcelaResponse> Installments);

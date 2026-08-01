@@ -18,7 +18,7 @@ public class TenantMiddlewareTests
 
         await middleware.InvokeAsync(context, tenantContext);
 
-        Assert.Equal(empresaId, tenantContext.EmpresaId);
+        Assert.Equal(empresaId, tenantContext.CompanyId);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class TenantMiddlewareTests
 
         await middleware.InvokeAsync(context, tenantContext);
 
-        Assert.Equal(Guid.Empty, tenantContext.EmpresaId);
+        Assert.Equal(Guid.Empty, tenantContext.CompanyId);
     }
 
     [Fact]
@@ -45,6 +45,6 @@ public class TenantMiddlewareTests
 
         await middleware.InvokeAsync(context, tenantContext);
 
-        Assert.Equal(Guid.Empty, tenantContext.EmpresaId);
+        Assert.Equal(Guid.Empty, tenantContext.CompanyId);
     }
 }

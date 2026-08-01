@@ -13,28 +13,28 @@ public class GeracaoCobrancaServiceTests
 
     private AppDbContext CreateDb()
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         return new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
     }
 
-    private async Task<Contrato> CriarContratoAtivoAsync(AppDbContext db, int diaVencimento = 10)
+    private async Task<Contract> CriarContratoAtivoAsync(AppDbContext db, int diaVencimento = 10)
     {
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "Carlos", Whatsapp = "11977770000" };
+        var cliente = new Customer { CompanyId = _empresaId, Name = "Carlos", WhatsApp = "11977770000" };
         db.Clientes.Add(cliente);
         await db.SaveChangesAsync();
 
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
-            Titulo = "Serviço Mensal",
-            Objeto = "Prestação de serviços",
-            Status = ContratoStatus.Ativo,
-            Valor = 300m,
-            DiaVencimento = diaVencimento,
-            DataInicio = new DateOnly(2026, 1, 1),
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
+            Title = "Serviço Mensal",
+            Subject = "Prestação de serviços",
+            Status = ContratoStatus.IsActive,
+            Amount = 300m,
+            DueDay = diaVencimento,
+            StartDate = new DateOnly(2026, 1, 1),
             TipoCobranca = TipoCobranca.Recorrente,
             Periodicidade = Periodicidade.Mensal,
         };
@@ -53,12 +53,12 @@ public class GeracaoCobrancaServiceTests
         var svc = new GeracaoCobrancaService(db);
         await svc.ProcessarTodosTenantsAsync(default, dia1);
 
-        var cobranca = db.Cobrancas.IgnoreQueryFilters().FirstOrDefault();
+        var cobranca = db.Charges.IgnoreQueryFilters().FirstOrDefault();
         Assert.NotNull(cobranca);
-        Assert.Equal(new DateOnly(2026, 7, 10), cobranca.DataVencimento);
-        Assert.Equal("Mensalidade 07/2026", cobranca.Referencia);
-        Assert.Equal(300m, cobranca.Valor);
-        Assert.Equal(_empresaId, cobranca.EmpresaId);
+        Assert.Equal(new DateOnly(2026, 7, 10), cobranca.DueDate);
+        Assert.Equal("Mensalidade 07/2026", cobranca.Reference);
+        Assert.Equal(300m, cobranca.Amount);
+        Assert.Equal(_empresaId, cobranca.CompanyId);
         Assert.Equal(CobrancaStatus.Pendente, cobranca.Status);
     }
 
@@ -72,7 +72,7 @@ public class GeracaoCobrancaServiceTests
         var svc = new GeracaoCobrancaService(db);
         await svc.ProcessarTodosTenantsAsync(default, dia2);
 
-        Assert.Empty(db.Cobrancas.IgnoreQueryFilters().ToList());
+        Assert.Empty(db.Charges.IgnoreQueryFilters().ToList());
     }
 
     [Fact]
@@ -82,14 +82,14 @@ public class GeracaoCobrancaServiceTests
         var dia1 = new DateOnly(2026, 7, 1);
         var contrato = await CriarContratoAtivoAsync(db, diaVencimento: 10);
 
-        db.Cobrancas.Add(new Cobranca
+        db.Charges.Add(new Charge
         {
-            EmpresaId = _empresaId,
-            ClienteId = contrato.ClienteId,
+            CompanyId = _empresaId,
+            CustomerId = contrato.CustomerId,
             ContratoId = contrato.Id,
-            Referencia = "Mensalidade 07/2026",
-            Valor = 300m,
-            DataVencimento = new DateOnly(2026, 7, 10),
+            Reference = "Mensalidade 07/2026",
+            Amount = 300m,
+            DueDate = new DateOnly(2026, 7, 10),
             Status = CobrancaStatus.Pendente,
         });
         await db.SaveChangesAsync();
@@ -97,7 +97,7 @@ public class GeracaoCobrancaServiceTests
         var svc = new GeracaoCobrancaService(db);
         await svc.ProcessarTodosTenantsAsync(default, dia1);
 
-        Assert.Single(db.Cobrancas.IgnoreQueryFilters().ToList());
+        Assert.Single(db.Charges.IgnoreQueryFilters().ToList());
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class GeracaoCobrancaServiceTests
         var svc = new GeracaoCobrancaService(db);
         await svc.ProcessarTodosTenantsAsync(default, dia1);
 
-        Assert.Empty(db.Cobrancas.IgnoreQueryFilters().ToList());
+        Assert.Empty(db.Charges.IgnoreQueryFilters().ToList());
     }
 
     [Fact]
@@ -125,9 +125,9 @@ public class GeracaoCobrancaServiceTests
         var svc = new GeracaoCobrancaService(db);
         await svc.ProcessarTodosTenantsAsync(default, dia1Fev);
 
-        var cobranca = db.Cobrancas.IgnoreQueryFilters().FirstOrDefault();
+        var cobranca = db.Charges.IgnoreQueryFilters().FirstOrDefault();
         Assert.NotNull(cobranca);
-        Assert.Equal(new DateOnly(2026, 2, 28), cobranca.DataVencimento);
+        Assert.Equal(new DateOnly(2026, 2, 28), cobranca.DueDate);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class GeracaoCobrancaServiceTests
 
         var log = db.AutomacaoLogs.IgnoreQueryFilters().FirstOrDefault();
         Assert.NotNull(log);
-        Assert.Equal(AutomacaoTipoEvento.CobrancaGerada, log.TipoEvento);
-        Assert.True(log.Sucesso);
+        Assert.Equal(AutomacaoTipoEvento.CobrancaGerada, log.EventType);
+        Assert.True(log.Success);
     }
 }

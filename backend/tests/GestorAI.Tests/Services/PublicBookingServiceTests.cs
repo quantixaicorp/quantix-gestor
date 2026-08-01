@@ -27,7 +27,7 @@ public class PublicBookingServiceTests
     public async Task ResolveEmpresaAsync_RetornaEmpresaId_QuandoSlugExiste()
     {
         var (db, svc) = Setup();
-        db.ConfiguracoesEmpresa.Add(new CompanySettings
+        db.CompanySettings.Add(new CompanySettings
         {
             CompanyId = _empresaId,
             Slug = "minha-empresa",
@@ -54,14 +54,14 @@ public class PublicBookingServiceTests
         var (db, svc) = Setup();
 
         var categoriaId = Guid.NewGuid();
-        db.Categorias.Add(new Category
+        db.Categories.Add(new Category
         {
             Id = categoriaId,
             CompanyId = _empresaId,
             Name = "Category Teste",
         });
 
-        db.Produtos.AddRange(
+        db.Products.AddRange(
             // Servico ativo com duracao — deve aparecer
             new Product
             {
@@ -88,7 +88,7 @@ public class PublicBookingServiceTests
                 CompanyId = _empresaId,
                 CategoryId = categoriaId,
                 Name = "Shampoo",
-                Type = TipoProduto.Product,
+                Type = TipoProduto.Produto,
                 IsActive = true,
                 DurationMinutes = null,
             }
@@ -110,14 +110,14 @@ public class PublicBookingServiceTests
         var profissionalId = Guid.NewGuid();
         var servicoId = Guid.NewGuid();
 
-        db.Categorias.Add(new Category
+        db.Categories.Add(new Category
         {
             Id = categoriaId,
             CompanyId = _empresaId,
             Name = "Category",
         });
 
-        db.Profissionais.Add(new Professional
+        db.Professionals.Add(new Professional
         {
             Id = profissionalId,
             CompanyId = _empresaId,
@@ -125,7 +125,7 @@ public class PublicBookingServiceTests
             IsActive = true,
         });
 
-        db.Produtos.Add(new Product
+        db.Products.Add(new Product
         {
             Id = servicoId,
             CompanyId = _empresaId,
@@ -140,7 +140,7 @@ public class PublicBookingServiceTests
 
         var dataHoraInicio = new DateTime(2026, 6, 10, 9, 0, 0, DateTimeKind.Utc);
         var req = new PublicCriarAgendamentoRequest(
-            ServicoId: servicoId,
+            ServiceId: servicoId,
             ProfessionalId: profissionalId,
             StartAt: dataHoraInicio,
             CustomerName: "Maria",
@@ -164,14 +164,14 @@ public class PublicBookingServiceTests
         var profissionalId = Guid.NewGuid();
         var servicoId = Guid.NewGuid();
 
-        db.Categorias.Add(new Category
+        db.Categories.Add(new Category
         {
             Id = categoriaId,
             CompanyId = _empresaId,
             Name = "Category",
         });
 
-        db.Profissionais.Add(new Professional
+        db.Professionals.Add(new Professional
         {
             Id = profissionalId,
             CompanyId = _empresaId,
@@ -179,7 +179,7 @@ public class PublicBookingServiceTests
             IsActive = true,
         });
 
-        db.Produtos.Add(new Product
+        db.Products.Add(new Product
         {
             Id = servicoId,
             CompanyId = _empresaId,
@@ -197,7 +197,7 @@ public class PublicBookingServiceTests
         {
             CompanyId = _empresaId,
             ProfessionalId = profissionalId,
-            ServicoId = servicoId,
+            ServiceId = servicoId,
             CustomerName = "Customer Anterior",
             CustomerPhone = "11999990000",
             StartAt = dataHoraInicio,
@@ -208,7 +208,7 @@ public class PublicBookingServiceTests
         await db.SaveChangesAsync();
 
         var req = new PublicCriarAgendamentoRequest(
-            ServicoId: servicoId,
+            ServiceId: servicoId,
             ProfessionalId: profissionalId,
             StartAt: dataHoraInicio,
             CustomerName: "Novo Customer",

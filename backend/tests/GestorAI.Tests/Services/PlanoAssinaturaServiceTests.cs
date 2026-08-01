@@ -54,9 +54,9 @@ public class PlanoAssinaturaServiceTests
         var plano = new SubscriptionPlan
         {
             CompanyId = _empresaId, Name = "Original", Price = 50m,
-            Periodicidade = Periodicidade.Mensal
+            Frequency = Periodicidade.Mensal
         };
-        db.PlanosAssinatura.Add(plano);
+        db.SubscriptionPlans.Add(plano);
         await db.SaveChangesAsync();
 
         var req = new UpdatePlanoAssinaturaRequest("Atualizado", null, "X", 60m, "Mensal", false, false, []);
@@ -70,23 +70,23 @@ public class PlanoAssinaturaServiceTests
     public async Task DeleteAsync_PlanoComAssinantes_LancaExcecao()
     {
         var (db, svc) = Setup();
-        var plano = new SubscriptionPlan { CompanyId = _empresaId, Name = "P", Price = 99m, Periodicidade = Periodicidade.Mensal };
-        db.PlanosAssinatura.Add(plano);
+        var plano = new SubscriptionPlan { CompanyId = _empresaId, Name = "P", Price = 99m, Frequency = Periodicidade.Mensal };
+        db.SubscriptionPlans.Add(plano);
         var cliente = new Customer { CompanyId = _empresaId, Name = "C", WhatsApp = "11999990000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         var contrato = new Contract
         {
             CompanyId = _empresaId, CustomerId = cliente.Id, Title = "T", Subject = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Amount = 99m, Numero = 1,
+            ChargeType = TipoCobranca.Recorrente, Amount = 99m, Number = 1,
             StartDate = DateOnly.FromDateTime(DateTime.Today),
-            Periodicidade = Periodicidade.Mensal, DueDay = 1, Status = ContratoStatus.IsActive
+            Frequency = Periodicidade.Mensal, DueDay = 1, Status = ContratoStatus.Ativo
         };
-        db.Contratos.Add(contrato);
+        db.Contracts.Add(contrato);
         await db.SaveChangesAsync();
-        db.AssinaturasCliente.Add(new CustomerSubscription
+        db.CustomerSubscriptions.Add(new CustomerSubscription
         {
             CompanyId = _empresaId, CustomerId = cliente.Id,
-            SubscriptionPlanId = plano.Id, ContratoId = contrato.Id,
+            SubscriptionPlanId = plano.Id, ContractId = contrato.Id,
             StartDate = DateOnly.FromDateTime(DateTime.Today),
             RenewalDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(1))
         });

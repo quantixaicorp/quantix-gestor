@@ -18,7 +18,7 @@ public class AgendamentoCancelamentoTests
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
-        db.ConfiguracoesEmpresa.Add(new CompanySettings
+        db.CompanySettings.Add(new CompanySettings
         {
             CompanyId = _empresaId,
             CancellationLimitHours = horasLimite,
@@ -30,18 +30,18 @@ public class AgendamentoCancelamentoTests
     private async Task<Appointment> CriarAgendamentoAsync(AppDbContext db, DateTime inicio)
     {
         var profissional = new Professional { CompanyId = _empresaId, Name = "Dr. Carlos" };
-        db.Profissionais.Add(profissional);
+        db.Professionals.Add(profissional);
         var servico = new Product
         {
             CompanyId = _empresaId, Name = "Consulta",
             Type = TipoProduto.Servico, SalePrice = 100m, DurationMinutes = 30,
         };
-        db.Produtos.Add(servico);
+        db.Products.Add(servico);
         await db.SaveChangesAsync();
         var agendamento = new Appointment
         {
             CompanyId = _empresaId, ProfessionalId = profissional.Id,
-            ServicoId = servico.Id, CustomerName = "Maria",
+            ServiceId = servico.Id, CustomerName = "Maria",
             CustomerPhone = "11999990000",
             StartAt = inicio, EndAt = inicio.AddMinutes(30),
             Status = AgendamentoStatus.Agendado,

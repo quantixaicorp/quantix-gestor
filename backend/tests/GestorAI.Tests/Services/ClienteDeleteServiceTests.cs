@@ -26,12 +26,12 @@ public class ClienteDeleteServiceTests
     {
         var (db, svc) = Setup();
         var cliente = new Customer { CompanyId = _empresaId, Name = "Ana", WhatsApp = "11999990000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
 
         await svc.DeleteAsync(cliente.Id, default);
 
-        var encontrado = await db.Clientes.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == cliente.Id);
+        var encontrado = await db.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == cliente.Id);
         Assert.Null(encontrado);
     }
 
@@ -40,13 +40,13 @@ public class ClienteDeleteServiceTests
     {
         var (db, svc) = Setup();
         var cliente = new Customer { CompanyId = _empresaId, Name = "Bob", WhatsApp = "11888880000" };
-        db.Clientes.Add(cliente);
-        db.Vendas.Add(new Sale
+        db.Customers.Add(cliente);
+        db.Sales.Add(new Sale
         {
             CompanyId = _empresaId,
             CustomerId = cliente.Id,
             Status = StatusVenda.Concluida,
-            FormaPagamento = FormaPagamento.Pix,
+            PaymentMethod = FormaPagamento.Pix,
         });
         await db.SaveChangesAsync();
 

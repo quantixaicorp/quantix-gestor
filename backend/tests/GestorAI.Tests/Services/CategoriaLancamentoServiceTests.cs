@@ -37,7 +37,7 @@ public class CategoriaLancamentoServiceTests
     public async Task CreateAsync_LancaExcecao_QuandoNomeDuplicadoNoMesmoTipo()
     {
         var (db, svc) = Setup();
-        db.CategoriasLancamento.Add(new TransactionCategory
+        db.TransactionCategories.Add(new TransactionCategory
         {
             CompanyId = _empresaId,
             Name = "Honorários",
@@ -60,8 +60,8 @@ public class CategoriaLancamentoServiceTests
             Name = "Aluguel",
             Type = TipoLancamento.Despesa
         };
-        db.CategoriasLancamento.Add(cat);
-        db.Lancamentos.Add(new Transaction
+        db.TransactionCategories.Add(cat);
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId,
             Type = TipoLancamento.Despesa,
@@ -76,7 +76,7 @@ public class CategoriaLancamentoServiceTests
         var result = await svc.UpdateAsync(cat.Id, new UpdateCategoriaLancamentoRequest("Aluguel Comercial"), default);
 
         Assert.Equal("Aluguel Comercial", result.Name);
-        var lancamento = await db.Lancamentos.IgnoreQueryFilters().FirstAsync();
+        var lancamento = await db.Transactions.IgnoreQueryFilters().FirstAsync();
         Assert.Equal("Aluguel Comercial", lancamento.Category);
     }
 
@@ -90,12 +90,12 @@ public class CategoriaLancamentoServiceTests
             Name = "Marketing",
             Type = TipoLancamento.Despesa
         };
-        db.CategoriasLancamento.Add(cat);
+        db.TransactionCategories.Add(cat);
         await db.SaveChangesAsync();
 
         await svc.DeleteAsync(cat.Id, default);
 
-        Assert.Empty(db.CategoriasLancamento.IgnoreQueryFilters().ToList());
+        Assert.Empty(db.TransactionCategories.IgnoreQueryFilters().ToList());
     }
 
     [Fact]
@@ -108,8 +108,8 @@ public class CategoriaLancamentoServiceTests
             Name = "Marketing",
             Type = TipoLancamento.Despesa
         };
-        db.CategoriasLancamento.Add(cat);
-        db.Lancamentos.Add(new Transaction
+        db.TransactionCategories.Add(cat);
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId,
             Type = TipoLancamento.Despesa,

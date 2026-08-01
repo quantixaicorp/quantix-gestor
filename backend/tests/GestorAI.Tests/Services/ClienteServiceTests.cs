@@ -46,7 +46,7 @@ public class ClienteServiceTests
     public async Task ListAsync_FiltersByBusca()
     {
         var (db, service) = Setup();
-        db.Clientes.AddRange(
+        db.Customers.AddRange(
             new Customer { CompanyId = _empresaId, Name = "Ana Silva", WhatsApp = "11999990001" },
             new Customer { CompanyId = _empresaId, Name = "Carlos", WhatsApp = "11999990002" });
         await db.SaveChangesAsync();

@@ -37,7 +37,7 @@ public class LancamentoUpdateServiceTests
             Category = "Aluguel",
             SaleId = vendaId,
         };
-        db.Lancamentos.Add(l);
+        db.Transactions.Add(l);
         await db.SaveChangesAsync();
         return l;
     }

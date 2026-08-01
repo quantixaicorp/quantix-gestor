@@ -28,7 +28,7 @@ public class FornecedorServiceTests
         var (db, svc) = Setup();
         var outroTenant = Guid.NewGuid();
 
-        db.Fornecedores.AddRange(
+        db.Suppliers.AddRange(
             new Supplier { CompanyId = _empresaId, Name = "Supplier A" },
             new Supplier { CompanyId = outroTenant, Name = "Supplier Outro Tenant" }
         );
@@ -51,16 +51,16 @@ public class FornecedorServiceTests
             Phone: "11999990000",
             Email: "contato@xyz.com",
             Logradouro: "Rua das Flores, 100",
-            Cidade: "São Paulo",
+            City: "São Paulo",
             Uf: "SP",
             Cep: "01310-100",
-            Contato: "João Silva",
+            ContactPerson: "João Silva",
             Notes: null);
 
         var result = await svc.CreateAsync(req, default);
 
         Assert.NotEqual(Guid.Empty, result.Id);
-        var saved = await db.Fornecedores.IgnoreQueryFilters()
+        var saved = await db.Suppliers.IgnoreQueryFilters()
             .FirstOrDefaultAsync(f => f.Id == result.Id);
         Assert.NotNull(saved);
         Assert.Equal(_empresaId, saved.CompanyId);
@@ -75,8 +75,8 @@ public class FornecedorServiceTests
         var req = new UpdateFornecedorRequest(
             Name: "Novo Name",
             CnpjCpf: null, Phone: null, Email: null,
-            Logradouro: null, Cidade: null, Uf: null,
-            Cep: null, Contato: null, Notes: null);
+            Logradouro: null, City: null, Uf: null,
+            Cep: null, ContactPerson: null, Notes: null);
 
         await Assert.ThrowsAsync<AppException>(() =>
             svc.UpdateAsync(Guid.NewGuid(), req, default));
@@ -87,12 +87,12 @@ public class FornecedorServiceTests
     {
         var (db, svc) = Setup();
         var fornecedor = new Supplier { CompanyId = _empresaId, Name = "Para Deletar" };
-        db.Fornecedores.Add(fornecedor);
+        db.Suppliers.Add(fornecedor);
         await db.SaveChangesAsync();
 
         await svc.DeleteAsync(fornecedor.Id, default);
 
-        var saved = await db.Fornecedores.IgnoreQueryFilters()
+        var saved = await db.Suppliers.IgnoreQueryFilters()
             .FirstOrDefaultAsync(f => f.Id == fornecedor.Id);
         Assert.Null(saved);
     }

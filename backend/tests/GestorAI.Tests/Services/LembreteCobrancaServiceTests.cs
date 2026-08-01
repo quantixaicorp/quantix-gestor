@@ -60,7 +60,7 @@ public class LembreteCobrancaServiceTests
         AppDbContext db, Guid empresaId, DateOnly vencimento)
     {
         var cliente = new Customer { CompanyId = empresaId, Name = "João", WhatsApp = "11999990000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
 
         var cobranca = new Charge
@@ -86,7 +86,7 @@ public class LembreteCobrancaServiceTests
     {
         var db = CreateDb();
         // CompanySettings sem campos Evolution
-        db.ConfiguracoesEmpresa.Add(new CompanySettings
+        db.CompanySettings.Add(new CompanySettings
         {
             CompanyId = _empresaId,
             ReminderOnDueDate = true,
@@ -109,7 +109,7 @@ public class LembreteCobrancaServiceTests
     {
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
-        db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
+        db.CompanySettings.Add(ConfigComEvolution(_empresaId));
         var (cobranca, cliente) = await CriarCobrancaAsync(db, _empresaId, hoje);
 
         var fake = new FakeEvolutionApiService();
@@ -119,9 +119,9 @@ public class LembreteCobrancaServiceTests
         Assert.Single(fake.EnviadosPara);
         Assert.Equal(cliente.WhatsApp, fake.EnviadosPara[0]);
 
-        var log = db.AutomacaoLogs.IgnoreQueryFilters()
+        var log = db.AutomationLogs.IgnoreQueryFilters()
             .FirstOrDefault(l => l.ChargeId == cobranca.Id
-                              && l.EventType == AutomacaoTipoEvento.ReminderOnDueDate);
+                              && l.EventType == AutomacaoTipoEvento.LembreteNoDia);
         Assert.NotNull(log);
         Assert.True(log.Success);
     }
@@ -134,15 +134,15 @@ public class LembreteCobrancaServiceTests
     {
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
-        db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
+        db.CompanySettings.Add(ConfigComEvolution(_empresaId));
         var (cobranca, _) = await CriarCobrancaAsync(db, _empresaId, hoje);
 
         // Simula log já existente
-        db.AutomacaoLogs.Add(new AutomationLog
+        db.AutomationLogs.Add(new AutomationLog
         {
             CompanyId  = _empresaId,
             ChargeId = cobranca.Id,
-            EventType = AutomacaoTipoEvento.ReminderOnDueDate,
+            EventType = AutomacaoTipoEvento.LembreteNoDia,
             Success    = true,
         });
         await db.SaveChangesAsync();
@@ -162,10 +162,10 @@ public class LembreteCobrancaServiceTests
     {
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
-        db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
+        db.CompanySettings.Add(ConfigComEvolution(_empresaId));
 
         var cliente = new Customer { CompanyId = _empresaId, Name = "Maria", WhatsApp = "11988880000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
 
         db.Charges.Add(new Charge
@@ -195,7 +195,7 @@ public class LembreteCobrancaServiceTests
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
 
-        db.ConfiguracoesEmpresa.Add(new CompanySettings
+        db.CompanySettings.Add(new CompanySettings
         {
             CompanyId        = _empresaId,
             EvolutionApiUrl  = "https://evo.test",
@@ -226,16 +226,16 @@ public class LembreteCobrancaServiceTests
     {
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
-        db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
+        db.CompanySettings.Add(ConfigComEvolution(_empresaId));
         var (cobranca, _) = await CriarCobrancaAsync(db, _empresaId, hoje);
 
         var fake = new FakeEvolutionApiService { ShouldThrow = true };
         var svc  = new LembreteCobrancaService(db, fake);
         await svc.ProcessarTodosTenantsAsync(default, hoje);
 
-        var log = db.AutomacaoLogs.IgnoreQueryFilters()
+        var log = db.AutomationLogs.IgnoreQueryFilters()
             .FirstOrDefault(l => l.ChargeId == cobranca.Id
-                              && l.EventType == AutomacaoTipoEvento.ReminderOnDueDate);
+                              && l.EventType == AutomacaoTipoEvento.LembreteNoDia);
         Assert.NotNull(log);
         Assert.False(log.Success);
         Assert.NotNull(log.ErrorMessage);
@@ -249,15 +249,15 @@ public class LembreteCobrancaServiceTests
     {
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
-        db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
+        db.CompanySettings.Add(ConfigComEvolution(_empresaId));
         var (cobranca, _) = await CriarCobrancaAsync(db, _empresaId, hoje);
 
         var fake = new FakeEvolutionApiService { ShouldFail = true };
         var svc  = new LembreteCobrancaService(db, fake);
         await svc.ProcessarTodosTenantsAsync(default, hoje);
 
-        var log = db.AutomacaoLogs.IgnoreQueryFilters()
-            .FirstOrDefault(l => l.ChargeId == cobranca.Id && l.EventType == AutomacaoTipoEvento.ReminderOnDueDate);
+        var log = db.AutomationLogs.IgnoreQueryFilters()
+            .FirstOrDefault(l => l.ChargeId == cobranca.Id && l.EventType == AutomacaoTipoEvento.LembreteNoDia);
         Assert.NotNull(log);
         Assert.False(log.Success);
     }
@@ -270,10 +270,10 @@ public class LembreteCobrancaServiceTests
     {
         var db   = CreateDb();
         var hoje = new DateOnly(2026, 6, 10);
-        db.ConfiguracoesEmpresa.Add(ConfigComEvolution(_empresaId));
+        db.CompanySettings.Add(ConfigComEvolution(_empresaId));
 
         var cliente = new Customer { CompanyId = _empresaId, Name = "Sem Tel", WhatsApp = "" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
         var cobranca = new Charge
         {
@@ -292,6 +292,6 @@ public class LembreteCobrancaServiceTests
         await svc.ProcessarTodosTenantsAsync(default, hoje);
 
         Assert.Empty(fake.EnviadosPara);
-        Assert.Empty(db.AutomacaoLogs.IgnoreQueryFilters().ToList());
+        Assert.Empty(db.AutomationLogs.IgnoreQueryFilters().ToList());
     }
 }

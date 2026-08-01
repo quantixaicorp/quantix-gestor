@@ -23,7 +23,7 @@ public class AssinaturaServiceTests
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tenant);
 
-        db.ConfiguracoesEmpresa.Add(new CompanySettings
+        db.CompanySettings.Add(new CompanySettings
         {
             CompanyId = _empresaId,
             Slug = "minha-empresa",
@@ -44,10 +44,10 @@ public class AssinaturaServiceTests
         var plano = new SubscriptionPlan
         {
             CompanyId = _empresaId, Name = "Premium", Price = 129m,
-            Periodicidade = Periodicidade.Mensal, Niche = "Barbearia"
+            Frequency = Periodicidade.Mensal, Niche = "Barbearia"
         };
         plano.Items.Add(new SubscriptionPlanItem { Description = "Corte", QuantityPerCycle = 4, Type = TipoItemPlano.Servico });
-        db.PlanosAssinatura.Add(plano);
+        db.SubscriptionPlans.Add(plano);
         db.SaveChanges();
         return plano;
     }
@@ -63,16 +63,16 @@ public class AssinaturaServiceTests
 
         Assert.Equal(_empresaId, tenant.CompanyId);
 
-        var clienteExiste = await db.Clientes.IgnoreQueryFilters()
+        var clienteExiste = await db.Customers.IgnoreQueryFilters()
             .AnyAsync(c => c.WhatsApp == "11999990000");
         Assert.True(clienteExiste);
 
-        var contratoExiste = await db.Contratos.IgnoreQueryFilters()
+        var contratoExiste = await db.Contracts.IgnoreQueryFilters()
             .AnyAsync(c => c.CustomerSubscriptionId == assinatura.AssinaturaId);
         Assert.True(contratoExiste);
 
         var cobrancaExiste = await db.Charges.IgnoreQueryFilters()
-            .AnyAsync(c => c.ContratoId == assinatura.ContratoId);
+            .AnyAsync(c => c.ContractId == assinatura.ContractId);
         Assert.True(cobrancaExiste);
     }
 
@@ -81,13 +81,13 @@ public class AssinaturaServiceTests
     {
         var (db, _, svc) = Setup();
         var plano = CriarPlano(db);
-        db.Clientes.Add(new Customer { CompanyId = _empresaId, Name = "João", WhatsApp = "11999990000" });
+        db.Customers.Add(new Customer { CompanyId = _empresaId, Name = "João", WhatsApp = "11999990000" });
         await db.SaveChangesAsync();
 
         var req = new AssinarRequest("João Silva", "11999990000", null);
         await svc.AssinarSemAsaasAsync(_empresaId, plano.Id, req, default);
 
-        var count = await db.Clientes.IgnoreQueryFilters()
+        var count = await db.Customers.IgnoreQueryFilters()
             .CountAsync(c => c.WhatsApp == "11999990000");
         Assert.Equal(1, count);
     }
@@ -98,34 +98,34 @@ public class AssinaturaServiceTests
         var (db, _, svc) = Setup();
         var plano = CriarPlano(db);
         var cliente = new Customer { CompanyId = _empresaId, Name = "Maria", WhatsApp = "11888880000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         var contrato = new Contract
         {
             CompanyId = _empresaId, CustomerId = cliente.Id, Title = "T", Subject = "O",
-            TipoCobranca = TipoCobranca.Recorrente, Amount = 129m, Numero = 1,
+            ChargeType = TipoCobranca.Recorrente, Amount = 129m, Number = 1,
             StartDate = DateOnly.FromDateTime(DateTime.Today),
-            Periodicidade = Periodicidade.Mensal, DueDay = 1, Status = ContratoStatus.IsActive
+            Frequency = Periodicidade.Mensal, DueDay = 1, Status = ContratoStatus.Ativo
         };
-        db.Contratos.Add(contrato);
+        db.Contracts.Add(contrato);
         await db.SaveChangesAsync();
 
         var assinatura = new CustomerSubscription
         {
             CompanyId = _empresaId, CustomerId = cliente.Id,
-            SubscriptionPlanId = plano.Id, ContratoId = contrato.Id,
+            SubscriptionPlanId = plano.Id, ContractId = contrato.Id,
             StartDate = DateOnly.FromDateTime(DateTime.Today),
             RenewalDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(1))
         };
-        db.AssinaturasCliente.Add(assinatura);
+        db.CustomerSubscriptions.Add(assinatura);
         await db.SaveChangesAsync();
 
         await svc.CancelarAsync(assinatura.Id, default);
 
-        var a = await db.AssinaturasCliente.IgnoreQueryFilters()
+        var a = await db.CustomerSubscriptions.IgnoreQueryFilters()
             .FirstOrDefaultAsync(x => x.Id == assinatura.Id);
         Assert.Equal(AssinaturaStatus.Cancelada, a!.Status);
 
-        var c = await db.Contratos.IgnoreQueryFilters()
+        var c = await db.Contracts.IgnoreQueryFilters()
             .FirstOrDefaultAsync(x => x.Id == contrato.Id);
         Assert.Equal(ContratoStatus.Encerrado, c!.Status);
     }

@@ -20,11 +20,11 @@ public class AppDbContextTests
         var outroId = Guid.NewGuid();
         using var ctx = CreateContext(empresaId);
 
-        ctx.Clientes.Add(new Customer { CompanyId = empresaId, Name = "Ana", WhatsApp = "11999990001" });
-        ctx.Clientes.Add(new Customer { CompanyId = outroId, Name = "Bob", WhatsApp = "11999990002" });
+        ctx.Customers.Add(new Customer { CompanyId = empresaId, Name = "Ana", WhatsApp = "11999990001" });
+        ctx.Customers.Add(new Customer { CompanyId = outroId, Name = "Bob", WhatsApp = "11999990002" });
         await ctx.SaveChangesAsync();
 
-        var result = await ctx.Clientes.ToListAsync();
+        var result = await ctx.Customers.ToListAsync();
 
         Assert.Single(result);
         Assert.Equal("Ana", result[0].Name);
@@ -37,11 +37,11 @@ public class AppDbContextTests
         var outroId = Guid.NewGuid();
         using var ctx = CreateContext(empresaId);
 
-        ctx.Categorias.Add(new Category { CompanyId = empresaId, Name = "Cat A" });
-        ctx.Categorias.Add(new Category { CompanyId = outroId, Name = "Cat B" });
+        ctx.Categories.Add(new Category { CompanyId = empresaId, Name = "Cat A" });
+        ctx.Categories.Add(new Category { CompanyId = outroId, Name = "Cat B" });
         await ctx.SaveChangesAsync();
 
-        var result = await ctx.Categorias.ToListAsync();
+        var result = await ctx.Categories.ToListAsync();
 
         Assert.Single(result);
         Assert.Equal("Cat A", result[0].Name);

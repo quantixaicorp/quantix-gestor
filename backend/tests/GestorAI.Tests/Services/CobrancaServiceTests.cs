@@ -27,7 +27,7 @@ public class CobrancaServiceTests
     private Customer CriarCliente(AppDbContext db)
     {
         var c = new Customer { CompanyId = _empresaId, Name = "Ana", WhatsApp = "11988880000" };
-        db.Clientes.Add(c);
+        db.Customers.Add(c);
         db.SaveChanges();
         return c;
     }
@@ -66,7 +66,7 @@ public class CobrancaServiceTests
         var result = await svc.PagarAsync(cobranca.Id, req, default);
 
         Assert.Equal("Pago", result.Status);
-        Assert.Equal("Pix", result.FormaPagamento);
+        Assert.Equal("Pix", result.PaymentMethod);
         Assert.NotNull(result.PaymentDate);
     }
 

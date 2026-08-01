@@ -53,7 +53,7 @@ public class LancamentoServiceTests
             Status = StatusLancamento.Pendente,
             Category = "Utilidades"
         };
-        db.Lancamentos.Add(lancamento);
+        db.Transactions.Add(lancamento);
         await db.SaveChangesAsync();
 
         var dataPagamento = DateTime.Today;
@@ -76,7 +76,7 @@ public class LancamentoServiceTests
             Status = StatusLancamento.Pago,
             Category = "Outros"
         };
-        db.Lancamentos.Add(lancamento);
+        db.Transactions.Add(lancamento);
         await db.SaveChangesAsync();
 
         await Assert.ThrowsAsync<AppException>(() =>
@@ -87,7 +87,7 @@ public class LancamentoServiceTests
     public async Task ListAsync_VencidoCalculadoPorQuery()
     {
         var (db, service) = Setup();
-        db.Lancamentos.Add(new Transaction
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId, Type = TipoLancamento.Despesa,
             Description = "Vencida", Amount = 200m,
@@ -108,7 +108,7 @@ public class LancamentoServiceTests
     {
         var (db, service) = Setup();
         var hoje = DateTime.Today;
-        db.Lancamentos.AddRange(
+        db.Transactions.AddRange(
             new Transaction
             {
                 CompanyId = _empresaId, Type = TipoLancamento.Receita,

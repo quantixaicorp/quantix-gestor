@@ -14,7 +14,7 @@ public class TenantMiddlewareTests
         var middleware = new TenantMiddleware(_ => Task.CompletedTask);
         var context = new DefaultHttpContext();
         context.User = new ClaimsPrincipal(
-            new ClaimsIdentity([new Claim("empresa_id", empresaId.ToString())]));
+            new ClaimsIdentity([new Claim("company_id", empresaId.ToString())]));
 
         await middleware.InvokeAsync(context, tenantContext);
 
@@ -41,7 +41,7 @@ public class TenantMiddlewareTests
         var middleware = new TenantMiddleware(_ => Task.CompletedTask);
         var context = new DefaultHttpContext();
         context.User = new ClaimsPrincipal(
-            new ClaimsIdentity([new Claim("empresa_id", "nao-e-guid")]));
+            new ClaimsIdentity([new Claim("company_id", "nao-e-guid")]));
 
         await middleware.InvokeAsync(context, tenantContext);
 

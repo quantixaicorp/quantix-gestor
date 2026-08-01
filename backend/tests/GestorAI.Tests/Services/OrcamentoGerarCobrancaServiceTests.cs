@@ -24,14 +24,14 @@ public class OrcamentoGerarCobrancaServiceTests
         AppDbContext db, OrcamentoStatus status)
     {
         var cliente = new Customer { CompanyId = _empresaId, Name = "João", WhatsApp = "11988880000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
 
         var orc = new Quote
         {
             CompanyId = _empresaId,
             CustomerId = cliente.Id,
-            Numero = 1,
+            Number = 1,
             Title = "Desenvolvimento de Site",
             ExpirationDate = DateTime.UtcNow.AddDays(30),
             Status = status,
@@ -43,7 +43,7 @@ public class OrcamentoGerarCobrancaServiceTests
             Quantity = 1,
             UnitPrice = 2500m,
         });
-        db.Orcamentos.Add(orc);
+        db.Quotes.Add(orc);
         await db.SaveChangesAsync();
         return (orc, cliente);
     }
@@ -81,7 +81,7 @@ public class OrcamentoGerarCobrancaServiceTests
 
         await svc.GerarCobrancaAsync(orc.Id, new DateOnly(2026, 8, 1), default);
 
-        var orcAtualizado = await db.Orcamentos.FindAsync(orc.Id);
+        var orcAtualizado = await db.Quotes.FindAsync(orc.Id);
         Assert.Equal(OrcamentoStatus.Aprovado, orcAtualizado!.Status);
     }
 }

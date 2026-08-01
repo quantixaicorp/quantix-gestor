@@ -23,23 +23,23 @@ public class ContratoRenovarServiceTests
     private async Task<Contract> CriarContratoAsync(AppDbContext db, ContratoStatus status, DateOnly? dataFim = null)
     {
         var cliente = new Customer { CompanyId = _empresaId, Name = "Ana", WhatsApp = "11999990000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         var contrato = new Contract
         {
             CompanyId = _empresaId,
             CustomerId = cliente.Id,
-            Numero = 1,
+            Number = 1,
             Title = "Serviço Mensal",
             Subject = "Prestação",
-            TipoCobranca = TipoCobranca.Recorrente,
+            ChargeType = TipoCobranca.Recorrente,
             Amount = 500m,
             StartDate = new DateOnly(2026, 1, 1),
             EndDate = dataFim,
-            Periodicidade = Periodicidade.Mensal,
+            Frequency = Periodicidade.Mensal,
             DueDay = 10,
             Status = status,
         };
-        db.Contratos.Add(contrato);
+        db.Contracts.Add(contrato);
         await db.SaveChangesAsync();
         return contrato;
     }
@@ -49,7 +49,7 @@ public class ContratoRenovarServiceTests
     {
         var (db, svc) = Setup();
         var dataFim = new DateOnly(2026, 12, 31);
-        var original = await CriarContratoAsync(db, ContratoStatus.IsActive, dataFim);
+        var original = await CriarContratoAsync(db, ContratoStatus.Ativo, dataFim);
 
         var novo = await svc.RenovarAsync(original.Id, default);
 
@@ -76,9 +76,9 @@ public class ContratoRenovarServiceTests
     {
         var (db, svc) = Setup();
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        await CriarContratoAsync(db, ContratoStatus.IsActive, hoje.AddDays(15));  // dentro do prazo
-        await CriarContratoAsync(db, ContratoStatus.IsActive, hoje.AddDays(60));  // fora do prazo
-        await CriarContratoAsync(db, ContratoStatus.IsActive, null);              // sem EndDate
+        await CriarContratoAsync(db, ContratoStatus.Ativo, hoje.AddDays(15));  // dentro do prazo
+        await CriarContratoAsync(db, ContratoStatus.Ativo, hoje.AddDays(60));  // fora do prazo
+        await CriarContratoAsync(db, ContratoStatus.Ativo, null);              // sem EndDate
 
         var vencendo = await svc.ListVencendoAsync(30, default);
 
@@ -92,8 +92,8 @@ public class ContratoRenovarServiceTests
         var (db, svc) = Setup();
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        await CriarContratoAsync(db, ContratoStatus.IsActive, hoje.AddDays(60));  // fora do prazo de 30 dias
-        await CriarContratoAsync(db, ContratoStatus.IsActive, null);              // sem EndDate — deve ser excluído
+        await CriarContratoAsync(db, ContratoStatus.Ativo, hoje.AddDays(60));  // fora do prazo de 30 dias
+        await CriarContratoAsync(db, ContratoStatus.Ativo, null);              // sem EndDate — deve ser excluído
 
         var vencendo = await svc.ListVencendoAsync(30, default);
 

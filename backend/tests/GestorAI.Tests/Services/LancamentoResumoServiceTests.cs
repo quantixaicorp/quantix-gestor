@@ -30,7 +30,7 @@ public class LancamentoResumoServiceTests
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         // Receita paga no mês → TotalReceitasMes
-        db.Lancamentos.Add(new Transaction
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId, Type = TipoLancamento.Receita,
             Description = "Receita", Amount = 500m,
@@ -38,7 +38,7 @@ public class LancamentoResumoServiceTests
             PaymentDate = inicioMes.AddDays(2), Category = "Serviço",
         });
         // Despesa paga no mês → TotalDespesasMes
-        db.Lancamentos.Add(new Transaction
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId, Type = TipoLancamento.Despesa,
             Description = "Despesa", Amount = 200m,
@@ -46,7 +46,7 @@ public class LancamentoResumoServiceTests
             PaymentDate = inicioMes.AddDays(1), Category = "Aluguel",
         });
         // Pendente com vencimento futuro → TotalPendente
-        db.Lancamentos.Add(new Transaction
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId, Type = TipoLancamento.Despesa,
             Description = "A pagar", Amount = 100m,
@@ -54,7 +54,7 @@ public class LancamentoResumoServiceTests
             Category = "Supplier",
         });
         // Cancelado — não entra em nada
-        db.Lancamentos.Add(new Transaction
+        db.Transactions.Add(new Transaction
         {
             CompanyId = _empresaId, Type = TipoLancamento.Receita,
             Description = "Cancelado", Amount = 999m,

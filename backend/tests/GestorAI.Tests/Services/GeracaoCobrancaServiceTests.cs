@@ -22,7 +22,7 @@ public class GeracaoCobrancaServiceTests
     private async Task<Contract> CriarContratoAtivoAsync(AppDbContext db, int diaVencimento = 10)
     {
         var cliente = new Customer { CompanyId = _empresaId, Name = "Carlos", WhatsApp = "11977770000" };
-        db.Clientes.Add(cliente);
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
 
         var contrato = new Contract
@@ -31,14 +31,14 @@ public class GeracaoCobrancaServiceTests
             CustomerId = cliente.Id,
             Title = "Serviço Mensal",
             Subject = "Prestação de serviços",
-            Status = ContratoStatus.IsActive,
+            Status = ContratoStatus.Ativo,
             Amount = 300m,
             DueDay = diaVencimento,
             StartDate = new DateOnly(2026, 1, 1),
-            TipoCobranca = TipoCobranca.Recorrente,
-            Periodicidade = Periodicidade.Mensal,
+            ChargeType = TipoCobranca.Recorrente,
+            Frequency = Periodicidade.Mensal,
         };
-        db.Contratos.Add(contrato);
+        db.Contracts.Add(contrato);
         await db.SaveChangesAsync();
         return contrato;
     }
@@ -86,7 +86,7 @@ public class GeracaoCobrancaServiceTests
         {
             CompanyId = _empresaId,
             CustomerId = contrato.CustomerId,
-            ContratoId = contrato.Id,
+            ContractId = contrato.Id,
             Reference = "Mensalidade 07/2026",
             Amount = 300m,
             DueDate = new DateOnly(2026, 7, 10),
@@ -140,7 +140,7 @@ public class GeracaoCobrancaServiceTests
         var svc = new GeracaoCobrancaService(db);
         await svc.ProcessarTodosTenantsAsync(default, dia1);
 
-        var log = db.AutomacaoLogs.IgnoreQueryFilters().FirstOrDefault();
+        var log = db.AutomationLogs.IgnoreQueryFilters().FirstOrDefault();
         Assert.NotNull(log);
         Assert.Equal(AutomacaoTipoEvento.CobrancaGerada, log.EventType);
         Assert.True(log.Success);

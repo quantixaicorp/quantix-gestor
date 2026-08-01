@@ -27,7 +27,7 @@ public class ProdutoServiceTests
     private async Task<Category> SeedCategoriaAsync(AppDbContext db)
     {
         var cat = new Category { CompanyId = _empresaId, Name = "Category Teste" };
-        db.Categorias.Add(cat);
+        db.Categories.Add(cat);
         await db.SaveChangesAsync();
         return cat;
     }
@@ -42,7 +42,7 @@ public class ProdutoServiceTests
         var result = await service.CreateAsync(req, default);
 
         Assert.Equal("Camiseta", result.Name);
-        Assert.Equal(_empresaId, db.Produtos.First().CompanyId);
+        Assert.Equal(_empresaId, db.Products.First().CompanyId);
     }
 
     [Fact]
@@ -56,13 +56,13 @@ public class ProdutoServiceTests
             Name = "Product", SalePrice = 100m,
             AverageCost = 20m, CurrentStock = 10m, MinimumStock = 2m
         };
-        db.Produtos.Add(produto);
+        db.Products.Add(produto);
         await db.SaveChangesAsync();
 
         var req = new EntradaEstoqueRequest(produto.Id, 10m, 30m, null);
         await service.EntradaEstoqueAsync(req, default);
 
-        var atualizado = await db.Produtos.FindAsync(produto.Id);
+        var atualizado = await db.Products.FindAsync(produto.Id);
         Assert.Equal(20m, atualizado!.CurrentStock);
         Assert.Equal(25m, atualizado.AverageCost); // (10*20 + 10*30) / 20 = 25
     }
@@ -78,13 +78,13 @@ public class ProdutoServiceTests
             Name = "Product", SalePrice = 50m,
             AverageCost = 10m, CurrentStock = 5m, MinimumStock = 2m
         };
-        db.Produtos.Add(produto);
+        db.Products.Add(produto);
         await db.SaveChangesAsync();
 
         await service.EntradaEstoqueAsync(
             new EntradaEstoqueRequest(produto.Id, 5m, null, "Reposição"), default);
 
-        var mov = await db.MovimentacoesEstoque.IgnoreQueryFilters().FirstAsync();
+        var mov = await db.StockMovements.IgnoreQueryFilters().FirstAsync();
         Assert.Equal(TipoMovimentacao.Entrada, mov.Type);
         Assert.Equal(OrigemMovimentacao.Manual, mov.Source);
         Assert.Equal(5m, mov.Quantity);

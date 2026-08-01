@@ -28,27 +28,27 @@ public class DashboardServiceTests
         var hoje = DateTime.UtcNow;
         var ontem = hoje.AddDays(-1);
 
-        db.Vendas.AddRange(
+        db.Sales.AddRange(
             new Sale
             {
-                CompanyId = _empresaId, DataHora = hoje,
+                CompanyId = _empresaId, SaleDate = hoje,
                 Status = StatusVenda.Concluida, Total = 300m,
                 Subtotal = 300m, Discount = 0m,
-                FormaPagamento = FormaPagamento.Pix
+                PaymentMethod = FormaPagamento.Pix
             },
             new Sale
             {
-                CompanyId = _empresaId, DataHora = ontem,
+                CompanyId = _empresaId, SaleDate = ontem,
                 Status = StatusVenda.Concluida, Total = 500m,
                 Subtotal = 500m, Discount = 0m,
-                FormaPagamento = FormaPagamento.Dinheiro
+                PaymentMethod = FormaPagamento.Dinheiro
             },
             new Sale
             {
-                CompanyId = _empresaId, DataHora = hoje,
+                CompanyId = _empresaId, SaleDate = hoje,
                 Status = StatusVenda.Cancelada, Total = 100m,
                 Subtotal = 100m, Discount = 0m,
-                FormaPagamento = FormaPagamento.Pix
+                PaymentMethod = FormaPagamento.Pix
             });
         await db.SaveChangesAsync();
 
@@ -62,8 +62,8 @@ public class DashboardServiceTests
     {
         var (db, service) = Setup();
         var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
-        db.Categorias.Add(cat);
-        db.Produtos.AddRange(
+        db.Categories.Add(cat);
+        db.Products.AddRange(
             new Product
             {
                 CompanyId = _empresaId, CategoryId = cat.Id,
@@ -88,23 +88,23 @@ public class DashboardServiceTests
     {
         var (db, service) = Setup();
         var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
-        db.Categorias.Add(cat);
+        db.Categories.Add(cat);
         var p1 = new Product { CompanyId = _empresaId, CategoryId = cat.Id, Name = "A", SalePrice = 10m, CurrentStock = 0m, MinimumStock = 0m };
         var p2 = new Product { CompanyId = _empresaId, CategoryId = cat.Id, Name = "B", SalePrice = 20m, CurrentStock = 0m, MinimumStock = 0m };
-        db.Produtos.AddRange(p1, p2);
+        db.Products.AddRange(p1, p2);
 
         var venda = new Sale
         {
-            CompanyId = _empresaId, DataHora = DateTime.UtcNow,
+            CompanyId = _empresaId, SaleDate = DateTime.UtcNow,
             Status = StatusVenda.Concluida, Subtotal = 50m,
-            Discount = 0m, Total = 50m, FormaPagamento = FormaPagamento.Pix
+            Discount = 0m, Total = 50m, PaymentMethod = FormaPagamento.Pix
         };
-        db.Vendas.Add(venda);
+        db.Sales.Add(venda);
         await db.SaveChangesAsync();
 
         db.SaleItems.AddRange(
-            new SaleItem { SaleId = venda.Id, ProductId = p1.Id, Quantity = 3m, PrecoUnitario = 10m, Discount = 0m, Total = 30m },
-            new SaleItem { SaleId = venda.Id, ProductId = p2.Id, Quantity = 1m, PrecoUnitario = 20m, Discount = 0m, Total = 20m });
+            new SaleItem { SaleId = venda.Id, ProductId = p1.Id, Quantity = 3m, UnitPrice = 10m, Discount = 0m, Total = 30m },
+            new SaleItem { SaleId = venda.Id, ProductId = p2.Id, Quantity = 1m, UnitPrice = 20m, Discount = 0m, Total = 20m });
         await db.SaveChangesAsync();
 
         var result = await service.GetDashboardAsync(default);

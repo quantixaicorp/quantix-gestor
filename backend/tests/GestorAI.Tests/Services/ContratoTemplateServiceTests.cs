@@ -43,11 +43,11 @@ public class ContratoTemplateServiceTests
     {
         var (db, svc) = Setup();
         var outroTenant = Guid.NewGuid();
-        db.ContratoTemplates.Add(new ContractTemplate
+        db.ContractTemplates.Add(new ContractTemplate
         {
             CompanyId = outroTenant, Name = "Outro", Subject = "X",
         });
-        db.ContratoTemplates.Add(new ContractTemplate
+        db.ContractTemplates.Add(new ContractTemplate
         {
             CompanyId = _empresaId, Name = "Meu", Subject = "Y",
         });
@@ -63,16 +63,16 @@ public class ContratoTemplateServiceTests
     public async Task DeleteAsync_Remove()
     {
         var (db, svc) = Setup();
-        db.ContratoTemplates.Add(new ContractTemplate
+        db.ContractTemplates.Add(new ContractTemplate
         {
             CompanyId = _empresaId, Name = "T", Subject = "O",
         });
         await db.SaveChangesAsync();
-        var id = db.ContratoTemplates.First().Id;
+        var id = db.ContractTemplates.First().Id;
 
         await svc.DeleteAsync(id, default);
 
-        Assert.Empty(db.ContratoTemplates.ToList());
+        Assert.Empty(db.ContractTemplates.ToList());
     }
 
     [Fact]

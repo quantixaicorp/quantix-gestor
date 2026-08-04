@@ -172,7 +172,7 @@ export default function NovaCompra() {
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">Selecione...</option>
-                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
@@ -299,7 +299,7 @@ export default function NovaCompra() {
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <h2 className="font-semibold">Revisão</h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            <div><span className="text-muted-foreground">Fornecedor:</span> {fornecedores.find(f => f.id === form.fornecedorId)?.nome}</div>
+            <div><span className="text-muted-foreground">Fornecedor:</span> {fornecedores.find(f => f.id === form.fornecedorId)?.name}</div>
             <div><span className="text-muted-foreground">Data:</span> {new Date(form.data).toLocaleDateString('pt-BR')}</div>
             <div><span className="text-muted-foreground">Tipo:</span> {form.tipoCompra}</div>
             <div><span className="text-muted-foreground">Nº Nota:</span> {form.numeroNota || '—'}</div>

@@ -26,8 +26,8 @@ export default function NovaCobranca() {
     setSaving(true)
     try {
       const result = await create({
-        clienteId, referencia, valor: Number(valor),
-        dataVencimento, observacao: observacao || undefined,
+        customerId: clienteId, reference: referencia, amount: Number(valor),
+        dueDate: dataVencimento, notes: observacao || undefined,
       })
       navigate(`/cobrancas/${result.id}`)
     } catch (e) {
@@ -56,7 +56,7 @@ export default function NovaCobranca() {
             <label className="block text-sm font-medium mb-1">Cliente *</label>
             <select value={clienteId} onChange={e => setClienteId(e.target.value)} required className={inputClass}>
               <option value="">Selecione...</option>
-              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
 

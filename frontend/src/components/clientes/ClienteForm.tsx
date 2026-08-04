@@ -7,10 +7,10 @@ import { Label } from '@/components/ui/label'
 import type { CreateClienteRequest } from '@/types/clientes'
 
 const schema = z.object({
-  nome: z.string().min(1, 'Nome obrigatório').max(200),
-  whatsapp: z.string().min(8, 'WhatsApp obrigatório').max(20),
+  name: z.string().min(1, 'Nome obrigatório').max(200),
+  whatsApp: z.string().min(8, 'WhatsApp obrigatório').max(20),
   email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  observacoes: z.string().optional(),
+  notes: z.string().optional(),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -28,13 +28,13 @@ export default function ClienteForm({ defaultValues, onSubmit, onCancel }: Props
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-2">
         <Label>Nome</Label>
-        <Input {...register('nome')} placeholder="Nome completo" />
-        {errors.nome && <p className="text-xs text-destructive">{errors.nome.message}</p>}
+        <Input {...register('name')} placeholder="Nome completo" />
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
       <div className="grid gap-2">
         <Label>WhatsApp</Label>
-        <Input {...register('whatsapp')} placeholder="11999990000" />
-        {errors.whatsapp && <p className="text-xs text-destructive">{errors.whatsapp.message}</p>}
+        <Input {...register('whatsApp')} placeholder="11999990000" />
+        {errors.whatsApp && <p className="text-xs text-destructive">{errors.whatsApp.message}</p>}
       </div>
       <div className="grid gap-2">
         <Label>E-mail (opcional)</Label>
@@ -43,7 +43,7 @@ export default function ClienteForm({ defaultValues, onSubmit, onCancel }: Props
       </div>
       <div className="grid gap-2">
         <Label>Observações</Label>
-        <Input {...register('observacoes')} placeholder="Anotações rápidas" />
+        <Input {...register('notes')} placeholder="Anotações rápidas" />
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>

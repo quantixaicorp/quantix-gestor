@@ -163,7 +163,7 @@ export default function DisponibilidadeProfissional() {
     if (!id) return
     setSaving(true)
     try {
-      await saveDisponibilidade(id, { dataInicio, dataFim, faixas })
+      await saveDisponibilidade(id, { startDate: dataInicio, endDate: dataFim, faixas })
       toast.success('Disponibilidade salva!')
       void carregarLista()
     } catch (e) {
@@ -186,7 +186,7 @@ export default function DisponibilidadeProfissional() {
   }
 
   function irParaPeriodo(p: DisponibilidadePeriodoResponse) {
-    const d = new Date(p.dataInicio + 'T12:00:00')
+    const d = new Date(p.startDate + 'T12:00:00')
     setRef(d)
   }
 
@@ -221,14 +221,14 @@ export default function DisponibilidadeProfissional() {
         ) : (
           <ul className="space-y-1">
             {periodos.map(p => (
-              <li key={`${p.dataInicio}-${p.dataFim}`}>
+              <li key={`${p.startDate}-${p.endDate}`}>
                 <button
                   onClick={() => irParaPeriodo(p)}
                   className={`w-full text-left rounded-md px-2 py-1.5 text-xs hover:bg-accent transition-colors
-                    ${p.dataInicio === dataInicio && p.dataFim === dataFim ? 'bg-accent font-medium' : ''}`}
+                    ${p.startDate === dataInicio && p.endDate === dataFim ? 'bg-accent font-medium' : ''}`}
                 >
-                  <span className="block">{new Date(p.dataInicio + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
-                  <span className="block text-muted-foreground">até {new Date(p.dataFim + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                  <span className="block">{new Date(p.startDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                  <span className="block text-muted-foreground">até {new Date(p.endDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
                 </button>
               </li>
             ))}

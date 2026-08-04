@@ -34,19 +34,19 @@ export default function PlanosList() {
             className="rounded-lg border p-4 hover:shadow-md transition-shadow space-y-2">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold">{p.nome}</p>
-                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{p.nicho}</span>
+                <p className="font-semibold">{p.name}</p>
+                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{p.niche}</span>
               </div>
-              {p.maisVendido && (
+              {p.bestSeller && (
                 <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">Mais vendido</span>
               )}
             </div>
             <p className="text-2xl font-bold">
-              R$ {p.preco.toFixed(2).replace('.', ',')}
-              <span className="text-sm font-normal text-muted-foreground">/{p.periodicidade.toLowerCase()}</span>
+              R$ {p.price.toFixed(2).replace('.', ',')}
+              <span className="text-sm font-normal text-muted-foreground">/{p.frequency.toLowerCase()}</span>
             </p>
             <p className="text-sm text-muted-foreground">{p.totalAssinantes} assinante(s) ativo(s)</p>
-            {!p.ativo && <span className="text-xs text-red-500">Inativo</span>}
+            {!p.isActive && <span className="text-xs text-red-500">Inativo</span>}
           </Link>
         ))}
       </div>

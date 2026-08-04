@@ -11,13 +11,13 @@ vi.mock('@/hooks/useOrcamentos', () => ({
   useOrcamentos: () => ({
     orcamentos: [
       {
-        id: '1', numero: 1, titulo: 'Orçamento Teste',
-        clienteNome: 'Maria', dataValidade: '2026-06-01',
+        id: '1', number: 1, title: 'Orçamento Teste',
+        customerName: 'Maria', expirationDate: '2026-06-01',
         status: 'Rascunho', total: 150,
       },
       {
-        id: '2', numero: 2, titulo: 'Outro Orçamento',
-        clienteNome: null, dataValidade: '2026-05-20',
+        id: '2', number: 2, title: 'Outro Orçamento',
+        customerName: null, expirationDate: '2026-05-20',
         status: 'Aprovado', total: 300,
       },
     ],
@@ -37,7 +37,7 @@ vi.mock('@/hooks/useOrcamentos', () => ({
 
 vi.mock('@/hooks/useEstoque', () => ({
   useEstoque: () => ({
-    produtos: [{ id: 'p1', nome: 'Shampoo', precoVenda: 50, ativo: true }],
+    produtos: [{ id: 'p1', name: 'Shampoo', salePrice: 50, isActive: true }],
     listProdutos: vi.fn(),
   }),
 }))

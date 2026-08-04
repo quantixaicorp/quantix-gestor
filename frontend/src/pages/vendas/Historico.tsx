@@ -257,7 +257,7 @@ export default function Historico() {
                   onChange={e => setEditandoVenda(prev => prev ? { ...prev, clienteId: e.target.value || null } : prev)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
                   <option value="">Balcão (sem cliente)</option>
-                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1.5">

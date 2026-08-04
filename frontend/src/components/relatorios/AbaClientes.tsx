@@ -39,9 +39,9 @@ export default function AbaClientes({ dados }: Props) {
             {dados.topClientes.map((c, idx) => (
               <tr key={idx} className="border-t hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-2.5 text-muted-foreground font-medium">{idx + 1}</td>
-                <td className="px-4 py-2.5 font-medium">{c.nome}</td>
+                <td className="px-4 py-2.5 font-medium">{c.name}</td>
                 <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell">
-                  {c.whatsapp || <span className="text-muted-foreground/50">—</span>}
+                  {c.whatsApp || <span className="text-muted-foreground/50">—</span>}
                 </td>
                 <td className="px-4 py-2.5 text-right">{c.compras}</td>
                 <td className="px-4 py-2.5 text-right font-semibold">{fmt(c.totalGasto)}</td>

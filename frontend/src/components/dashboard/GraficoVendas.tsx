@@ -10,7 +10,7 @@ export default function GraficoVendas({ dados }: Props) {
   const data = (dados ?? []).map(d => ({
     dia: new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     total: d.total,
-    qtd: d.quantidade,
+    qtd: d.quantity,
   }))
 
   return (

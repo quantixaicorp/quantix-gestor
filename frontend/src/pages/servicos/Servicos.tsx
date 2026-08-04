@@ -27,7 +27,7 @@ export default function Servicos() {
     setLoading(true)
     try {
       const data = await api.get<ProdutoResponse[]>('/api/produtos')
-      setServicos(data.filter(p => p.tipo === 'Servico'))
+      setServicos(data.filter(p => p.type === 'Servico'))
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao carregar serviços')
     } finally {
@@ -87,8 +87,8 @@ export default function Servicos() {
   }
 
   const filtrados = servicos.filter(s =>
-    s.nome.toLowerCase().includes(busca.toLowerCase()) &&
-    (!filtroCategoria || s.categoriaId === filtroCategoria)
+    s.name.toLowerCase().includes(busca.toLowerCase()) &&
+    (!filtroCategoria || s.categoryId === filtroCategoria)
   )
 
   return (
@@ -102,10 +102,10 @@ export default function Servicos() {
 
       <KpiRow items={[
         { label: 'Total', value: String(servicos.length) },
-        { label: 'Ativos', value: String(servicos.filter(s => s.ativo).length), color: 'text-green-600 dark:text-green-400' },
-        { label: 'Inativos', value: String(servicos.filter(s => !s.ativo).length), color: 'text-muted-foreground' },
-        { label: 'Duração média', value: servicos.filter(s => s.duracaoMinutos).length
-          ? `${Math.round(servicos.filter(s => s.duracaoMinutos).reduce((a, s) => a + (s.duracaoMinutos ?? 0), 0) / servicos.filter(s => s.duracaoMinutos).length)} min`
+        { label: 'Ativos', value: String(servicos.filter(s => s.isActive).length), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Inativos', value: String(servicos.filter(s => !s.isActive).length), color: 'text-muted-foreground' },
+        { label: 'Duração média', value: servicos.filter(s => s.durationMinutes).length
+          ? `${Math.round(servicos.filter(s => s.durationMinutes).reduce((a, s) => a + (s.durationMinutes ?? 0), 0) / servicos.filter(s => s.durationMinutes).length)} min`
           : '—' },
       ]} />
 
@@ -119,7 +119,7 @@ export default function Servicos() {
         <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
           className="h-9 rounded-md border border-input bg-transparent px-3 text-sm">
           <option value="">Todas as categorias</option>
-          {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          {categorias.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         {filtroCategoria && (
           <button onClick={() => setFiltroCategoria('')}
@@ -135,9 +135,9 @@ export default function Servicos() {
           <div className="flex flex-wrap gap-2">
             {categorias.map(c => (
               <div key={c.id} className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                {c.nome}
+                {c.name}
                 <button
-                  onClick={() => void handleDeleteCategoria(c.id, c.nome)}
+                  onClick={() => void handleDeleteCategoria(c.id, c.name)}
                   className="ml-1 text-muted-foreground hover:text-destructive transition-colors">
                   <Trash2 size={12} />
                 </button>
@@ -159,23 +159,23 @@ export default function Servicos() {
               <div key={s.id} className="rounded-lg border bg-card p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{s.nome}</p>
+                    <p className="font-medium truncate">{s.name}</p>
                     <p className="text-sm text-muted-foreground">{s.categoriaNome}</p>
                   </div>
-                  <Badge variant={s.ativo ? 'secondary' : 'outline'} className="shrink-0">
-                    {s.ativo ? 'Ativo' : 'Inativo'}
+                  <Badge variant={s.isActive ? 'secondary' : 'outline'} className="shrink-0">
+                    {s.isActive ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{s.duracaoMinutos ? `${s.duracaoMinutos} min` : '—'}</span>
-                  <span className="font-semibold">{s.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  <span className="text-muted-foreground">{s.durationMinutes ? `${s.durationMinutes} min` : '—'}</span>
+                  <span className="font-semibold">{s.salePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
                 <div className="flex gap-1 pt-1">
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditando(s)}>
                     <Pencil size={13} className="mr-1" /> Editar
                   </Button>
                   <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(s.id, s.nome)}>
+                    onClick={() => handleDelete(s.id, s.name)}>
                     <Trash2 size={13} />
                   </Button>
                 </div>
@@ -199,17 +199,17 @@ export default function Servicos() {
               <tbody>
                 {filtrados.map(s => (
                   <tr key={s.id} className="border-b last:border-b-0">
-                    <td className="px-4 py-3 font-medium">{s.nome}</td>
+                    <td className="px-4 py-3 font-medium">{s.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{s.categoriaNome}</td>
                     <td className="px-4 py-3 text-right">
-                      {s.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {s.salePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {s.duracaoMinutos ? `${s.duracaoMinutos} min` : '—'}
+                      {s.durationMinutes ? `${s.durationMinutes} min` : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={s.ativo ? 'secondary' : 'outline'}>
-                        {s.ativo ? 'Ativo' : 'Inativo'}
+                      <Badge variant={s.isActive ? 'secondary' : 'outline'}>
+                        {s.isActive ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
@@ -218,7 +218,7 @@ export default function Servicos() {
                           <Pencil size={14} />
                         </Button>
                         <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(s.id, s.nome)}>
+                          onClick={() => handleDelete(s.id, s.name)}>
                           <Trash2 size={14} />
                         </Button>
                       </div>

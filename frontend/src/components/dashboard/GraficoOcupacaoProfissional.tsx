@@ -11,7 +11,7 @@ export default function GraficoOcupacaoProfissional({ dados }: Props) {
     </div>
   )
   const data = dados.map(d => ({
-    nome: d.profissional.length > 12 ? d.profissional.slice(0, 12) + '…' : d.profissional,
+    nome: d.professional.length > 12 ? d.professional.slice(0, 12) + '…' : d.professional,
     total: d.total,
     concluidos: d.concluidos,
   }))

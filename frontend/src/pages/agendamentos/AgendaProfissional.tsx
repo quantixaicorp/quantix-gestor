@@ -66,8 +66,8 @@ function fmtFullDate(date: Date): string {
 }
 
 function getCardMetrics(a: AgendamentoListItem) {
-  const start = new Date(a.dataHoraInicio)
-  const end = new Date(a.dataHoraFim)
+  const start = new Date(a.startAt)
+  const end = new Date(a.endAt)
   const startMin = start.getHours() * 60 + start.getMinutes()
   const endMin = end.getHours() * 60 + end.getMinutes()
   const clampedStart = Math.max(startMin, HOUR_START * 60)
@@ -111,19 +111,19 @@ export default function AgendaProfissional() {
   const todayKey = toDateKey(new Date())
 
   const agendamentosPorDia = weekDays.map(day =>
-    agendamentos.filter(a => toDateKey(new Date(a.dataHoraInicio)) === toDateKey(day))
+    agendamentos.filter(a => toDateKey(new Date(a.startAt)) === toDateKey(day))
   )
 
   const totalCount = agendamentos.filter(a => a.status !== 'Cancelado').length
   const semanaLabel = `${fmtShort(semanaInicio)} — ${fmtShort(addDays(semanaInicio, 6))}`
 
   const profissionalNome = profissionalId
-    ? (profissionais.find(p => p.id === profissionalId)?.nome ?? 'Profissional')
+    ? (profissionais.find(p => p.id === profissionalId)?.name ?? 'Profissional')
     : 'Todos'
 
   const diaSelecionadoIdx = weekDays.findIndex(d => toDateKey(d) === diaSelecionado)
   const agendamentosHoje = diaSelecionadoIdx >= 0
-    ? agendamentosPorDia[diaSelecionadoIdx].sort((a, b) => a.dataHoraInicio.localeCompare(b.dataHoraInicio))
+    ? agendamentosPorDia[diaSelecionadoIdx].sort((a, b) => a.startAt.localeCompare(b.startAt))
     : []
 
   function mudarDiaMobile(delta: number) {
@@ -231,7 +231,7 @@ export default function AgendaProfissional() {
           >
             <option value="">Todos os profissionais</option>
             {profissionais.map(p => (
-              <option key={p.id} value={p.id}>{p.nome}</option>
+              <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         )}
@@ -258,18 +258,18 @@ export default function AgendaProfissional() {
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-sm leading-tight truncate">{a.clienteNome}</p>
+                  <p className="font-semibold text-sm leading-tight truncate">{a.customerName}</p>
                   <span className="text-[10px] font-semibold shrink-0 opacity-70">{STATUS_LABEL[a.status]}</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs opacity-75">
                   <Clock size={11} className="shrink-0" />
-                  <span>{fmtTime(a.dataHoraInicio)} – {fmtTime(a.dataHoraFim)}</span>
+                  <span>{fmtTime(a.startAt)} – {fmtTime(a.endAt)}</span>
                 </div>
                 <p className="text-xs opacity-70 truncate">{a.servicoNome}</p>
                 {!profissionalId && (
                   <div className="flex items-center gap-1 text-xs opacity-70">
                     <User size={11} className="shrink-0" />
-                    <span className="truncate">{a.profissionalNome}</span>
+                    <span className="truncate">{a.professionalName}</span>
                   </div>
                 )}
               </button>
@@ -289,7 +289,7 @@ export default function AgendaProfissional() {
           >
             <option value="">Todos os profissionais</option>
             {profissionais.map(p => (
-              <option key={p.id} value={p.id}>{p.nome}</option>
+              <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
 
@@ -426,7 +426,7 @@ export default function AgendaProfissional() {
                     return (
                       <button
                         key={a.id}
-                        title={`${fmtFullDate(new Date(a.dataHoraInicio))}\n${a.clienteNome} · ${a.servicoNome}\n${fmtTime(a.dataHoraInicio)} — ${fmtTime(a.dataHoraFim)}`}
+                        title={`${fmtFullDate(new Date(a.startAt))}\n${a.customerName} · ${a.servicoNome}\n${fmtTime(a.startAt)} — ${fmtTime(a.endAt)}`}
                         onClick={() => navigate(`/agendamentos/${a.id}`)}
                         style={{ top, height, left: 3, right: 3 }}
                         className={cn(
@@ -437,12 +437,12 @@ export default function AgendaProfissional() {
                       >
                         {showTime && (
                           <div className="text-[9px] font-semibold leading-tight truncate opacity-75 mt-0.5">
-                            {fmtTime(a.dataHoraInicio)} — {fmtTime(a.dataHoraFim)}
+                            {fmtTime(a.startAt)} — {fmtTime(a.endAt)}
                           </div>
                         )}
                         {showClient && (
                           <div className="text-[11px] font-semibold leading-tight truncate">
-                            {a.clienteNome}
+                            {a.customerName}
                           </div>
                         )}
                         {showService && (

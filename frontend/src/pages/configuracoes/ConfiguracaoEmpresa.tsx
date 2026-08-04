@@ -117,7 +117,7 @@ export default function ConfiguracaoEmpresa() {
   const [loading, setLoading] = useState(true)
   const [temToken, setTemToken] = useState(false)
 
-  const [ident, setIdent] = useState({ razaoSocial: '', nomeFantasia: '', cnpj: '', inscricaoEstadual: '', inscricaoMunicipal: '', telefone: '', email: '', tipoNegocio: 'Lojista' })
+  const [ident, setIdent] = useState({ razaoSocial: '', nomeFantasia: '', cnpj: '', inscricaoEstadual: '', inscricaoMunicipal: '', phone: '', email: '', tipoNegocio: 'Lojista' })
   const [savingIdent, setSavingIdent] = useState(false)
 
   const [end, setEnd] = useState({ logradouro: '', numero: '', complemento: '', bairro: '', codigoMunicipio: '', municipio: '', uf: '', cep: '' })
@@ -125,7 +125,7 @@ export default function ConfiguracaoEmpresa() {
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [cnpjErro, setCnpjErro] = useState('')
 
-  const [visual, setVisual] = useState({ slug: '', nomeExibicao: '', corPrimaria: '#2563eb', descricaoPublica: '', logoUrl: '' })
+  const [visual, setVisual] = useState({ slug: '', nomeExibicao: '', primaryColor: '#2563eb', publicDescription: '', logoUrl: '' })
   const [savingVisual, setSavingVisual] = useState(false)
   const [uploading, setUploading] = useState(false)
 
@@ -141,9 +141,9 @@ export default function ConfiguracaoEmpresa() {
   useEffect(() => {
     api.get<ConfiguracaoEmpresaResponse>('/api/configuracao-empresa')
       .then(c => {
-        setIdent({ razaoSocial: c.razaoSocial ?? '', nomeFantasia: c.nomeFantasia ?? '', cnpj: c.cnpj ?? '', inscricaoEstadual: c.inscricaoEstadual ?? '', inscricaoMunicipal: c.inscricaoMunicipal ?? '', telefone: c.telefone ?? '', email: c.email ?? '', tipoNegocio: c.tipoNegocio || 'Lojista' })
+        setIdent({ razaoSocial: c.razaoSocial ?? '', nomeFantasia: c.nomeFantasia ?? '', cnpj: c.cnpj ?? '', inscricaoEstadual: c.inscricaoEstadual ?? '', inscricaoMunicipal: c.inscricaoMunicipal ?? '', phone: c.phone ?? '', email: c.email ?? '', tipoNegocio: c.tipoNegocio || 'Lojista' })
         setEnd({ logradouro: c.logradouro ?? '', numero: c.numero ?? '', complemento: c.complemento ?? '', bairro: c.bairro ?? '', codigoMunicipio: c.codigoMunicipio ?? '', municipio: c.municipio ?? '', uf: c.uf ?? '', cep: c.cep ?? '' })
-        setVisual({ slug: c.slug ?? '', nomeExibicao: c.nomeFantasia ?? '', corPrimaria: c.corPrimaria ?? '#2563eb', descricaoPublica: c.descricaoPublica ?? '', logoUrl: c.logoUrl ?? '' })
+        setVisual({ slug: c.slug ?? '', nomeExibicao: c.nomeFantasia ?? '', primaryColor: c.primaryColor ?? '#2563eb', publicDescription: c.publicDescription ?? '', logoUrl: c.logoUrl ?? '' })
         setNfe({ regimeTributario: c.regimeTributario ?? 1, ambiente: c.ambiente ?? 2, serieNfe: c.serieNfe ?? 1, serieNfce: c.serieNfce ?? 1 })
         setTemToken(c.temToken)
       })
@@ -194,7 +194,7 @@ export default function ConfiguracaoEmpresa() {
   async function saveVisual() {
     setSavingVisual(true)
     try {
-      await api.put('/api/configuracao-empresa/branding', { slug: visual.slug, nomeExibicao: visual.nomeExibicao || null, corPrimaria: visual.corPrimaria, descricaoPublica: visual.descricaoPublica || null })
+      await api.put('/api/configuracao-empresa/branding', { slug: visual.slug, nomeExibicao: visual.nomeExibicao || null, primaryColor: visual.primaryColor, publicDescription: visual.publicDescription || null })
       toast.success('Identidade visual salva!')
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Erro') }
     finally { setSavingVisual(false) }
@@ -329,7 +329,7 @@ export default function ConfiguracaoEmpresa() {
               </Field>
               <Field label="Inscrição Estadual"><Input value={ident.inscricaoEstadual} onChange={e => setIdent(v => ({ ...v, inscricaoEstadual: e.target.value }))} /></Field>
               <Field label="Inscrição Municipal"><Input value={ident.inscricaoMunicipal} onChange={e => setIdent(v => ({ ...v, inscricaoMunicipal: e.target.value }))} /></Field>
-              <Field label="Telefone"><Input value={ident.telefone} placeholder="(11) 99999-0000" onChange={e => setIdent(v => ({ ...v, telefone: e.target.value }))} /></Field>
+              <Field label="Telefone"><Input value={ident.phone} placeholder="(11) 99999-0000" onChange={e => setIdent(v => ({ ...v, phone: e.target.value }))} /></Field>
               <div className="col-span-2">
                 <Field label="E-mail"><Input type="email" value={ident.email} placeholder="contato@empresa.com" onChange={e => setIdent(v => ({ ...v, email: e.target.value }))} /></Field>
               </div>
@@ -412,11 +412,11 @@ export default function ConfiguracaoEmpresa() {
             </Field>
             <Field label="Cor primária">
               <div className="flex items-center gap-2">
-                <input type="color" value={visual.corPrimaria}
-                  onChange={e => setVisual(v => ({ ...v, corPrimaria: e.target.value }))}
+                <input type="color" value={visual.primaryColor}
+                  onChange={e => setVisual(v => ({ ...v, primaryColor: e.target.value }))}
                   className="h-9 w-12 rounded border cursor-pointer shrink-0" />
-                <Input value={visual.corPrimaria} placeholder="#2563eb" className="max-w-28"
-                  onChange={e => setVisual(v => ({ ...v, corPrimaria: e.target.value }))} />
+                <Input value={visual.primaryColor} placeholder="#2563eb" className="max-w-28"
+                  onChange={e => setVisual(v => ({ ...v, primaryColor: e.target.value }))} />
               </div>
             </Field>
           </div>
@@ -430,13 +430,13 @@ export default function ConfiguracaoEmpresa() {
           </Field>
 
           <Field label="Descrição pública">
-            <Input value={visual.descricaoPublica} placeholder="Ex: Barbearia especializada em cortes modernos"
-              onChange={e => setVisual(v => ({ ...v, descricaoPublica: e.target.value }))} />
+            <Input value={visual.publicDescription} placeholder="Ex: Barbearia especializada em cortes modernos"
+              onChange={e => setVisual(v => ({ ...v, publicDescription: e.target.value }))} />
           </Field>
 
           <div>
             <p className="text-xs text-muted-foreground mb-2">Pré-visualização</p>
-            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: visual.corPrimaria }}>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: visual.primaryColor }}>
               <div className="px-4 py-4 flex items-center gap-3">
                 {visual.logoUrl
                   ? <img src={visual.logoUrl.startsWith('http') ? visual.logoUrl : `${API_BASE}${visual.logoUrl}`}
@@ -447,7 +447,7 @@ export default function ConfiguracaoEmpresa() {
                 }
                 <div>
                   <p className="text-white font-bold text-base leading-tight">{visual.nomeExibicao || 'Nome da empresa'}</p>
-                  {visual.descricaoPublica && <p className="text-white/80 text-xs">{visual.descricaoPublica}</p>}
+                  {visual.publicDescription && <p className="text-white/80 text-xs">{visual.publicDescription}</p>}
                 </div>
               </div>
             </div>

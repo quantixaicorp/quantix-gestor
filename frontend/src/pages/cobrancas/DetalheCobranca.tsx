@@ -51,7 +51,7 @@ export default function DetalheCobranca() {
     setActionError('')
     setSaving(true)
     try {
-      await pagar(id, { dataPagamento, formaPagamento })
+      await pagar(id, { paymentDate: dataPagamento, paymentMethod: formaPagamento })
       setModalPagar(false)
     } catch (e) { setActionError(e instanceof Error ? e.message : 'Erro ao registrar pagamento') }
     finally { setSaving(false) }
@@ -102,21 +102,21 @@ export default function DetalheCobranca() {
 
       <div className="rounded-xl border p-4 flex flex-col gap-3 text-sm">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <div><span className="text-muted-foreground">Referência:</span> <span className="font-medium">{c.referencia}</span></div>
-          <div><span className="text-muted-foreground">Valor:</span> <span className="font-medium">{fmtVal(c.valor)}</span></div>
-          <div><span className="text-muted-foreground">Cliente:</span> {c.clienteNome}</div>
-          <div><span className="text-muted-foreground">Vencimento:</span> {fmtDate(c.dataVencimento)}</div>
+          <div><span className="text-muted-foreground">Referência:</span> <span className="font-medium">{c.reference}</span></div>
+          <div><span className="text-muted-foreground">Valor:</span> <span className="font-medium">{fmtVal(c.amount)}</span></div>
+          <div><span className="text-muted-foreground">Cliente:</span> {c.customerName}</div>
+          <div><span className="text-muted-foreground">Vencimento:</span> {fmtDate(c.dueDate)}</div>
           {c.contratoTitulo && (
             <div className="col-span-2"><span className="text-muted-foreground">Contrato:</span> {c.contratoTitulo}</div>
           )}
-          {c.dataPagamento && (
+          {c.paymentDate && (
             <>
-              <div><span className="text-muted-foreground">Pago em:</span> {new Date(c.dataPagamento).toLocaleDateString('pt-BR')}</div>
-              <div><span className="text-muted-foreground">Forma:</span> {c.formaPagamento}</div>
+              <div><span className="text-muted-foreground">Pago em:</span> {new Date(c.paymentDate).toLocaleDateString('pt-BR')}</div>
+              <div><span className="text-muted-foreground">Forma:</span> {c.paymentMethod}</div>
             </>
           )}
-          {c.observacao && (
-            <div className="col-span-2"><span className="text-muted-foreground">Obs:</span> {c.observacao}</div>
+          {c.notes && (
+            <div className="col-span-2"><span className="text-muted-foreground">Obs:</span> {c.notes}</div>
           )}
         </div>
       </div>

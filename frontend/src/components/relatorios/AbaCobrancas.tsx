@@ -51,12 +51,12 @@ export default function AbaCobrancas({ dados }: Props) {
             </tr>
           </thead>
           <tbody>
-            {dados.cobrancas.map((c, i) => (
+            {dados.charges.map((c, i) => (
               <tr key={i} className="border-t hover:bg-muted/30">
-                <td className="px-4 py-2">{c.referencia}</td>
-                <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{c.clienteNome}</td>
-                <td className="px-4 py-2 text-right font-medium">{fmt(c.valor)}</td>
-                <td className="px-4 py-2">{c.dataVencimento}</td>
+                <td className="px-4 py-2">{c.reference}</td>
+                <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{c.customerName}</td>
+                <td className="px-4 py-2 text-right font-medium">{fmt(c.amount)}</td>
+                <td className="px-4 py-2">{c.dueDate}</td>
                 <td className="px-4 py-2 text-center">
                   <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                     c.status === 'Pago' ? 'bg-green-100 text-green-700' :
@@ -67,7 +67,7 @@ export default function AbaCobrancas({ dados }: Props) {
                 </td>
               </tr>
             ))}
-            {!dados.cobrancas.length && <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Nenhuma cobrança</td></tr>}
+            {!dados.charges.length && <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Nenhuma cobrança</td></tr>}
           </tbody>
         </table>
       </div>

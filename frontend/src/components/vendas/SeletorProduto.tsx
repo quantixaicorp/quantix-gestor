@@ -25,21 +25,21 @@ export default function SeletorProduto({ onAdd }: Props) {
   }, [])
 
   const filtrados = produtos
-    .filter(p => p.ativo && (
+    .filter(p => p.isActive && (
       !busca ||
-      p.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      (p.codigoBarras?.includes(busca) ?? false)))
+      p.name.toLowerCase().includes(busca.toLowerCase()) ||
+      (p.barcode?.includes(busca) ?? false)))
     .slice(0, 40)
 
   function selecionar(produtoId: string) {
     const p = produtos.find(x => x.id === produtoId)!
     onAdd({
       produtoId: p.id,
-      produtoNome: p.nome,
-      precoUnitario: p.precoVenda,
+      produtoNome: p.name,
+      precoUnitario: p.salePrice,
       quantidade: 1,
       desconto: 0,
-      total: p.precoVenda,
+      total: p.salePrice,
     })
     setBusca('')
     setAberto(false)
@@ -75,15 +75,15 @@ export default function SeletorProduto({ onAdd }: Props) {
                 onMouseDown={e => { e.preventDefault(); selecionar(p.id) }}
               >
                 <div>
-                  <p className="text-sm font-medium">{p.nome}</p>
+                  <p className="text-sm font-medium">{p.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {p.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    {p.codigoBarras && <span className="ml-2 opacity-60">{p.codigoBarras}</span>}
-                    {p.estoqueBaixo && <span className="ml-2 text-destructive">• Estoque baixo ({p.estoqueAtual})</span>}
+                    {p.salePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {p.barcode && <span className="ml-2 opacity-60">{p.barcode}</span>}
+                    {p.estoqueBaixo && <span className="ml-2 text-destructive">• Estoque baixo ({p.currentStock})</span>}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground ml-4 shrink-0">
-                  {p.tipo === 'Servico' ? '✂️' : '📦'}
+                  {p.type === 'Servico' ? '✂️' : '📦'}
                 </span>
               </button>
             ))

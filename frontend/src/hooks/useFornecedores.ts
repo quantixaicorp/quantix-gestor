@@ -22,7 +22,7 @@ export function useFornecedores() {
 
   const create = useCallback(async (req: CreateFornecedorRequest) => {
     const result = await api.post<FornecedorResponse>('/api/fornecedores', req)
-    setFornecedores(prev => [...prev, result].sort((a, b) => a.nome.localeCompare(b.nome)))
+    setFornecedores(prev => [...prev, result].sort((a, b) => a.name.localeCompare(b.name)))
     return result
   }, [])
 

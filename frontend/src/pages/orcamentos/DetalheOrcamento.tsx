@@ -61,12 +61,12 @@ export default function DetalheOrcamento() {
 
   function abrirWhatsapp() {
     if (!orcamento?.clienteWhatsapp) return
-    const num = String(orcamento.numero).padStart(3, '0')
+    const num = String(orcamento.number).padStart(3, '0')
     const total = fmt(orcamento.total)
-    const validade = fmtDate(orcamento.dataValidade)
+    const validade = fmtDate(orcamento.expirationDate)
     const msg = encodeURIComponent(
-      `Olá${orcamento.clienteNome ? ` ${orcamento.clienteNome}` : ''}! ` +
-      `Segue o Orçamento ORC-${num}: "${orcamento.titulo}"\n` +
+      `Olá${orcamento.customerName ? ` ${orcamento.customerName}` : ''}! ` +
+      `Segue o Orçamento ORC-${num}: "${orcamento.title}"\n` +
       `Total: ${total} | Válido até: ${validade}`
     )
     const digits = orcamento.clienteWhatsapp.replace(/\D/g, '')
@@ -98,7 +98,7 @@ export default function DetalheOrcamento() {
     setAcao('converter')
     try {
       const result = await converter(id)
-      if (result.vendaId) navigate(`/vendas/nova?vendaId=${result.vendaId}`)
+      if (result.saleId) navigate(`/vendas/nova?vendaId=${result.saleId}`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao converter')
     } finally {
@@ -118,37 +118,37 @@ export default function DetalheOrcamento() {
       <div className="rounded-xl border bg-card p-6 space-y-4">
         {o.status === 'Expirado' && (
           <div className="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Este orçamento expirou em {fmtDate(o.dataValidade)}.
+            Este orçamento expirou em {fmtDate(o.expirationDate)}.
           </div>
         )}
 
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-muted-foreground font-mono">
-              ORC-{String(o.numero).padStart(3, '0')}
+              ORC-{String(o.number).padStart(3, '0')}
             </p>
-            <h1 className="text-2xl font-bold">{o.titulo}</h1>
-            {o.clienteNome && <p className="text-muted-foreground">{o.clienteNome}</p>}
+            <h1 className="text-2xl font-bold">{o.title}</h1>
+            {o.customerName && <p className="text-muted-foreground">{o.customerName}</p>}
           </div>
           <Badge className={statusClassName(o.status)}>{o.status}</Badge>
         </div>
 
         <div className="grid gap-1 text-sm text-muted-foreground">
-          <p>Válido até: <strong className="text-foreground">{fmtDate(o.dataValidade)}</strong></p>
-          {o.observacao && <p>Obs: {o.observacao}</p>}
+          <p>Válido até: <strong className="text-foreground">{fmtDate(o.expirationDate)}</strong></p>
+          {o.notes && <p>Obs: {o.notes}</p>}
         </div>
 
-        {o.tokenPublico && o.status !== 'Rascunho' && (
+        {o.publicToken && o.status !== 'Rascunho' && (
           <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
             <p className="text-sm flex-1 truncate font-mono text-muted-foreground">
-              {window.location.origin}/orcamento/{o.tokenPublico}
+              {window.location.origin}/orcamento/{o.publicToken}
             </p>
             <Button
               size="sm"
               variant="outline"
               onClick={() => {
                 void navigator.clipboard.writeText(
-                  `${window.location.origin}/orcamento/${o.tokenPublico}`
+                  `${window.location.origin}/orcamento/${o.publicToken}`
                 )
               }}
             >
@@ -193,11 +193,11 @@ export default function DetalheOrcamento() {
             <Button onClick={handleConverter} disabled={acao !== null}>
               {acao === 'converter' ? '...' : 'Converter em Venda'}
             </Button>
-            {o.clienteId && (
+            {o.customerId && (
               <Button
                 variant="outline"
                 onClick={() => navigate(
-                  `/contratos/novo?clienteId=${o.clienteId}&titulo=${encodeURIComponent(o.titulo)}`
+                  `/contratos/novo?clienteId=${o.customerId}&titulo=${encodeURIComponent(o.title)}`
                 )}
               >
                 Criar Contrato
@@ -208,7 +208,7 @@ export default function DetalheOrcamento() {
             </Button>
           </>
         )}
-        {o.status === 'Convertido' && o.vendaId && (
+        {o.status === 'Convertido' && o.saleId && (
           <Button variant="outline" onClick={() => navigate('/vendas')}>
             Ver histórico de vendas
           </Button>
@@ -230,16 +230,16 @@ export default function DetalheOrcamento() {
             </tr>
           </thead>
           <tbody>
-            {o.itens.map(item => (
+            {o.items.map(item => (
               <tr key={item.id} className="border-b">
                 <td className="px-4 py-3">
-                  <span className="rounded bg-muted px-2 py-0.5 text-xs">{item.tipo}</span>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs">{item.type}</span>
                 </td>
-                <td className="px-4 py-3">{item.descricao}</td>
-                <td className="px-4 py-3 text-right">{item.quantidade}</td>
-                <td className="px-4 py-3 text-right">{fmt(item.valorUnitario)}</td>
+                <td className="px-4 py-3">{item.description}</td>
+                <td className="px-4 py-3 text-right">{item.quantity}</td>
+                <td className="px-4 py-3 text-right">{fmt(item.unitPrice)}</td>
                 <td className="px-4 py-3 text-right font-medium">
-                  {fmt(item.quantidade * item.valorUnitario)}
+                  {fmt(item.quantity * item.unitPrice)}
                 </td>
               </tr>
             ))}

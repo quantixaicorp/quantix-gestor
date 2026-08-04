@@ -1,38 +1,38 @@
 export interface ContratoTemplateItem {
   id: string
-  descricao: string
-  quantidade: number
-  valorUnitario: number
+  description: string
+  quantity: number
+  unitPrice: number
 }
 
 export interface ContratoTemplate {
   id: string
-  nome: string
-  objeto: string
-  tipoCobranca: string
-  periodicidade: string
-  diaVencimento: number
-  valorPadrao: number | null
-  criadoEm: string
-  itens: ContratoTemplateItem[]
+  name: string
+  subject: string
+  chargeType: string
+  frequency: string
+  dueDay: number
+  defaultAmount: number | null
+  createdAt: string
+  items: ContratoTemplateItem[]
   total: number
 }
 
 export interface ContratoTemplateListItem {
   id: string
-  nome: string
-  tipoCobranca: string
-  periodicidade: string
-  valorPadrao: number | null
+  name: string
+  chargeType: string
+  frequency: string
+  defaultAmount: number | null
   qtdItens: number
 }
 
 export interface CreateContratoTemplateRequest {
-  nome: string
-  objeto: string
-  tipoCobranca: string
-  periodicidade: string
-  diaVencimento: number
-  valorPadrao: number | null
-  itens: { descricao: string; quantidade: number; valorUnitario: number }[]
+  name: string
+  subject: string
+  chargeType: string
+  frequency: string
+  dueDay: number
+  defaultAmount: number | null
+  items: { description: string; quantity: number; unitPrice: number }[]
 }

@@ -49,7 +49,7 @@ export default function AgendamentoPublico() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<DadosForm>({ resolver: zodResolver(dadosSchema) })
 
-  const cor = bk.info?.corPrimaria ?? '#3B82F6'
+  const cor = bk.info?.primaryColor ?? '#3B82F6'
 
   const today = new Date()
   const [calYear, setCalYear] = React.useState(today.getFullYear())
@@ -81,9 +81,9 @@ export default function AgendamentoPublico() {
             <img src={logoSrc(bk.info!.logoUrl)!} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
           )}
           <div>
-            <h1 className="text-white font-bold text-lg leading-tight">{bk.info?.nome}</h1>
-            {bk.info?.descricao && (
-              <p className="text-white/80 text-xs">{bk.info.descricao}</p>
+            <h1 className="text-white font-bold text-lg leading-tight">{bk.info?.name}</h1>
+            {bk.info?.description && (
+              <p className="text-white/80 text-xs">{bk.info.description}</p>
             )}
           </div>
         </div>
@@ -122,12 +122,12 @@ export default function AgendamentoPublico() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium text-gray-900">{s.nome}</p>
-                    {s.duracaoMinutos && (
-                      <p className="text-sm text-gray-500">{s.duracaoMinutos} min</p>
+                    <p className="font-medium text-gray-900">{s.name}</p>
+                    {s.durationMinutes && (
+                      <p className="text-sm text-gray-500">{s.durationMinutes} min</p>
                     )}
                   </div>
-                  <p className="font-semibold" style={{ color: cor }}>{fmtPreco(s.preco)}</p>
+                  <p className="font-semibold" style={{ color: cor }}>{fmtPreco(s.price)}</p>
                 </div>
               </button>
             ))}
@@ -144,7 +144,7 @@ export default function AgendamentoPublico() {
                 onClick={() => void bk.selecionarProfissional(p)}
                 className="w-full text-left rounded-xl border-2 border-gray-200 p-4 hover:border-blue-300 transition-colors"
               >
-                <p className="font-medium text-gray-900">{p.nome}</p>
+                <p className="font-medium text-gray-900">{p.name}</p>
               </button>
             ))}
             <button onClick={bk.voltar} className="text-sm text-gray-500 underline">← Voltar</button>
@@ -229,8 +229,8 @@ export default function AgendamentoPublico() {
           <div className="space-y-4">
             <h2 className="font-semibold text-gray-800">Seus dados</h2>
             <div className="rounded-xl bg-white border p-4 text-sm space-y-1 text-gray-600">
-              <p><span className="font-medium">Serviço:</span> {bk.servicoSelecionado?.nome}</p>
-              <p><span className="font-medium">Profissional:</span> {bk.profissionalSelecionado?.nome}</p>
+              <p><span className="font-medium">Serviço:</span> {bk.servicoSelecionado?.name}</p>
+              <p><span className="font-medium">Profissional:</span> {bk.profissionalSelecionado?.name}</p>
               <p><span className="font-medium">Data:</span> {bk.dataSelecionada && fmtData(bk.dataSelecionada + 'T12:00:00')}</p>
               <p><span className="font-medium">Horário:</span> {bk.slotSelecionado && fmtHora(bk.slotSelecionado)}</p>
             </div>
@@ -269,11 +269,11 @@ export default function AgendamentoPublico() {
             </p>
             <div className="rounded-xl bg-white border p-4 text-sm space-y-1 text-gray-600 text-left">
               <p><span className="font-medium">Serviço:</span> {bk.confirmado.servicoNome}</p>
-              <p><span className="font-medium">Profissional:</span> {bk.confirmado.profissionalNome}</p>
-              <p><span className="font-medium">Data:</span> {fmtData(bk.confirmado.dataHoraInicio)}</p>
-              <p><span className="font-medium">Horário:</span> {fmtHora(bk.confirmado.dataHoraInicio)}</p>
+              <p><span className="font-medium">Profissional:</span> {bk.confirmado.professionalName}</p>
+              <p><span className="font-medium">Data:</span> {fmtData(bk.confirmado.startAt)}</p>
+              <p><span className="font-medium">Horário:</span> {fmtHora(bk.confirmado.startAt)}</p>
             </div>
-            {bk.confirmado.sinalPixQrCode && (
+            {bk.confirmado.depositPixQrCode && (
               <div className="rounded-md border border-amber-300 bg-amber-50 p-4 space-y-2 text-left">
                 <p className="font-semibold text-amber-800">Pagamento de sinal necessário</p>
                 <p className="text-sm text-amber-700">
@@ -281,11 +281,11 @@ export default function AgendamentoPublico() {
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 bg-white border rounded px-2 py-1 text-xs break-all">
-                    {bk.confirmado.sinalPixQrCode}
+                    {bk.confirmado.depositPixQrCode}
                   </code>
                   <button
                     className="text-xs text-amber-800 underline shrink-0"
-                    onClick={() => void navigator.clipboard.writeText(bk.confirmado!.sinalPixQrCode!)}
+                    onClick={() => void navigator.clipboard.writeText(bk.confirmado!.depositPixQrCode!)}
                   >
                     Copiar
                   </button>

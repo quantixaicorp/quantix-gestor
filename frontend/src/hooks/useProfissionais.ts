@@ -6,13 +6,13 @@ import type {
   BloqueioResponse,
 } from '@/types/agendamento'
 
-interface CriarProfissionalRequest { nome: string; telefone?: string }
-interface AtualizarProfissionalRequest { nome: string; telefone?: string; ativo: boolean }
+interface CriarProfissionalRequest { name: string; phone?: string }
+interface AtualizarProfissionalRequest { name: string; phone?: string; isActive: boolean }
 interface CriarBloqueioRequest {
-  profissionalId?: string
-  dataInicio: string
-  dataFim: string
-  motivo?: string
+  professionalId?: string
+  startDate: string
+  endDate: string
+  reason?: string
 }
 
 export function useProfissionais() {

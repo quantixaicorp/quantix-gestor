@@ -20,9 +20,9 @@ export const EVENTO_LABEL: Record<AutomacaoTipoEvento, string> = {
 export interface AutomacaoLogItem {
   id: string
   enviadoEm: string
-  clienteNome: string
-  referencia: string
-  tipoEvento: AutomacaoTipoEvento
-  sucesso: boolean
-  erroMsg: string | null
+  customerName: string
+  reference: string
+  eventType: AutomacaoTipoEvento
+  success: boolean
+  errorMessage: string | null
 }

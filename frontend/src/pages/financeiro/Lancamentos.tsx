@@ -30,13 +30,13 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 // "Compra #42 - Parcela 2/3" → "Compra #42"
 function grupoDescricao(parcelas: LancamentoResponse[]): string {
   const desc = [...parcelas].sort((a, b) =>
-    (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))[0]?.descricao ?? ''
+    (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))[0]?.description ?? ''
   const m = desc.match(/^(.+)\s[-–]\s(?:Parcela\s)?\d+\/\d+$/)
   return m ? m[1] : desc
 }
 
 function grupoStats(parcelas: LancamentoResponse[]) {
-  const total = parcelas.reduce((s, p) => s + p.valor, 0)
+  const total = parcelas.reduce((s, p) => s + p.amount, 0)
   const pagas = parcelas.filter(p => p.status === 'Pago').length
   const pendentes = parcelas.filter(p => p.status === 'Pendente').length
   const vencidas = parcelas.filter(p => p.vencido && p.status === 'Pendente').length
@@ -79,7 +79,7 @@ export default function Lancamentos() {
   useEffect(() => {
     void list()
     void fetchResumo().then(setResumo).catch(() => {})
-    void listCategorias().then(cats => setTodasCategorias(cats.map(c => c.nome).sort())).catch(() => {})
+    void listCategorias().then(cats => setTodasCategorias(cats.map(c => c.name).sort())).catch(() => {})
   }, [list, fetchResumo, listCategorias])
 
   // ── agrupamento ──────────────────────────────────────────────────────────
@@ -88,10 +88,10 @@ export default function Lancamentos() {
   const allGroups = useMemo(() => {
     const map = new Map<string, LancamentoResponse[]>()
     for (const l of lancamentos) {
-      if (!l.parcelamentoId) continue
-      const arr = map.get(l.parcelamentoId) ?? []
+      if (!l.installmentPlanId) continue
+      const arr = map.get(l.installmentPlanId) ?? []
       arr.push(l)
-      map.set(l.parcelamentoId, arr)
+      map.set(l.installmentPlanId, arr)
     }
     return map
   }, [lancamentos])
@@ -103,17 +103,17 @@ export default function Lancamentos() {
 
     for (const l of lancamentos) {
       const matchesFiltro = (x: LancamentoResponse) =>
-        (!filtroTipo || x.tipo === filtroTipo) &&
-        (!filtroCategoria || x.categoria === filtroCategoria) &&
+        (!filtroTipo || x.type === filtroTipo) &&
+        (!filtroCategoria || x.category === filtroCategoria) &&
         (!filtroStatus || x.status === filtroStatus)
 
-      if (l.parcelamentoId) {
-        if (seenGroups.has(l.parcelamentoId)) continue
-        const parcelas = allGroups.get(l.parcelamentoId) ?? []
+      if (l.installmentPlanId) {
+        if (seenGroups.has(l.installmentPlanId)) continue
+        const parcelas = allGroups.get(l.installmentPlanId) ?? []
         // Mostra o grupo se ao menos uma parcela bate no filtro
         if (parcelas.some(matchesFiltro)) {
-          seenGroups.add(l.parcelamentoId)
-          items.push({ kind: 'group', parcelamentoId: l.parcelamentoId, parcelas })
+          seenGroups.add(l.installmentPlanId)
+          items.push({ kind: 'group', parcelamentoId: l.installmentPlanId, parcelas })
         }
       } else if (matchesFiltro(l)) {
         items.push({ kind: 'individual', lancamento: l })
@@ -166,7 +166,7 @@ export default function Lancamentos() {
   async function handleExcluir(l: LancamentoResponse) {
     const ok = await confirm({
       title: 'Excluir lançamento?',
-      description: `Esta ação não pode ser desfeita. ${l.descricao} — ${fmt(l.valor)}`,
+      description: `Esta ação não pode ser desfeita. ${l.description} — ${fmt(l.amount)}`,
     })
     if (!ok) return
     setExcluindo(l.id)
@@ -201,12 +201,12 @@ export default function Lancamentos() {
   async function handlePagar(l: LancamentoResponse) {
     const ok = await confirm({
       title: 'Confirmar pagamento?',
-      description: `${fmt(l.valor)} — ${l.descricao}`,
+      description: `${fmt(l.amount)} — ${l.description}`,
     })
     if (!ok) return
     setPagando(l.id)
     try {
-      await pagar(l.id, { dataPagamento: new Date().toISOString() })
+      await pagar(l.id, { paymentDate: new Date().toISOString() })
       toast.success('Pagamento registrado')
       void list()
       void fetchResumo().then(setResumo).catch(() => {})
@@ -223,15 +223,15 @@ export default function Lancamentos() {
         {l.status === 'Pendente' && (
           <Button size="sm" variant="outline" disabled={pagando === l.id}
             onClick={() => void handlePagar(l)}>
-            {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+            {pagando === l.id ? '...' : l.type === 'Receita' ? 'Receber' : 'Pagar'}
           </Button>
         )}
-        {l.status === 'Pendente' && !l.vendaId && (
+        {l.status === 'Pendente' && !l.saleId && (
           <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
             <Pencil size={14} />
           </Button>
         )}
-        {isAdmin && !l.vendaId && (
+        {isAdmin && !l.saleId && (
           <Button size="sm" variant="ghost" disabled={excluindo === l.id}
             onClick={() => void handleExcluir(l)}
             className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -306,37 +306,37 @@ export default function Lancamentos() {
                   <div key={l.id} className="rounded-lg border bg-card p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{l.descricao}</p>
-                        <p className="text-xs text-muted-foreground">{l.categoria}</p>
+                        <p className="font-medium truncate">{l.description}</p>
+                        <p className="text-xs text-muted-foreground">{l.category}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
-                        <Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge>
+                        <Badge variant={tipoVariant(l.type)}>{l.type}</Badge>
                         <Badge variant={statusVariant(l.status, l.vencido)}>
                           {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
                         </Badge>
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</span>
-                      <span className={`font-semibold ${l.tipo === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
-                        {fmt(l.valor)}
+                      <span className="text-muted-foreground">Vence: {fmtDate(l.dueDate)}</span>
+                      <span className={`font-semibold ${l.type === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                        {fmt(l.amount)}
                       </span>
                     </div>
-                    {(l.status === 'Pendente' || (isAdmin && !l.vendaId)) && (
+                    {(l.status === 'Pendente' || (isAdmin && !l.saleId)) && (
                       <div className="flex gap-1 pt-1 flex-wrap">
                         {l.status === 'Pendente' && (
                           <Button size="sm" variant="outline" className="flex-1"
                             disabled={pagando === l.id}
                             onClick={() => void handlePagar(l)}>
-                            {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                            {pagando === l.id ? '...' : l.type === 'Receita' ? 'Receber' : 'Pagar'}
                           </Button>
                         )}
-                        {l.status === 'Pendente' && !l.vendaId && (
+                        {l.status === 'Pendente' && !l.saleId && (
                           <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
                             <Pencil size={13} />
                           </Button>
                         )}
-                        {isAdmin && !l.vendaId && (
+                        {isAdmin && !l.saleId && (
                           <Button size="sm" variant="ghost" disabled={excluindo === l.id}
                             onClick={() => void handleExcluir(l)}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -378,16 +378,16 @@ export default function Lancamentos() {
                   {expanded && (
                     <div className="border-t divide-y">
                       {[...parcelas]
-                        .sort((a, b) => (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))
+                        .sort((a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))
                         .map(l => (
                           <div key={l.id} className="p-3 pl-6 space-y-1">
                             <div className="flex items-center justify-between gap-2">
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{l.descricao}</p>
-                                <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</p>
+                                <p className="text-sm font-medium truncate">{l.description}</p>
+                                <p className="text-xs text-muted-foreground">Vence: {fmtDate(l.dueDate)}</p>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className={`text-sm font-semibold ${l.tipo === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>{fmt(l.valor)}</span>
+                                <span className={`text-sm font-semibold ${l.type === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>{fmt(l.amount)}</span>
                                 <Badge variant={statusVariant(l.status, l.vencido)}>
                                   {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
                                 </Badge>
@@ -397,15 +397,15 @@ export default function Lancamentos() {
                               {l.status === 'Pendente' && (
                                 <Button size="sm" variant="outline" disabled={pagando === l.id}
                                   onClick={() => void handlePagar(l)}>
-                                  {pagando === l.id ? '...' : l.tipo === 'Receita' ? 'Receber' : 'Pagar'}
+                                  {pagando === l.id ? '...' : l.type === 'Receita' ? 'Receber' : 'Pagar'}
                                 </Button>
                               )}
-                              {l.status === 'Pendente' && !l.vendaId && (
+                              {l.status === 'Pendente' && !l.saleId && (
                                 <Button size="sm" variant="ghost" onClick={() => setEditandoLanc(l)}>
                                   <Pencil size={13} />
                                 </Button>
                               )}
-                              {isAdmin && !l.vendaId && (
+                              {isAdmin && !l.saleId && (
                                 <Button size="sm" variant="ghost" disabled={excluindo === l.id}
                                   onClick={() => void handleExcluir(l)}
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -457,11 +457,11 @@ export default function Lancamentos() {
                     const l = item.lancamento
                     return (
                       <tr key={l.id} className="border-b hover:bg-muted/20">
-                        <td className="px-4 py-3 font-medium">{l.descricao}</td>
-                        <td className="px-4 py-3"><Badge variant={tipoVariant(l.tipo)}>{l.tipo}</Badge></td>
-                        <td className="px-4 py-3 text-muted-foreground">{l.categoria}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
-                        <td className="px-4 py-3 text-right font-medium">{fmt(l.valor)}</td>
+                        <td className="px-4 py-3 font-medium">{l.description}</td>
+                        <td className="px-4 py-3"><Badge variant={tipoVariant(l.type)}>{l.type}</Badge></td>
+                        <td className="px-4 py-3 text-muted-foreground">{l.category}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{fmtDate(l.dueDate)}</td>
+                        <td className="px-4 py-3 text-right font-medium">{fmt(l.amount)}</td>
                         <td className="px-4 py-3">
                           <Badge variant={statusVariant(l.status, l.vencido)}>
                             {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
@@ -498,7 +498,7 @@ export default function Lancamentos() {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground text-xs">Parcelamento</td>
                         <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {fmtDate(parcelas[0].dataVencimento)}
+                          {fmtDate(parcelas[0].dueDate)}
                         </td>
                         <td className="px-4 py-3 text-right font-medium">{fmt(stats.total)}</td>
                         <td className="px-4 py-3">
@@ -528,18 +528,18 @@ export default function Lancamentos() {
 
                       {/* linhas das parcelas (expandido) */}
                       {expanded && [...parcelas]
-                        .sort((a, b) => (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))
+                        .sort((a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))
                         .map(l => (
                           <tr key={l.id} className="border-b bg-muted/5 hover:bg-muted/20">
                             <td className="py-2.5" colSpan={2}>
                               <div className="flex items-center gap-2 pl-10 pr-4">
                                 <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                                <span className="font-medium text-sm">{l.descricao}</span>
+                                <span className="font-medium text-sm">{l.description}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-2.5 text-muted-foreground">{l.categoria}</td>
-                            <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
-                            <td className="px-4 py-2.5 text-right font-medium">{fmt(l.valor)}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{l.category}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(l.dueDate)}</td>
+                            <td className="px-4 py-2.5 text-right font-medium">{fmt(l.amount)}</td>
                             <td className="px-4 py-2.5">
                               <Badge variant={statusVariant(l.status, l.vencido)}>
                                 {l.vencido && l.status === 'Pendente' ? 'Vencida' : l.status}
@@ -576,12 +576,12 @@ export default function Lancamentos() {
             <LancamentoForm
               key={editandoLanc.id}
               defaultValues={{
-                tipo: editandoLanc.tipo,
-                descricao: editandoLanc.descricao,
-                valor: editandoLanc.valor.toString(),
-                dataVencimento: editandoLanc.dataVencimento.slice(0, 10),
-                categoria: editandoLanc.categoria,
-                observacao: editandoLanc.observacao ?? undefined,
+                type: editandoLanc.type,
+                description: editandoLanc.description,
+                amount: editandoLanc.amount.toString(),
+                dueDate: editandoLanc.dueDate.slice(0, 10),
+                category: editandoLanc.category,
+                notes: editandoLanc.notes ?? undefined,
               }}
               onSubmit={handleEditLanc}
               onCancel={() => setEditandoLanc(null)}

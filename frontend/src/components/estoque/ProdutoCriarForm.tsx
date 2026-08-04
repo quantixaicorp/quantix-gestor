@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label'
 import type { CategoriaResponse, CreateProdutoRequest } from '@/types/estoque'
 
 const schema = z.object({
-  categoriaId: z.string().min(1, 'Selecione uma categoria'),
-  nome: z.string().min(1, 'Nome obrigatório').max(200),
-  descricao: z.string().optional(),
-  precoVenda: z.number().positive('Preço deve ser maior que zero'),
-  custoMedio: z.number().min(0),
-  estoqueAtual: z.number().min(0),
-  estoqueMinimo: z.number().min(0),
-  codigoBarras: z.string().optional(),
+  categoryId: z.string().min(1, 'Selecione uma categoria'),
+  name: z.string().min(1, 'Nome obrigatório').max(200),
+  description: z.string().optional(),
+  salePrice: z.number().positive('Preço deve ser maior que zero'),
+  averageCost: z.number().min(0),
+  currentStock: z.number().min(0),
+  minimumStock: z.number().min(0),
+  barcode: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -32,7 +32,7 @@ export default function ProdutoCriarForm({ categorias, onSubmit, onCancel, onCre
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { precoVenda: 0, custoMedio: 0, estoqueAtual: 0, estoqueMinimo: 0 },
+      defaultValues: { salePrice: 0, averageCost: 0, currentStock: 0, minimumStock: 0 },
     })
 
   const [novaCategoria, setNovaCategoria] = useState('')
@@ -46,7 +46,7 @@ export default function ProdutoCriarForm({ categorias, onSubmit, onCancel, onCre
     setCriandoCategoria(true)
     try {
       const criada = await onCreateCategoria(novaCategoria.trim())
-      setValue('categoriaId', criada.id)
+      setValue('categoryId', criada.id)
       setNovaCategoria('')
       setMostraCriarCategoria(false)
     } catch (e) {
@@ -57,7 +57,7 @@ export default function ProdutoCriarForm({ categorias, onSubmit, onCancel, onCre
   }
 
   async function submit(values: FormValues) {
-    await onSubmit({ ...values, tipo: 'Produto' })
+    await onSubmit({ ...values, type: 'Produto' })
   }
 
   return (
@@ -86,49 +86,49 @@ export default function ProdutoCriarForm({ categorias, onSubmit, onCancel, onCre
             {erroCategoria && <p className="text-xs text-destructive">{erroCategoria}</p>}
           </div>
         )}
-        <select {...register('categoriaId')}
+        <select {...register('categoryId')}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
           <option value="">Selecione...</option>
-          {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          {categorias.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {errors.categoriaId && <p className="text-xs text-destructive">{errors.categoriaId.message}</p>}
+        {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
       </div>
 
       <div className="grid gap-2">
         <Label>Nome</Label>
-        <Input {...register('nome')} placeholder="Nome do produto" />
-        {errors.nome && <p className="text-xs text-destructive">{errors.nome.message}</p>}
+        <Input {...register('name')} placeholder="Nome do produto" />
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Preço de Venda (R$)</Label>
-          <Input type="number" step="0.01" {...register('precoVenda', { valueAsNumber: true })} />
-          {errors.precoVenda && <p className="text-xs text-destructive">{errors.precoVenda.message}</p>}
+          <Input type="number" step="0.01" {...register('salePrice', { valueAsNumber: true })} />
+          {errors.salePrice && <p className="text-xs text-destructive">{errors.salePrice.message}</p>}
         </div>
         <div className="grid gap-2">
           <Label>Custo Médio (R$)</Label>
-          <Input type="number" step="0.01" {...register('custoMedio', { valueAsNumber: true })} />
-          {errors.custoMedio && <p className="text-xs text-destructive">{errors.custoMedio.message}</p>}
+          <Input type="number" step="0.01" {...register('averageCost', { valueAsNumber: true })} />
+          {errors.averageCost && <p className="text-xs text-destructive">{errors.averageCost.message}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Estoque Inicial</Label>
-          <Input type="number" step="0.01" {...register('estoqueAtual', { valueAsNumber: true })} />
-          {errors.estoqueAtual && <p className="text-xs text-destructive">{errors.estoqueAtual.message}</p>}
+          <Input type="number" step="0.01" {...register('currentStock', { valueAsNumber: true })} />
+          {errors.currentStock && <p className="text-xs text-destructive">{errors.currentStock.message}</p>}
         </div>
         <div className="grid gap-2">
           <Label>Estoque Mínimo</Label>
-          <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
-          {errors.estoqueMinimo && <p className="text-xs text-destructive">{errors.estoqueMinimo.message}</p>}
+          <Input type="number" step="0.01" {...register('minimumStock', { valueAsNumber: true })} />
+          {errors.minimumStock && <p className="text-xs text-destructive">{errors.minimumStock.message}</p>}
         </div>
       </div>
 
       <div className="grid gap-2">
         <Label>Código de Barras (opcional)</Label>
-        <Input {...register('codigoBarras')} placeholder="EAN-13" />
+        <Input {...register('barcode')} placeholder="EAN-13" />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

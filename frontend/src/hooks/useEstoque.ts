@@ -35,8 +35,8 @@ export function useEstoque() {
     setCategorias(data)
   }, [])
 
-  const createCategoria = useCallback(async (nome: string) => {
-    const result = await api.post<CategoriaResponse>('/api/categorias', { nome })
+  const createCategoria = useCallback(async (name: string) => {
+    const result = await api.post<CategoriaResponse>('/api/categorias', { name })
     setCategorias(prev => [...prev, result])
     return result
   }, [])
@@ -60,7 +60,7 @@ export function useEstoque() {
 
   const entradaEstoque = useCallback(async (req: EntradaEstoqueRequest) => {
     const result = await api.post<ProdutoResponse>('/api/estoque/movimentar', req)
-    setProdutos(prev => prev.map(p => p.id === req.produtoId ? result : p))
+    setProdutos(prev => prev.map(p => p.id === req.productId ? result : p))
     return result
   }, [])
 

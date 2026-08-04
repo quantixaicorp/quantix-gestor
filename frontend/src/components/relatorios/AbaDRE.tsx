@@ -93,7 +93,7 @@ export default function AbaDRE({ dados }: Props) {
                 <>
                   <Separador label="Despesas Operacionais" />
                   {dados.despesasOperacionais.map((d, i) => (
-                    <Linha key={i} label={d.descricao} valor={d.valor} variante="negativo" indent />
+                    <Linha key={i} label={d.description} valor={d.amount} variante="negativo" indent />
                   ))}
                   <Linha label="Total Despesas Operacionais" valor={dados.totalDespesasOperacionais}
                     variante="negativo" destaque />

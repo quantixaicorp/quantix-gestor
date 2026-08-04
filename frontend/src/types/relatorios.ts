@@ -45,10 +45,10 @@ export interface KpisGeralResponse {
   topClientes: RankingClienteResponse[]
 }
 
-export interface TendenciaVendasResponse { data: string; total: number; quantidade: number }
-export interface RankingProdutoResponse { nome: string; quantidade: number; total: number }
-export interface RankingClienteResponse { nome: string; compras: number; total: number }
-export interface VendasPorPagamentoResponse { formaPagamento: string; quantidade: number; total: number }
+export interface TendenciaVendasResponse { data: string; total: number; quantity: number }
+export interface RankingProdutoResponse { name: string; quantity: number; total: number }
+export interface RankingClienteResponse { name: string; compras: number; total: number }
+export interface VendasPorPagamentoResponse { paymentMethod: string; quantity: number; total: number }
 export interface RelatorioVendasResponse {
   tendencia: TendenciaVendasResponse[]
   topProdutos: RankingProdutoResponse[]
@@ -57,10 +57,10 @@ export interface RelatorioVendasResponse {
 }
 
 export interface FluxoCaixaDiaResponse { data: string; receitas: number; despesas: number; saldo: number }
-export interface CategoriaDespesaResponse { categoria: string; total: number }
+export interface CategoriaDespesaResponse { category: string; total: number }
 export interface LancamentoAnaliticoResponse {
-  id: string; tipo: string; descricao: string; categoria: string; valor: number
-  dataVencimento: string; dataPagamento: string | null; status: string
+  id: string; type: string; description: string; category: string; amount: number
+  dueDate: string; paymentDate: string | null; status: string
 }
 export interface RelatorioFinanceiroResponse {
   totalReceitas: number
@@ -71,8 +71,8 @@ export interface RelatorioFinanceiroResponse {
   analitico: LancamentoAnaliticoResponse[]
 }
 
-export interface GiroProdutoResponse { nome: string; entradas: number; saidas: number; giroLiquido: number }
-export interface ProdutoSemMovimentacaoResponse { nome: string; estoqueAtual: number; valorEmEstoque: number }
+export interface GiroProdutoResponse { name: string; entradas: number; saidas: number; giroLiquido: number }
+export interface ProdutoSemMovimentacaoResponse { name: string; currentStock: number; valorEmEstoque: number }
 export interface RelatorioEstoqueResponse {
   valorTotalEstoque: number
   produtosAtivos: number
@@ -81,7 +81,7 @@ export interface RelatorioEstoqueResponse {
   semMovimentacao: ProdutoSemMovimentacaoResponse[]
 }
 
-export interface ClienteRankingResponse { nome: string; whatsapp: string; compras: number; totalGasto: number }
+export interface ClienteRankingResponse { name: string; whatsApp: string; compras: number; totalGasto: number }
 export interface RelatorioClientesResponse {
   totalClientes: number
   clientesCompraram: number
@@ -91,9 +91,9 @@ export interface RelatorioClientesResponse {
 
 // Histórico de Clientes (lifetime)
 export interface HistoricoClienteItemResponse {
-  clienteId: string
-  nome: string
-  whatsapp: string
+  customerId: string
+  name: string
+  whatsApp: string
   qtdPedidos: number
   totalGasto: number
   ticketMedio: number
@@ -115,19 +115,19 @@ export interface HistoricoClientesResponse {
   clientes: HistoricoClienteItemResponse[]
 }
 export interface CompraHistoricoItemResponse {
-  vendaId: string
-  dataHora: string
+  saleId: string
+  saleDate: string
   qtdItens: number
   total: number
-  formaPagamento: string
+  paymentMethod: string
   status: string
 }
 export interface HistoricoClienteDetalheResponse {
-  clienteId: string
-  nome: string
-  whatsapp: string
+  customerId: string
+  name: string
+  whatsApp: string
   email: string | null
-  dataCadastro: string
+  createdAt: string
   qtdPedidos: number
   totalGasto: number
   ticketMedio: number
@@ -140,20 +140,20 @@ export interface HistoricoClienteDetalheResponse {
 
 // Curva ABC
 export interface CurvaAbcItemResponse {
-  nome: string
-  quantidade: number
+  name: string
+  quantity: number
   total: number
   percentual: number
   percentualAcumulado: number
   classe: 'A' | 'B' | 'C'
 }
 export interface CurvaAbcResponse {
-  itens: CurvaAbcItemResponse[]
+  items: CurvaAbcItemResponse[]
   totalGeral: number
 }
 
 // DRE
-export interface DreLinhaResponse { descricao: string; valor: number }
+export interface DreLinhaResponse { description: string; amount: number }
 export interface DreResponse {
   receitaBrutaVendas: number
   outrasReceitas: number
@@ -170,7 +170,7 @@ export interface DreResponse {
 
 // ─── Agendamentos ────────────────────────────────────────────────────────────
 export interface AgendamentoStatusItemRel { status: string; count: number }
-export interface AgendamentoProfissionalItemRel { profissional: string; total: number; concluidos: number; taxaConclusao: number }
+export interface AgendamentoProfissionalItemRel { professional: string; total: number; concluidos: number; taxaConclusao: number }
 export interface RelatorioAgendamentosResponse {
   totalNoPeriodo: number
   concluidos: number
@@ -182,7 +182,7 @@ export interface RelatorioAgendamentosResponse {
 }
 
 // ─── Contratos ───────────────────────────────────────────────────────────────
-export interface ContratoDetalheRel { titulo: string; clienteNome: string; valor: number; periodicidade: string; dataFim: string | null; status: string }
+export interface ContratoDetalheRel { title: string; customerName: string; amount: number; frequency: string; endDate: string | null; status: string }
 export interface RelatorioContratosResponse {
   totalAtivos: number
   mrrTotal: number
@@ -192,19 +192,19 @@ export interface RelatorioContratosResponse {
 
 // ─── Cobranças ───────────────────────────────────────────────────────────────
 export interface AgingFaixaRel { faixa: string; count: number; total: number }
-export interface CobrancaDetalheRel { referencia: string; clienteNome: string; valor: number; dataVencimento: string; status: string; diasAtraso: number }
+export interface CobrancaDetalheRel { reference: string; customerName: string; amount: number; dueDate: string; status: string; diasAtraso: number }
 export interface RelatorioCobrancasResponse {
   totalReceber: number
   totalVencido: number
   vencidosCount: number
   taxaInadimplencia: number
   aging: AgingFaixaRel[]
-  cobrancas: CobrancaDetalheRel[]
+  charges: CobrancaDetalheRel[]
 }
 
 // ─── Orçamentos ──────────────────────────────────────────────────────────────
-export interface OrcamentoStatusItemRel { status: string; count: number; valorTotal: number }
-export interface OrcamentoDetalheRel { numero: number; titulo: string; clienteNome: string; valorTotal: number; status: string; criadoEm: string }
+export interface OrcamentoStatusItemRel { status: string; count: number; totalAmount: number }
+export interface OrcamentoDetalheRel { number: number; title: string; customerName: string; totalAmount: number; status: string; createdAt: string }
 export interface RelatorioOrcamentosResponse {
   totalNoPeriodo: number
   taxaConversao: number
@@ -215,7 +215,7 @@ export interface RelatorioOrcamentosResponse {
 
 // ─── Assinaturas ─────────────────────────────────────────────────────────────
 export interface EvolucaoAssinaturaMesRel { mes: string; ativas: number; novas: number; canceladas: number }
-export interface AssinaturaDetalheRel { clienteNome: string; plano: string; valor: number; periodicidade: string; dataInicio: string; dataRenovacao: string; status: string }
+export interface AssinaturaDetalheRel { customerName: string; plan: string; amount: number; frequency: string; startDate: string; renewalDate: string; status: string }
 export interface RelatorioAssinaturasResponse {
   totalAtivas: number
   mrrTotal: number

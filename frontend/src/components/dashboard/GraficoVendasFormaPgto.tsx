@@ -13,7 +13,7 @@ export default function GraficoVendasFormaPgto({ dados }: Props) {
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">Sem vendas no mês</div>
     </div>
   )
-  const data = dados.map(d => ({ name: d.formaPagamento, value: d.total, qtd: d.quantidade }))
+  const data = dados.map(d => ({ name: d.paymentMethod, value: d.total, qtd: d.quantity }))
   return (
     <div className="rounded-lg border bg-card p-4">
       <p className="text-sm font-medium mb-1">Vendas por Forma de Pagamento</p>

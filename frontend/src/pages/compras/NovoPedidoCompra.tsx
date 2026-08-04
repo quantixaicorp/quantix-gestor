@@ -76,7 +76,7 @@ export default function NovoPedidoCompra() {
                 required
               >
                 <option value="">Selecione...</option>
-                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">

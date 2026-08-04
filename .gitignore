@@ -4,6 +4,7 @@ obj/
 *.user
 .vs/
 appsettings.Development.json
+backend/publish/
 
 # Node
 node_modules/

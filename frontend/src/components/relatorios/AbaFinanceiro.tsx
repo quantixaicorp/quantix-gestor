@@ -31,7 +31,7 @@ function Panel({ titulo, children }: { titulo: string; children: React.ReactNode
 export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Props) {
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState('')
-  const categorias = [...new Set(dados.analitico.map(l => l.categoria))].sort()
+  const categorias = [...new Set(dados.analitico.map(l => l.category))].sort()
   const fluxo = dados.fluxoPorDia.map(d => ({
     dia: new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     receitas: d.receitas,
@@ -40,8 +40,8 @@ export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Pro
   }))
 
   const analiticoFiltrado = dados.analitico.filter(l =>
-    (!filtroTipo || l.tipo === filtroTipo) &&
-    (!filtroCategoria || l.categoria === filtroCategoria)
+    (!filtroTipo || l.type === filtroTipo) &&
+    (!filtroCategoria || l.category === filtroCategoria)
   )
 
   return (
@@ -106,7 +106,7 @@ export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Pro
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie data={dados.categoriasDespesas} dataKey="total"
-                    nameKey="categoria" cx="50%" cy="50%" outerRadius={80}>
+                    nameKey="category" cx="50%" cy="50%" outerRadius={80}>
                     {dados.categoriasDespesas.map((_e, i) => (
                       <Cell key={i} fill={CORES[i % CORES.length]} />
                     ))}
@@ -122,7 +122,7 @@ export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Pro
                       <td className="py-2 flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full shrink-0"
                           style={{ background: CORES[i % CORES.length] }} />
-                        {c.categoria}
+                        {c.category}
                       </td>
                       <td className="py-2 text-right font-medium">{fmt(c.total)}</td>
                     </tr>
@@ -172,14 +172,14 @@ export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Pro
               <tbody>
                 {analiticoFiltrado.map(l => (
                   <tr key={l.id} className="border-b hover:bg-muted/20">
-                    <td className="px-3 py-2">{l.descricao}</td>
+                    <td className="px-3 py-2">{l.description}</td>
                     <td className="px-3 py-2">
-                      <Badge variant={l.tipo === 'Receita' ? 'secondary' : 'destructive'} className="text-xs">{l.tipo}</Badge>
+                      <Badge variant={l.type === 'Receita' ? 'secondary' : 'destructive'} className="text-xs">{l.type}</Badge>
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">{l.categoria}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{fmtDate(l.dataVencimento)}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{l.dataPagamento ? fmtDate(l.dataPagamento) : '—'}</td>
-                    <td className="px-3 py-2 text-right font-medium">{fmt(l.valor)}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.category}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{fmtDate(l.dueDate)}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.paymentDate ? fmtDate(l.paymentDate) : '—'}</td>
+                    <td className="px-3 py-2 text-right font-medium">{fmt(l.amount)}</td>
                     <td className="px-3 py-2">
                       <Badge variant={l.status === 'Pago' ? 'secondary' : l.status === 'Cancelado' ? 'outline' : 'outline'} className="text-xs">
                         {l.status}
@@ -192,7 +192,7 @@ export default function AbaFinanceiro({ dados, tipoData, onChangeTipoData }: Pro
                 <tr className="bg-muted/30 font-medium">
                   <td colSpan={5} className="px-3 py-2 text-sm">Total filtrado</td>
                   <td className="px-3 py-2 text-right">
-                    {fmt(analiticoFiltrado.reduce((s, l) => s + (l.tipo === 'Receita' ? l.valor : -l.valor), 0))}
+                    {fmt(analiticoFiltrado.reduce((s, l) => s + (l.type === 'Receita' ? l.amount : -l.amount), 0))}
                   </td>
                   <td />
                 </tr>

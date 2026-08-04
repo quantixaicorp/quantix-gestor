@@ -45,7 +45,7 @@ export default function Categorias() {
 
   function abrirEditar(cat: CategoriaLancamentoResponse) {
     setEditando(cat)
-    setNome(cat.nome)
+    setNome(cat.name)
     setModalAberto(true)
   }
 
@@ -60,10 +60,10 @@ export default function Categorias() {
     setSalvando(true)
     try {
       if (editando) {
-        await update(editando.id, { nome: nome.trim() })
+        await update(editando.id, { name: nome.trim() })
         toast.success('Categoria atualizada')
       } else {
-        await create({ nome: nome.trim(), tipo: aba })
+        await create({ name: nome.trim(), type: aba })
         toast.success('Categoria criada')
       }
       fecharModal()
@@ -78,7 +78,7 @@ export default function Categorias() {
   async function handleExcluir(cat: CategoriaLancamentoResponse) {
     const ok = await confirm({
       title: 'Excluir categoria?',
-      description: `"${cat.nome}" será removida. Lançamentos existentes com esta categoria não poderão ser excluídos enquanto vinculados.`,
+      description: `"${cat.name}" será removida. Lançamentos existentes com esta categoria não poderão ser excluídos enquanto vinculados.`,
       variant: 'destructive',
     })
     if (!ok) return
@@ -129,8 +129,8 @@ export default function Categorias() {
             {categorias.map(cat => (
               <div key={cat.id} className="rounded-lg border bg-card p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{cat.nome}</p>
-                  <p className="text-sm text-muted-foreground">{cat.tipo}</p>
+                  <p className="font-medium truncate">{cat.name}</p>
+                  <p className="text-sm text-muted-foreground">{cat.type}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
@@ -159,8 +159,8 @@ export default function Categorias() {
               <tbody>
                 {categorias.map(cat => (
                   <tr key={cat.id} className="border-b">
-                    <td className="px-4 py-3 font-medium">{cat.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{cat.tipo}</td>
+                    <td className="px-4 py-3 font-medium">{cat.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{cat.type}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 justify-end">
                         <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
@@ -189,7 +189,7 @@ export default function Categorias() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Tipo</Label>
-              <p className="text-sm text-muted-foreground">{editando ? editando.tipo : aba}</p>
+              <p className="text-sm text-muted-foreground">{editando ? editando.type : aba}</p>
             </div>
             <div className="space-y-1.5">
               <Label>Nome</Label>

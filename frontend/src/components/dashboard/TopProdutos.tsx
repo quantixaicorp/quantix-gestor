@@ -8,7 +8,7 @@ interface Props { dados: TopProdutoResponse[] }
 
 export default function TopProdutos({ dados }: Props) {
   const data = (dados ?? []).map(d => ({
-    nome: d.nome.length > 15 ? d.nome.slice(0, 15) + '…' : d.nome,
+    nome: d.name.length > 15 ? d.name.slice(0, 15) + '…' : d.name,
     qtd: d.quantidadeVendida,
     total: d.totalFaturado,
   }))

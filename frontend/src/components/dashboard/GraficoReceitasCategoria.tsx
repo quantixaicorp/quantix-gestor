@@ -13,7 +13,7 @@ export default function GraficoReceitasCategoria({ dados }: Props) {
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">Sem receitas no mês</div>
     </div>
   )
-  const data = dados.map(d => ({ name: d.categoria, value: d.total }))
+  const data = dados.map(d => ({ name: d.category, value: d.total }))
   return (
     <div className="rounded-lg border bg-card p-4">
       <p className="text-sm font-medium mb-1">Receitas por Categoria</p>

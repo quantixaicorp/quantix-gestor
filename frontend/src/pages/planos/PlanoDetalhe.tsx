@@ -44,9 +44,9 @@ export default function PlanoDetalhe() {
 
   async function toggleAtivo() {
     try {
-      await api.put(`/api/planos-assinatura/${plano!.id}`, { ...plano, ativo: !plano!.ativo })
-      setPlano(p => p ? { ...p, ativo: !p.ativo } : p)
-      toast.success(plano!.ativo ? 'Plano desativado' : 'Plano ativado')
+      await api.put(`/api/planos-assinatura/${plano!.id}`, { ...plano, isActive: !plano!.isActive })
+      setPlano(p => p ? { ...p, isActive: !p.isActive } : p)
+      toast.success(plano!.isActive ? 'Plano desativado' : 'Plano ativado')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro')
     }
@@ -57,14 +57,14 @@ export default function PlanoDetalhe() {
       <div className="flex items-center justify-between">
         <div>
           <Link to="/planos" className="text-sm text-muted-foreground hover:underline">← Planos</Link>
-          <h1 className="text-2xl font-bold">{plano.nome}</h1>
-          <span className="text-sm bg-muted px-2 py-0.5 rounded-full">{plano.nicho}</span>
+          <h1 className="text-2xl font-bold">{plano.name}</h1>
+          <span className="text-sm bg-muted px-2 py-0.5 rounded-full">{plano.niche}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant={plano.ativo ? 'outline' : 'default'} size="sm" onClick={() => void toggleAtivo()}>
-            {plano.ativo ? 'Desativar' : 'Ativar'}
+          <Button variant={plano.isActive ? 'outline' : 'default'} size="sm" onClick={() => void toggleAtivo()}>
+            {plano.isActive ? 'Desativar' : 'Ativar'}
           </Button>
-          {!plano.ativo && plano.totalAssinantes === 0 && (
+          {!plano.isActive && plano.totalAssinantes === 0 && (
             <Button variant="destructive" size="sm" onClick={() => void handleDelete()} disabled={deleting}>
               {deleting ? 'Excluindo...' : 'Excluir'}
             </Button>
@@ -74,22 +74,22 @@ export default function PlanoDetalhe() {
 
       <div className="rounded-lg border p-4 space-y-2">
         <p className="text-3xl font-bold">
-          R$ {plano.preco.toFixed(2).replace('.', ',')}
-          <span className="text-sm font-normal text-muted-foreground">/{plano.periodicidade.toLowerCase()}</span>
+          R$ {plano.price.toFixed(2).replace('.', ',')}
+          <span className="text-sm font-normal text-muted-foreground">/{plano.frequency.toLowerCase()}</span>
         </p>
-        {plano.descricao && <p className="text-sm text-muted-foreground">{plano.descricao}</p>}
+        {plano.description && <p className="text-sm text-muted-foreground">{plano.description}</p>}
         <p className="text-sm">{plano.totalAssinantes} assinante(s) ativo(s)</p>
       </div>
 
-      {plano.itens.length > 0 && (
+      {plano.items.length > 0 && (
         <div className="space-y-2">
           <p className="font-medium">Itens do plano</p>
           <ul className="space-y-1">
-            {plano.itens.map(i => (
+            {plano.items.map(i => (
               <li key={i.id} className="flex items-center gap-2 text-sm">
                 <span className="text-green-500">✓</span>
-                {i.quantidadePorCiclo === 0 ? `${i.descricao} (ilimitado)` : `${i.quantidadePorCiclo}x ${i.descricao}`}
-                {i.tipo === 'Desconto' && i.percentualDesconto && ` — ${i.percentualDesconto}% desconto`}
+                {i.quantityPerCycle === 0 ? `${i.description} (ilimitado)` : `${i.quantityPerCycle}x ${i.description}`}
+                {i.type === 'Desconto' && i.discountPercentage && ` — ${i.discountPercentage}% desconto`}
               </li>
             ))}
           </ul>

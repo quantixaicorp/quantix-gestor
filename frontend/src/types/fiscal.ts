@@ -1,38 +1,38 @@
 export interface NotaFiscalItemResponse {
   id: string
-  nomeProduto: string
+  productName: string
   ncm: string | null
   cfop: string | null
-  quantidade: number
-  precoUnitario: number
+  quantity: number
+  unitPrice: number
   total: number
 }
 
 export interface NotaFiscalResponse {
   id: string
-  vendaId: string
-  modelo: 'NFe' | 'NFCe'
-  numero: number | null
-  serie: number | null
+  saleId: string
+  model: 'NFe' | 'NFCe'
+  number: number | null
+  series: number | null
   status: 'Pendente' | 'Processando' | 'Autorizada' | 'Rejeitada' | 'Cancelada'
-  chaveAcesso: string | null
-  protocolo: string | null
+  accessKey: string | null
+  protocol: string | null
   xmlUrl: string | null
   pdfUrl: string | null
-  mensagemErro: string | null
-  autorizadaEm: string | null
-  canceladaEm: string | null
-  criadaEm: string
-  itens: NotaFiscalItemResponse[]
+  errorMessage: string | null
+  authorizedAt: string | null
+  canceledAt: string | null
+  createdAt: string
+  items: NotaFiscalItemResponse[]
 }
 
 export interface EmitirNotaFiscalRequest {
-  vendaId: string
-  tipo: 'NFe' | 'NFCe'
+  saleId: string
+  type: 'NFe' | 'NFCe'
 }
 
 export interface CancelarNotaFiscalRequest {
-  motivo: string
+  reason: string
 }
 
 export interface ConfiguracaoEmpresaResponse {
@@ -42,7 +42,7 @@ export interface ConfiguracaoEmpresaResponse {
   cnpj: string | null
   inscricaoEstadual: string | null
   inscricaoMunicipal: string | null
-  telefone: string | null
+  phone: string | null
   email: string | null
   logradouro: string | null
   numero: string | null
@@ -59,8 +59,8 @@ export interface ConfiguracaoEmpresaResponse {
   temToken: boolean
   slug: string | null
   logoUrl: string | null
-  corPrimaria: string | null
-  descricaoPublica: string | null
+  primaryColor: string | null
+  publicDescription: string | null
   asaasApiKey: string | null
   asaasSandbox: boolean
   clickSignApiKey: string | null
@@ -68,16 +68,16 @@ export interface ConfiguracaoEmpresaResponse {
   evolutionApiUrl: string | null
   temEvolutionKey: boolean
   evolutionInstance: string | null
-  lembrete3dAntes: boolean
-  lembrete1dAntes: boolean
-  lembreteNoDia: boolean
-  lembrete1dDepois: boolean
-  lembrete3dDepois: boolean
-  lembrete7dDepois: boolean
-  dominioCustomizado: string | null
-  aprovarAutomaticamente: boolean
-  valorSinal: number | null
-  horasLimiteCancelamento: number | null
+  reminder3DaysBefore: boolean
+  reminder1DayBefore: boolean
+  reminderOnDueDate: boolean
+  reminder1DayAfter: boolean
+  reminder3DaysAfter: boolean
+  reminder7DaysAfter: boolean
+  customDomain: string | null
+  autoApprove: boolean
+  depositAmount: number | null
+  cancellationLimitHours: number | null
   tipoNegocio: string
 }
 
@@ -87,7 +87,7 @@ export interface AtualizarConfiguracaoEmpresaRequest {
   cnpj?: string
   inscricaoEstadual?: string
   inscricaoMunicipal?: string
-  telefone?: string
+  phone?: string
   email?: string
   logradouro?: string
   numero?: string

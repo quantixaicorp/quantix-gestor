@@ -56,10 +56,10 @@ export default function AbaOrcamentos({ dados }: Props) {
           <tbody>
             {dados.orcamentos.map((o, i) => (
               <tr key={i} className="border-t hover:bg-muted/30">
-                <td className="px-4 py-2 text-muted-foreground">#{o.numero}</td>
-                <td className="px-4 py-2 font-medium">{o.titulo}</td>
-                <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{o.clienteNome}</td>
-                <td className="px-4 py-2 text-right font-medium">{fmt(o.valorTotal)}</td>
+                <td className="px-4 py-2 text-muted-foreground">#{o.number}</td>
+                <td className="px-4 py-2 font-medium">{o.title}</td>
+                <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{o.customerName}</td>
+                <td className="px-4 py-2 text-right font-medium">{fmt(o.totalAmount)}</td>
                 <td className="px-4 py-2 text-center">
                   <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                     o.status === 'Convertido' ? 'bg-green-100 text-green-700' :

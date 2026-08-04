@@ -45,9 +45,9 @@ export default function DetalheAgendamento() {
     if (!id || !agendamento) return
 
     const agora = new Date()
-    const fimAgendado = new Date(agendamento.dataHoraFim)
+    const fimAgendado = new Date(agendamento.endAt)
     if (agora < fimAgendado) {
-      const fimFmt = fmtDt(agendamento.dataHoraFim)
+      const fimFmt = fmtDt(agendamento.endAt)
       const ok = await confirm({
         title: 'Finalizar antes do horário?',
         description: `O atendimento termina às ${fimFmt}. Deseja concluir mesmo assim?`,
@@ -64,7 +64,7 @@ export default function DetalheAgendamento() {
     setAcao('concluir')
     try {
       const result = await concluir(id)
-      navigate(`/vendas/nova?vendaId=${result.vendaId}&origem=agendamento`)
+      navigate(`/vendas/nova?vendaId=${result.saleId}&origem=agendamento`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao concluir')
     } finally {
@@ -73,12 +73,12 @@ export default function DetalheAgendamento() {
   }
 
   function abrirWhatsapp() {
-    if (!agendamento?.clienteTelefone) return
-    const digits = agendamento.clienteTelefone.replace(/\D/g, '')
+    if (!agendamento?.customerPhone) return
+    const digits = agendamento.customerPhone.replace(/\D/g, '')
     const phone = digits.startsWith('55') ? digits : `55${digits}`
-    const dt = fmtDt(agendamento.dataHoraInicio)
+    const dt = fmtDt(agendamento.startAt)
     const msg = encodeURIComponent(
-      `Olá ${agendamento.clienteNome}! ` +
+      `Olá ${agendamento.customerName}! ` +
       `Seu agendamento de "${agendamento.servicoNome}" está confirmado para ${dt}.`
     )
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank')
@@ -94,8 +94,8 @@ export default function DetalheAgendamento() {
     <div className="max-w-lg space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{a.clienteNome}</h1>
-          <p className="text-muted-foreground">{a.servicoNome} • {a.duracaoMinutos} min</p>
+          <h1 className="text-2xl font-bold">{a.customerName}</h1>
+          <p className="text-muted-foreground">{a.servicoNome} • {a.durationMinutes} min</p>
         </div>
         <Badge className={statusClassName(a.status)}>{a.status}</Badge>
       </div>
@@ -129,7 +129,7 @@ export default function DetalheAgendamento() {
             </Button>
           </>
         )}
-        {a.status === 'Concluido' && a.vendaId && (
+        {a.status === 'Concluido' && a.saleId && (
           <Button variant="outline" onClick={() => navigate('/vendas')}>
             Ver histórico de vendas
           </Button>
@@ -139,23 +139,23 @@ export default function DetalheAgendamento() {
       <div className="rounded-md border divide-y text-sm">
         <div className="px-4 py-3 flex justify-between">
           <span className="text-muted-foreground">Profissional</span>
-          <span className="font-medium">{a.profissionalNome}</span>
+          <span className="font-medium">{a.professionalName}</span>
         </div>
         <div className="px-4 py-3 flex justify-between">
           <span className="text-muted-foreground">Início</span>
-          <span className="font-medium">{fmtDt(a.dataHoraInicio)}</span>
+          <span className="font-medium">{fmtDt(a.startAt)}</span>
         </div>
         <div className="px-4 py-3 flex justify-between">
           <span className="text-muted-foreground">Fim</span>
-          <span className="font-medium">{fmtDt(a.dataHoraFim)}</span>
+          <span className="font-medium">{fmtDt(a.endAt)}</span>
         </div>
         <div className="px-4 py-3 flex justify-between">
           <span className="text-muted-foreground">Telefone</span>
-          <span className="font-medium">{a.clienteTelefone}</span>
+          <span className="font-medium">{a.customerPhone}</span>
         </div>
-        {a.observacao && (
+        {a.notes && (
           <div className="px-4 py-3">
-            <span className="text-muted-foreground">Obs: </span>{a.observacao}
+            <span className="text-muted-foreground">Obs: </span>{a.notes}
           </div>
         )}
       </div>

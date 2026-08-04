@@ -221,24 +221,24 @@ export function renderWidget(
 
     // ── Agendamentos ─────────────────────────────────────────────────
     case 'kpi-agendamentos-hoje':
-      return <KpiCard titulo="Agendamentos hoje" valor={fmtN(modulos?.agendamentos?.hoje)} icon={Calendar} />
+      return <KpiCard titulo="Agendamentos hoje" valor={fmtN(modulos?.appointments?.hoje)} icon={Calendar} />
     case 'kpi-agendamentos-confirmados':
-      return <KpiCard titulo="Confirmados hoje" valor={fmtN(modulos?.agendamentos?.confirmadosHoje)} icon={CheckCircle} cor="green" />
+      return <KpiCard titulo="Confirmados hoje" valor={fmtN(modulos?.appointments?.confirmadosHoje)} icon={CheckCircle} cor="green" />
     case 'kpi-agendamentos-cancelados':
-      return <KpiCard titulo="Cancelados no mês" valor={fmtN(modulos?.agendamentos?.canceladosMes)} icon={XCircle}
-        cor={(modulos?.agendamentos?.canceladosMes ?? 0) > 0 ? 'red' : 'default'} />
+      return <KpiCard titulo="Cancelados no mês" valor={fmtN(modulos?.appointments?.canceladosMes)} icon={XCircle}
+        cor={(modulos?.appointments?.canceladosMes ?? 0) > 0 ? 'red' : 'default'} />
     case 'kpi-taxa-conclusao-agendamentos':
-      return <KpiCard titulo="Taxa de conclusão" valor={fmtPct(modulos?.agendamentos?.taxaConclusaoMes)} icon={Percent}
-        cor={(modulos?.agendamentos?.taxaConclusaoMes ?? 0) >= 80 ? 'green' : 'yellow'} />
+      return <KpiCard titulo="Taxa de conclusão" valor={fmtPct(modulos?.appointments?.taxaConclusaoMes)} icon={Percent}
+        cor={(modulos?.appointments?.taxaConclusaoMes ?? 0) >= 80 ? 'green' : 'yellow'} />
     case 'kpi-taxa-ocupacao':
-      return <KpiCard titulo="Taxa de ocupação" valor={fmtPct(modulos?.agendamentos?.taxaOcupacao)} icon={Percent}
-        cor={(modulos?.agendamentos?.taxaOcupacao ?? 0) >= 70 ? 'green' : 'yellow'} />
+      return <KpiCard titulo="Taxa de ocupação" valor={fmtPct(modulos?.appointments?.taxaOcupacao)} icon={Percent}
+        cor={(modulos?.appointments?.taxaOcupacao ?? 0) >= 70 ? 'green' : 'yellow'} />
     case 'grafico-agenda-status':
-      return <GraficoAgendaStatus dados={modulos?.agendamentos?.porStatus ?? []} />
+      return <GraficoAgendaStatus dados={modulos?.appointments?.porStatus ?? []} />
     case 'grafico-ocupacao-profissional':
-      return <GraficoOcupacaoProfissional dados={modulos?.agendamentos?.porProfissional ?? []} />
+      return <GraficoOcupacaoProfissional dados={modulos?.appointments?.porProfissional ?? []} />
     case 'tabela-agenda-hoje':
-      return <TabelaAgendaHoje dados={modulos?.agendamentos?.agendaHoje ?? []} />
+      return <TabelaAgendaHoje dados={modulos?.appointments?.agendaHoje ?? []} />
 
     // ── Contratos ────────────────────────────────────────────────────
     case 'kpi-contratos-ativos':
@@ -253,17 +253,17 @@ export function renderWidget(
 
     // ── Cobranças ────────────────────────────────────────────────────
     case 'kpi-cobrancas-receber':
-      return <KpiCard titulo="Cobranças a receber" valor={fmt(modulos?.cobrancas?.totalReceber)} icon={CreditCard} cor="green" />
+      return <KpiCard titulo="Cobranças a receber" valor={fmt(modulos?.charges?.totalReceber)} icon={CreditCard} cor="green" />
     case 'kpi-cobrancas-vencidas':
-      return <KpiCard titulo="Cobranças vencidas" valor={fmt(modulos?.cobrancas?.totalVencido)} icon={AlertTriangle}
-        cor={(modulos?.cobrancas?.totalVencido ?? 0) > 0 ? 'red' : 'default'} />
+      return <KpiCard titulo="Cobranças vencidas" valor={fmt(modulos?.charges?.totalVencido)} icon={AlertTriangle}
+        cor={(modulos?.charges?.totalVencido ?? 0) > 0 ? 'red' : 'default'} />
     case 'kpi-cobrancas-vencidas-count':
-      return <KpiCard titulo="Cobranças em atraso" valor={fmtN(modulos?.cobrancas?.vencidosCount)} icon={AlertTriangle}
-        cor={(modulos?.cobrancas?.vencidosCount ?? 0) > 0 ? 'red' : 'default'} />
+      return <KpiCard titulo="Cobranças em atraso" valor={fmtN(modulos?.charges?.vencidosCount)} icon={AlertTriangle}
+        cor={(modulos?.charges?.vencidosCount ?? 0) > 0 ? 'red' : 'default'} />
     case 'grafico-aging-cobrancas':
-      return <GraficoAgingCobrancas dados={modulos?.cobrancas?.aging ?? []} />
+      return <GraficoAgingCobrancas dados={modulos?.charges?.aging ?? []} />
     case 'tabela-cobrancas-vencidas':
-      return <TabelaCobrancasVencidas dados={modulos?.cobrancas?.cobrancasVencidas ?? []} />
+      return <TabelaCobrancasVencidas dados={modulos?.charges?.cobrancasVencidas ?? []} />
 
     // ── Orçamentos ───────────────────────────────────────────────────
     case 'kpi-orcamentos-abertos':

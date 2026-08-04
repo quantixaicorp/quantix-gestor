@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
 import type { OrcamentoListItem, OrcamentoResponse, CreateOrcamentoRequest } from '@/types/orcamento'
+import type { CobrancaResponse } from '@/types/cobranca'
 
 export function useOrcamentos() {
   const [orcamentos, setOrcamentos] = useState<OrcamentoListItem[]>([])
@@ -70,10 +71,10 @@ export function useOrcamentos() {
     return result
   }, [])
 
-  const gerarCobranca = useCallback(async (id: string, dataVencimento: string) => {
-    return api.post<{ id: string; valor: number; referencia: string }>(
+  const gerarCobranca = useCallback(async (id: string, dueDate: string) => {
+    return api.post<CobrancaResponse>(
       `/api/orcamentos/${id}/gerar-cobranca`,
-      { dataVencimento }
+      { dueDate }
     )
   }, [])
 

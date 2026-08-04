@@ -57,11 +57,11 @@ export default function AbaAssinaturas({ dados }: Props) {
           <tbody>
             {dados.assinaturas.map((a, i) => (
               <tr key={i} className="border-t hover:bg-muted/30">
-                <td className="px-4 py-2 font-medium">{a.clienteNome}</td>
-                <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{a.plano}</td>
-                <td className="px-4 py-2 text-right font-medium">{fmt(a.valor)}</td>
-                <td className="px-4 py-2 hidden md:table-cell text-muted-foreground">{a.periodicidade}</td>
-                <td className="px-4 py-2 hidden lg:table-cell text-muted-foreground">{a.dataRenovacao}</td>
+                <td className="px-4 py-2 font-medium">{a.customerName}</td>
+                <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{a.plan}</td>
+                <td className="px-4 py-2 text-right font-medium">{fmt(a.amount)}</td>
+                <td className="px-4 py-2 hidden md:table-cell text-muted-foreground">{a.frequency}</td>
+                <td className="px-4 py-2 hidden lg:table-cell text-muted-foreground">{a.renewalDate}</td>
                 <td className="px-4 py-2 text-center">
                   <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                     a.status === 'Ativo' ? 'bg-green-100 text-green-700' :

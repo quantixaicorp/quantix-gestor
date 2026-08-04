@@ -23,7 +23,7 @@ export default function AbaVendas({ dados }: Props) {
   const tendencia = dados.tendencia.map(d => ({
     dia: new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     total: d.total,
-    quantidade: d.quantidade,
+    quantidade: d.quantity,
   }))
 
   return (
@@ -78,8 +78,8 @@ export default function AbaVendas({ dados }: Props) {
               <tbody>
                 {dados.topProdutos.map((p, i) => (
                   <tr key={i} className="border-t hover:bg-muted/20">
-                    <td className="px-4 py-2">{p.nome}</td>
-                    <td className="px-4 py-2 text-right text-muted-foreground">{fmtN(p.quantidade)}</td>
+                    <td className="px-4 py-2">{p.name}</td>
+                    <td className="px-4 py-2 text-right text-muted-foreground">{fmtN(p.quantity)}</td>
                     <td className="px-4 py-2 text-right font-medium">{fmt(p.total)}</td>
                   </tr>
                 ))}
@@ -97,10 +97,10 @@ export default function AbaVendas({ dados }: Props) {
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie data={dados.porFormaPagamento} dataKey="total"
-                    nameKey="formaPagamento" cx="50%" cy="50%" outerRadius={75}
+                    nameKey="paymentMethod" cx="50%" cy="50%" outerRadius={75}
                     label={(props) => {
-                      const p = props as unknown as { formaPagamento: string; percent: number }
-                      return `${p.formaPagamento} ${(p.percent * 100).toFixed(0)}%`
+                      const p = props as unknown as { paymentMethod: string; percent: number }
+                      return `${p.paymentMethod} ${(p.percent * 100).toFixed(0)}%`
                     }}>
                     {dados.porFormaPagamento.map((_e, i) => (
                       <Cell key={i} fill={CORES[i % CORES.length]} />
@@ -133,7 +133,7 @@ export default function AbaVendas({ dados }: Props) {
               <tbody>
                 {dados.topClientes.map((c, i) => (
                   <tr key={i} className="border-t hover:bg-muted/20">
-                    <td className="px-4 py-2">{c.nome}</td>
+                    <td className="px-4 py-2">{c.name}</td>
                     <td className="px-4 py-2 text-right text-muted-foreground">{fmtN(c.compras)}</td>
                     <td className="px-4 py-2 text-right font-medium">{fmt(c.total)}</td>
                   </tr>

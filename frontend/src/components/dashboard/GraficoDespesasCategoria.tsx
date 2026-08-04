@@ -27,7 +27,7 @@ export default function GraficoDespesasCategoria({ dados }: Props) {
     )
   }
 
-  const data = dados.map(d => ({ name: d.categoria, value: d.total }))
+  const data = dados.map(d => ({ name: d.category, value: d.total }))
 
   return (
     <div className="rounded-lg border bg-card p-4">

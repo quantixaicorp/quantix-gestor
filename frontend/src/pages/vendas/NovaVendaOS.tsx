@@ -52,9 +52,9 @@ export default function NovaVendaOS() {
   const hoje = new Date().toISOString().slice(0, 10)
   const [dataExecucao, setDataExecucao] = useState(hoje)
 
-  const servicos = produtos.filter(p => p.ativo && p.tipo === 'Servico')
+  const servicos = produtos.filter(p => p.isActive && p.type === 'Servico')
   const servicosFiltrados = servicos.filter(p =>
-    !busca || p.nome.toLowerCase().includes(busca.toLowerCase()))
+    !busca || p.name.toLowerCase().includes(busca.toLowerCase()))
 
   useEffect(() => {
     void listClientes()
@@ -80,7 +80,7 @@ export default function NovaVendaOS() {
     if (!vendaIdParam || profissionais.length === 0 || !vendaCarregadaRef.current) return
     const nome = vendaCarregadaRef.current.profissionalNome
     if (!nome) return
-    const prof = profissionais.find(p => p.nome === nome)
+    const prof = profissionais.find(p => p.name === nome)
     if (prof) setProfissionalId(prof.id)
   }, [profissionais, vendaIdParam])
 
@@ -94,9 +94,9 @@ export default function NovaVendaOS() {
           ? { ...i, quantidade: i.quantidade + 1, total: i.precoUnitario * (i.quantidade + 1) }
           : i)
       return [...prev, {
-        produtoId: p.id, produtoNome: p.nome,
-        precoUnitario: p.precoVenda, quantidade: 1,
-        desconto: 0, total: p.precoVenda,
+        produtoId: p.id, produtoNome: p.name,
+        precoUnitario: p.salePrice, quantidade: 1,
+        desconto: 0, total: p.salePrice,
       }]
     })
     setBusca('')
@@ -227,8 +227,8 @@ export default function NovaVendaOS() {
                         <button key={p.id} type="button"
                           className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-accent text-sm"
                           onClick={() => adicionarItem(p.id)}>
-                          <span>{p.nome}</span>
-                          <span className="text-muted-foreground">{fmt(p.precoVenda)}</span>
+                          <span>{p.name}</span>
+                          <span className="text-muted-foreground">{fmt(p.salePrice)}</span>
                         </button>
                       ))}
                 </div>
@@ -267,7 +267,7 @@ export default function NovaVendaOS() {
               <select value={clienteId} onChange={e => setClienteId(e.target.value)}
                 className="flex h-9 flex-1 rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
                 <option value="">Selecione o cliente...</option>
-                {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <Button type="button" variant="outline" size="icon"
                 title="Criar novo cliente"
@@ -285,8 +285,8 @@ export default function NovaVendaOS() {
             <select value={profissionalId} onChange={e => setProfissionalId(e.target.value)}
               className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
               <option value="">Selecione o profissional...</option>
-              {profissionais.filter(p => p.ativo).map(p =>
-                <option key={p.id} value={p.id}>{p.nome}</option>
+              {profissionais.filter(p => p.isActive).map(p =>
+                <option key={p.id} value={p.id}>{p.name}</option>
               )}
             </select>
           </div>

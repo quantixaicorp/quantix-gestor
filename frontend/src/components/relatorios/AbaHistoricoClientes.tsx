@@ -102,11 +102,11 @@ export default function AbaHistoricoClientes() {
                 const emRisco = c.classificacao === 'Recorrente' && c.diasDesdeUltimaCompra >= 61
                 return (
                   <tr
-                    key={c.clienteId}
-                    onClick={() => abrirDetalhe(c.clienteId)}
+                    key={c.customerId}
+                    onClick={() => abrirDetalhe(c.customerId)}
                     className="border-t hover:bg-muted/30 transition-colors cursor-pointer"
                   >
-                    <td className="px-4 py-2.5 font-medium">{c.nome}</td>
+                    <td className="px-4 py-2.5 font-medium">{c.name}</td>
                     <td className="px-4 py-2.5 text-right">{c.qtdPedidos}</td>
                     <td className="px-4 py-2.5 text-right font-semibold">{fmt(c.totalGasto)}</td>
                     <td className="px-4 py-2.5 text-right hidden md:table-cell">{fmt(c.ticketMedio)}</td>
@@ -132,7 +132,7 @@ export default function AbaHistoricoClientes() {
       <Dialog open={aberto} onOpenChange={fecharDetalhe}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{detalhe?.nome ?? 'Histórico do cliente'}</DialogTitle>
+            <DialogTitle>{detalhe?.name ?? 'Histórico do cliente'}</DialogTitle>
           </DialogHeader>
 
           {loadingDetalhe || !detalhe ? (
@@ -144,9 +144,9 @@ export default function AbaHistoricoClientes() {
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <Badge classificacao={detalhe.classificacao} />
-                {detalhe.whatsapp && <span>· {detalhe.whatsapp}</span>}
+                {detalhe.whatsApp && <span>· {detalhe.whatsApp}</span>}
                 {detalhe.email && <span>· {detalhe.email}</span>}
-                <span>· Cliente desde {fmtData(detalhe.dataCadastro)}</span>
+                <span>· Cliente desde {fmtData(detalhe.createdAt)}</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
@@ -180,10 +180,10 @@ export default function AbaHistoricoClientes() {
                   </thead>
                   <tbody>
                     {detalhe.compras.map(co => (
-                      <tr key={co.vendaId} className="border-t">
-                        <td className="px-3 py-2">{fmtData(co.dataHora)}</td>
+                      <tr key={co.saleId} className="border-t">
+                        <td className="px-3 py-2">{fmtData(co.saleDate)}</td>
                         <td className="px-3 py-2 text-right">{co.qtdItens}</td>
-                        <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{co.formaPagamento}</td>
+                        <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{co.paymentMethod}</td>
                         <td className="px-3 py-2 text-right font-semibold">{fmt(co.total)}</td>
                       </tr>
                     ))}

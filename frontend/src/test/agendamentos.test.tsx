@@ -11,22 +11,22 @@ vi.mock('@/hooks/useAgendamentos', () => ({
     agendamentos: [
       {
         id: '1',
-        profissionalId: 'p1',
-        profissionalNome: 'Ana',
-        clienteNome: 'João',
+        professionalId: 'p1',
+        professionalName: 'Ana',
+        customerName: 'João',
         servicoNome: 'Corte',
-        dataHoraInicio: '2026-05-25T10:00:00Z',
-        dataHoraFim: '2026-05-25T10:30:00Z',
+        startAt: '2026-05-25T10:00:00Z',
+        endAt: '2026-05-25T10:30:00Z',
         status: 'Agendado',
       },
       {
         id: '2',
-        profissionalId: 'p2',
-        profissionalNome: 'Carlos',
-        clienteNome: 'Maria',
+        professionalId: 'p2',
+        professionalName: 'Carlos',
+        customerName: 'Maria',
         servicoNome: 'Manicure',
-        dataHoraInicio: '2026-05-25T11:00:00Z',
-        dataHoraFim: '2026-05-25T11:30:00Z',
+        startAt: '2026-05-25T11:00:00Z',
+        endAt: '2026-05-25T11:30:00Z',
         status: 'Confirmado',
       },
     ],
@@ -46,8 +46,8 @@ vi.mock('@/hooks/useAgendamentos', () => ({
 vi.mock('@/hooks/useProfissionais', () => ({
   useProfissionais: () => ({
     profissionais: [
-      { id: 'p1', nome: 'Ana', telefone: null, ativo: true },
-      { id: 'p2', nome: 'Carlos', telefone: null, ativo: true },
+      { id: 'p1', name: 'Ana', phone: null, isActive: true },
+      { id: 'p2', name: 'Carlos', phone: null, isActive: true },
     ],
     loading: false,
     error: null,
@@ -66,7 +66,7 @@ vi.mock('@/hooks/useProfissionais', () => ({
 vi.mock('@/hooks/useEstoque', () => ({
   useEstoque: () => ({
     produtos: [
-      { id: 'srv1', nome: 'Corte', precoVenda: 40, duracaoMinutos: 30, ativo: true },
+      { id: 'srv1', name: 'Corte', salePrice: 40, durationMinutes: 30, isActive: true },
     ],
     listProdutos: vi.fn(),
   }),

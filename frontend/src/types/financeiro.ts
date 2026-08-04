@@ -1,30 +1,30 @@
 export interface LancamentoResponse {
   id: string
-  tipo: 'Receita' | 'Despesa'
-  descricao: string
-  valor: number
-  dataVencimento: string
-  dataPagamento: string | null
+  type: 'Receita' | 'Despesa'
+  description: string
+  amount: number
+  dueDate: string
+  paymentDate: string | null
   status: 'Pendente' | 'Pago' | 'Cancelado'
-  categoria: string
-  vendaId: string | null
-  observacao: string | null
+  category: string
+  saleId: string | null
+  notes: string | null
   vencido: boolean
-  parcelamentoId: string | null
-  numeroParcela: number | null
+  installmentPlanId: string | null
+  installmentNumber: number | null
 }
 
 export interface CreateLancamentoRequest {
-  tipo: 'Receita' | 'Despesa'
-  descricao: string
-  valor: number
-  dataVencimento: string
-  categoria: string
-  observacao?: string
+  type: 'Receita' | 'Despesa'
+  description: string
+  amount: number
+  dueDate: string
+  category: string
+  notes?: string
 }
 
 export interface PagarLancamentoRequest {
-  dataPagamento: string
+  paymentDate: string
 }
 
 export interface FluxoCaixaItemResponse {
@@ -38,7 +38,7 @@ export interface FluxoCaixaResponse {
   totalReceitas: number
   totalDespesas: number
   saldoFinal: number
-  itens: FluxoCaixaItemResponse[]
+  items: FluxoCaixaItemResponse[]
 }
 
 export interface LancamentoResumo {
@@ -49,25 +49,25 @@ export interface LancamentoResumo {
 }
 
 export interface UpdateLancamentoRequest {
-  tipo: 'Receita' | 'Despesa'
-  descricao: string
-  valor: number
-  dataVencimento: string
-  categoria: string
-  observacao?: string
+  type: 'Receita' | 'Despesa'
+  description: string
+  amount: number
+  dueDate: string
+  category: string
+  notes?: string
 }
 
 export interface CategoriaLancamentoResponse {
   id: string
-  nome: string
-  tipo: 'Receita' | 'Despesa'
+  name: string
+  type: 'Receita' | 'Despesa'
 }
 
 export interface CreateCategoriaLancamentoRequest {
-  nome: string
-  tipo: 'Receita' | 'Despesa'
+  name: string
+  type: 'Receita' | 'Despesa'
 }
 
 export interface UpdateCategoriaLancamentoRequest {
-  nome: string
+  name: string
 }

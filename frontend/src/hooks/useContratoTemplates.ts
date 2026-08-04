@@ -23,9 +23,9 @@ export function useContratoTemplates() {
   async function create(req: CreateContratoTemplateRequest) {
     const created = await api.post<ContratoTemplate>('/api/contrato-templates', req)
     setTemplates(prev => [...prev, {
-      id: created.id, nome: created.nome,
-      tipoCobranca: created.tipoCobranca, periodicidade: created.periodicidade,
-      valorPadrao: created.valorPadrao, qtdItens: created.itens.length,
+      id: created.id, name: created.name,
+      chargeType: created.chargeType, frequency: created.frequency,
+      defaultAmount: created.defaultAmount, qtdItens: created.items.length,
     }])
     return created
   }

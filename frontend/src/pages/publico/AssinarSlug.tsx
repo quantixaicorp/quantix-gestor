@@ -50,19 +50,19 @@ export default function AssinarSlug() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {planos.map(p => (
-            <div key={p.id} className={`rounded-xl border-2 p-5 space-y-3 bg-white relative ${p.maisVendido ? 'border-primary shadow-md' : 'border-gray-200'}`}>
-              {p.maisVendido && (
+            <div key={p.id} className={`rounded-xl border-2 p-5 space-y-3 bg-white relative ${p.bestSeller ? 'border-primary shadow-md' : 'border-gray-200'}`}>
+              {p.bestSeller && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="text-xs bg-primary text-white px-3 py-0.5 rounded-full font-medium">⭐ Mais vendido</span>
                 </div>
               )}
               <div>
-                <p className="font-bold text-lg">{p.nome}</p>
-                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">{p.nicho}</span>
+                <p className="font-bold text-lg">{p.name}</p>
+                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">{p.niche}</span>
               </div>
               <p className="text-3xl font-extrabold" style={{ color: cor }}>
-                R$ {p.preco.toFixed(2).replace('.', ',')}
-                <span className="text-sm font-normal text-gray-500">/{p.periodicidade.toLowerCase()}</span>
+                R$ {p.price.toFixed(2).replace('.', ',')}
+                <span className="text-sm font-normal text-gray-500">/{p.frequency.toLowerCase()}</span>
               </p>
               <Link to={`/assinar/${slug}/${p.id}`}>
                 <button className="w-full py-2.5 rounded-lg text-white font-semibold text-sm transition-opacity hover:opacity-90"

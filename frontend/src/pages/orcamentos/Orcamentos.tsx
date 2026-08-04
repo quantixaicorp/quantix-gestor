@@ -80,13 +80,13 @@ export default function Orcamentos() {
                 onClick={() => navigate(`/orcamentos/${o.id}`)}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{o.titulo}</p>
-                    <p className="text-xs text-muted-foreground">ORC-{String(o.numero).padStart(3, '0')} · {o.clienteNome ?? '—'}</p>
+                    <p className="font-medium truncate">{o.title}</p>
+                    <p className="text-xs text-muted-foreground">ORC-{String(o.number).padStart(3, '0')} · {o.customerName ?? '—'}</p>
                   </div>
                   <Badge className={`${statusClassName(o.status)} shrink-0`}>{o.status}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Válido até: {fmtDate(o.dataValidade)}</span>
+                  <span className="text-muted-foreground">Válido até: {fmtDate(o.expirationDate)}</span>
                   <span className="font-semibold">{fmt(o.total)}</span>
                 </div>
               </div>
@@ -111,11 +111,11 @@ export default function Orcamentos() {
                 {orcamentos.map(o => (
                   <tr key={o.id} className="border-b hover:bg-muted/30">
                     <td className="px-4 py-3 font-mono text-muted-foreground">
-                      ORC-{String(o.numero).padStart(3, '0')}
+                      ORC-{String(o.number).padStart(3, '0')}
                     </td>
-                    <td className="px-4 py-3 font-medium">{o.titulo}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{o.clienteNome ?? '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(o.dataValidade)}</td>
+                    <td className="px-4 py-3 font-medium">{o.title}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{o.customerName ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(o.expirationDate)}</td>
                     <td className="px-4 py-3 text-right font-medium">{fmt(o.total)}</td>
                     <td className="px-4 py-3">
                       <Badge className={statusClassName(o.status)}>{o.status}</Badge>

@@ -48,17 +48,17 @@ export default function PlanoWizard() {
 
   function applyTemplate(t: NichoTemplate) {
     setForm({
-      nome: t.nomePlano,
-      descricao: t.descricao ?? '',
+      nome: t.planName,
+      descricao: t.description ?? '',
       nicho: t.nicho,
-      preco: String(t.precoSugerido),
-      periodicidade: t.periodicidade,
-      maisVendido: t.maisVendido,
-      itens: t.itens.map(i => ({
-        descricao: i.descricao,
-        quantidadePorCiclo: i.quantidadePorCiclo,
-        tipo: i.tipo,
-        percentualDesconto: i.percentualDesconto ? String(i.percentualDesconto) : '',
+      preco: String(t.suggestedPrice),
+      periodicidade: t.frequency,
+      maisVendido: t.bestSeller,
+      itens: t.items.map(i => ({
+        descricao: i.description,
+        quantidadePorCiclo: i.quantityPerCycle,
+        tipo: i.type,
+        percentualDesconto: i.discountPercentage ? String(i.discountPercentage) : '',
       })),
     })
     setStep(2)
@@ -76,18 +76,18 @@ export default function PlanoWizard() {
     setSaving(true)
     try {
       const result = await api.post<{ id: string }>('/api/planos-assinatura', {
-        nome: form.nome,
-        descricao: form.descricao || null,
-        nicho: form.nicho,
-        preco: parseFloat(form.preco),
-        periodicidade: form.periodicidade,
-        maisVendido: form.maisVendido,
-        itens: form.itens.map(i => ({
-          descricao: i.descricao,
-          servicoId: null,
-          quantidadePorCiclo: i.quantidadePorCiclo,
-          tipo: i.tipo,
-          percentualDesconto: i.percentualDesconto ? parseFloat(i.percentualDesconto) : null,
+        name: form.nome,
+        description: form.descricao || null,
+        niche: form.nicho,
+        price: parseFloat(form.preco),
+        frequency: form.periodicidade,
+        bestSeller: form.maisVendido,
+        items: form.itens.map(i => ({
+          description: i.descricao,
+          serviceId: null,
+          quantityPerCycle: i.quantidadePorCiclo,
+          type: i.tipo,
+          discountPercentage: i.percentualDesconto ? parseFloat(i.percentualDesconto) : null,
         })),
       })
       toast.success('Plano criado com sucesso!')
@@ -126,11 +126,11 @@ export default function PlanoWizard() {
                 {templatesByNicho.map(t => (
                   <button key={t.id} onClick={() => applyTemplate(t)}
                     className="rounded-lg border p-3 text-left hover:border-primary transition-colors">
-                    {t.maisVendido && <span className="text-xs text-amber-700 font-medium">⭐ Mais vendido</span>}
-                    <p className="font-semibold">{t.nomePlano}</p>
-                    <p className="text-primary font-bold">R$ {t.precoSugerido.toFixed(2).replace('.', ',')}/mês</p>
+                    {t.bestSeller && <span className="text-xs text-amber-700 font-medium">⭐ Mais vendido</span>}
+                    <p className="font-semibold">{t.planName}</p>
+                    <p className="text-primary font-bold">R$ {t.suggestedPrice.toFixed(2).replace('.', ',')}/mês</p>
                     <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                      {t.itens.slice(0, 3).map(i => <li key={i.id}>• {i.quantidadePorCiclo === 0 ? `${i.descricao} ilimitado` : `${i.quantidadePorCiclo}x ${i.descricao}`}</li>)}
+                      {t.items.slice(0, 3).map(i => <li key={i.id}>• {i.quantityPerCycle === 0 ? `${i.description} ilimitado` : `${i.quantityPerCycle}x ${i.description}`}</li>)}
                     </ul>
                   </button>
                 ))}

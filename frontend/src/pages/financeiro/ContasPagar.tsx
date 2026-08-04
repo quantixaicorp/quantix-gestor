@@ -32,7 +32,7 @@ export default function ContasPagar() {
 
   useEffect(() => {
     reload()
-    void listCategorias('Despesa').then(cs => setCategorias(cs.map(c => c.nome).sort())).catch(() => {})
+    void listCategorias('Despesa').then(cs => setCategorias(cs.map(c => c.name).sort())).catch(() => {})
   }, [reload, listCategorias])
 
   const toggleGroup = useCallback((pid: string) => {
@@ -46,18 +46,18 @@ export default function ContasPagar() {
   const allGroups = useMemo(() => {
     const map = new Map<string, LancamentoResponse[]>()
     for (const l of lancamentos) {
-      if (!l.parcelamentoId) continue
-      const arr = map.get(l.parcelamentoId) ?? []
+      if (!l.installmentPlanId) continue
+      const arr = map.get(l.installmentPlanId) ?? []
       arr.push(l)
-      map.set(l.parcelamentoId, arr)
+      map.set(l.installmentPlanId, arr)
     }
     return map
   }, [lancamentos])
 
   const matchesFiltro = useCallback((l: LancamentoResponse) => {
-    if (filtroCategoria && l.categoria !== filtroCategoria) return false
-    if (filtroDe && l.dataVencimento < filtroDe) return false
-    if (filtroAte && l.dataVencimento > filtroAte + 'T23:59:59') return false
+    if (filtroCategoria && l.category !== filtroCategoria) return false
+    if (filtroDe && l.dueDate < filtroDe) return false
+    if (filtroAte && l.dueDate > filtroAte + 'T23:59:59') return false
     return true
   }, [filtroCategoria, filtroDe, filtroAte])
 
@@ -65,12 +65,12 @@ export default function ContasPagar() {
     const seenGroups = new Set<string>()
     const items: RenderItem[] = []
     for (const l of lancamentos) {
-      if (l.parcelamentoId) {
-        if (seenGroups.has(l.parcelamentoId)) continue
-        const parcelas = allGroups.get(l.parcelamentoId) ?? []
+      if (l.installmentPlanId) {
+        if (seenGroups.has(l.installmentPlanId)) continue
+        const parcelas = allGroups.get(l.installmentPlanId) ?? []
         if (parcelas.some(matchesFiltro)) {
-          seenGroups.add(l.parcelamentoId)
-          items.push({ kind: 'group', parcelamentoId: l.parcelamentoId, parcelas })
+          seenGroups.add(l.installmentPlanId)
+          items.push({ kind: 'group', parcelamentoId: l.installmentPlanId, parcelas })
         }
       } else if (matchesFiltro(l)) {
         items.push({ kind: 'individual', lancamento: l })
@@ -82,25 +82,25 @@ export default function ContasPagar() {
   // KPIs calculados sobre lancamentos individuais (todos os valores pendentes filtrados)
   const allFiltered = useMemo(() => lancamentos.filter(matchesFiltro), [lancamentos, matchesFiltro])
   const vencidasCount = allFiltered.filter(l => l.vencido).length
-  const totalPendente = allFiltered.reduce((s, l) => s + l.valor, 0)
-  const totalVencido = allFiltered.filter(l => l.vencido).reduce((s, l) => s + l.valor, 0)
-  const totalProximo = allFiltered.filter(l => !l.vencido).reduce((s, l) => s + l.valor, 0)
+  const totalPendente = allFiltered.reduce((s, l) => s + l.amount, 0)
+  const totalVencido = allFiltered.filter(l => l.vencido).reduce((s, l) => s + l.amount, 0)
+  const totalProximo = allFiltered.filter(l => !l.vencido).reduce((s, l) => s + l.amount, 0)
 
   async function handlePagar(l: LancamentoResponse) {
     const ok = await confirm({
       title: 'Confirmar pagamento?',
-      description: `${fmt(l.valor)} — ${l.descricao}`,
+      description: `${fmt(l.amount)} — ${l.description}`,
     })
     if (!ok) return
     setPagando(l.id)
     try {
-      await pagar(l.id, { dataPagamento: new Date().toISOString() })
+      await pagar(l.id, { paymentDate: new Date().toISOString() })
       reload()
     } finally { setPagando(null) }
   }
 
   function grupoDescricao(parcelas: LancamentoResponse[]) {
-    const d = parcelas[0]?.descricao ?? ''
+    const d = parcelas[0]?.description ?? ''
     return d.replace(/\s*-?\s*[Pp]arcela\s+\d+\/\d+$/, '').replace(/\s+\d+\/\d+$/, '').trim()
   }
 
@@ -108,7 +108,7 @@ export default function ContasPagar() {
     const pagas = parcelas.filter(p => p.status === 'Pago').length
     const pendentes = parcelas.filter(p => p.status === 'Pendente')
     const vencidas = pendentes.filter(p => p.vencido).length
-    const total = pendentes.reduce((s, p) => s + p.valor, 0)
+    const total = pendentes.reduce((s, p) => s + p.amount, 0)
     return { n: parcelas.length, pagas, vencidas, total, pendentes: pendentes.length }
   }
 
@@ -171,17 +171,17 @@ export default function ContasPagar() {
               return (
                 <div key={l.id} className={`rounded-lg border bg-card p-4 space-y-2 ${l.vencido ? 'border-destructive/40 bg-destructive/5' : ''}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium truncate flex-1">{l.descricao}</p>
+                    <p className="font-medium truncate flex-1">{l.description}</p>
                     <div className="flex items-center gap-2 shrink-0">
                       {l.vencido && <Badge variant="destructive" className="text-xs">Vencida</Badge>}
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{l.categoria}</span>
-                    <span className="font-semibold">{fmt(l.valor)}</span>
+                    <span className="text-muted-foreground">{l.category}</span>
+                    <span className="font-semibold">{fmt(l.amount)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Vence: {fmtDate(l.dataVencimento)}</span>
+                    <span className="text-xs text-muted-foreground">Vence: {fmtDate(l.dueDate)}</span>
                     <Button size="sm" variant="outline" disabled={pagando === l.id} onClick={() => void handlePagar(l)}>
                       {pagando === l.id ? '...' : 'Pagar'}
                     </Button>
@@ -218,18 +218,18 @@ export default function ContasPagar() {
                 {expanded && (
                   <div className="border-t divide-y">
                     {[...parcelas]
-                      .sort((a, b) => (a.numeroParcela ?? 0) - (b.numeroParcela ?? 0))
+                      .sort((a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))
                       .map(l => (
                         <div key={l.id} className={`p-3 pl-6 space-y-1 ${l.vencido ? 'bg-destructive/5' : ''}`}>
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{l.descricao}</p>
+                              <p className="text-sm font-medium truncate">{l.description}</p>
                               <p className="text-xs text-muted-foreground">
-                                {l.categoria ? `${l.categoria} · ` : ''}Vence: {fmtDate(l.dataVencimento)}
+                                {l.category ? `${l.category} · ` : ''}Vence: {fmtDate(l.dueDate)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-sm font-semibold">{fmt(l.valor)}</span>
+                              <span className="text-sm font-semibold">{fmt(l.amount)}</span>
                               <Badge variant={l.status === 'Pago' ? 'default' : l.vencido ? 'destructive' : 'outline'}>
                                 {l.status === 'Pago' ? 'Pago' : l.vencido ? 'Vencida' : 'Pendente'}
                               </Badge>

@@ -29,7 +29,7 @@ export default function AbaVisaoGeral({ kpis, showVendas = true }: Props) {
   const tendencia = kpis.tendenciaVendas.map(d => ({
     dia: fmtDia(d.data as unknown as string),
     total: d.total,
-    quantidade: d.quantidade,
+    quantidade: d.quantity,
   }))
 
   const fluxo = kpis.fluxoPorDia.map(d => ({
@@ -103,8 +103,8 @@ export default function AbaVisaoGeral({ kpis, showVendas = true }: Props) {
                   {kpis.topProdutos.map((p, i) => (
                     <tr key={i} className="border-t hover:bg-muted/20">
                       <td className="px-4 py-2 text-muted-foreground hidden sm:table-cell">{i + 1}</td>
-                      <td className="px-4 py-2 font-medium">{p.nome}</td>
-                      <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmtN(p.quantidade)}</td>
+                      <td className="px-4 py-2 font-medium">{p.name}</td>
+                      <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmtN(p.quantity)}</td>
                       <td className="px-4 py-2 text-right font-medium">{fmt(p.total)}</td>
                     </tr>
                   ))}
@@ -130,7 +130,7 @@ export default function AbaVisaoGeral({ kpis, showVendas = true }: Props) {
                     {kpis.topClientes.map((c, i) => (
                       <tr key={i} className="border-t hover:bg-muted/20">
                         <td className="px-4 py-2 text-muted-foreground hidden sm:table-cell">{i + 1}</td>
-                        <td className="px-4 py-2 font-medium">{c.nome}</td>
+                        <td className="px-4 py-2 font-medium">{c.name}</td>
                         <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmtN(c.compras)}</td>
                         <td className="px-4 py-2 text-right font-medium">{fmt(c.total)}</td>
                       </tr>

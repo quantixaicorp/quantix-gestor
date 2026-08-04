@@ -54,10 +54,10 @@ export default function Produtos() {
   }
 
   const produtosFiltrados = produtos
-    .filter(p => p.tipo === 'Produto')
+    .filter(p => p.type === 'Produto')
     .filter(p =>
-      p.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      (p.codigoBarras?.includes(busca) ?? false))
+      p.name.toLowerCase().includes(busca.toLowerCase()) ||
+      (p.barcode?.includes(busca) ?? false))
 
   return (
     <div className="space-y-4">
@@ -69,14 +69,14 @@ export default function Produtos() {
       </div>
 
       {(() => {
-        const prods = produtos.filter(p => p.tipo === 'Produto')
+        const prods = produtos.filter(p => p.type === 'Produto')
         const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         return (
           <KpiRow items={[
             { label: 'Total produtos', value: String(prods.length) },
-            { label: 'Ativos', value: String(prods.filter(p => p.ativo).length), color: 'text-green-600 dark:text-green-400' },
-            { label: 'Estoque baixo', value: String(prods.filter(p => p.estoqueBaixo && p.ativo).length), color: prods.some(p => p.estoqueBaixo && p.ativo) ? 'text-red-600 dark:text-red-400' : '' },
-            { label: 'Valor em estoque', value: fmt(prods.reduce((s, p) => s + p.estoqueAtual * p.custoMedio, 0)) },
+            { label: 'Ativos', value: String(prods.filter(p => p.isActive).length), color: 'text-green-600 dark:text-green-400' },
+            { label: 'Estoque baixo', value: String(prods.filter(p => p.estoqueBaixo && p.isActive).length), color: prods.some(p => p.estoqueBaixo && p.isActive) ? 'text-red-600 dark:text-red-400' : '' },
+            { label: 'Valor em estoque', value: fmt(prods.reduce((s, p) => s + p.currentStock * p.averageCost, 0)) },
           ]} />
         )
       })()}
@@ -100,10 +100,10 @@ export default function Produtos() {
               <div key={p.id} className="rounded-lg border bg-card p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{p.nome}</p>
+                    <p className="font-medium truncate">{p.name}</p>
                     <p className="text-sm text-muted-foreground">{p.categoriaNome}</p>
                   </div>
-                  {!p.ativo ? (
+                  {!p.isActive ? (
                     <Badge variant="outline">Inativo</Badge>
                   ) : p.estoqueBaixo ? (
                     <Badge variant="destructive" className="gap-1 shrink-0"><PackageX size={11} /> Baixo</Badge>
@@ -112,8 +112,8 @@ export default function Produtos() {
                   )}
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Estoque: <strong className="text-foreground">{p.estoqueAtual}</strong></span>
-                  <span className="font-semibold">{p.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  <span className="text-muted-foreground">Estoque: <strong className="text-foreground">{p.currentStock}</strong></span>
+                  <span className="font-semibold">{p.salePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
                 <div className="flex gap-1 pt-1">
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => setProdutoEditando(p)}>
@@ -123,7 +123,7 @@ export default function Produtos() {
                     <ArrowDownToLine size={13} className="mr-1" /> Entrada
                   </Button>
                   <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(p.id, p.nome)}>
+                    onClick={() => handleDelete(p.id, p.name)}>
                     <Trash2 size={13} />
                   </Button>
                 </div>
@@ -147,14 +147,14 @@ export default function Produtos() {
               <tbody>
                 {produtosFiltrados.map(p => (
                   <tr key={p.id} className="border-b last:border-b-0">
-                    <td className="px-4 py-3 font-medium">{p.nome}</td>
+                    <td className="px-4 py-3 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{p.categoriaNome}</td>
                     <td className="px-4 py-3 text-right">
-                      {p.precoVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {p.salePrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </td>
-                    <td className="px-4 py-3 text-right">{p.estoqueAtual}</td>
+                    <td className="px-4 py-3 text-right">{p.currentStock}</td>
                     <td className="px-4 py-3">
-                      {!p.ativo ? (
+                      {!p.isActive ? (
                         <Badge variant="outline">Inativo</Badge>
                       ) : p.estoqueBaixo ? (
                         <Badge variant="destructive" className="gap-1">
@@ -173,7 +173,7 @@ export default function Produtos() {
                           <ArrowDownToLine size={14} className="mr-1" /> Entrada
                         </Button>
                         <Button size="sm" variant="outline" className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(p.id, p.nome)}>
+                          onClick={() => handleDelete(p.id, p.name)}>
                           <Trash2 size={14} />
                         </Button>
                       </div>
@@ -218,7 +218,7 @@ export default function Produtos() {
         open={!!produtoEntrada}
         onClose={() => setProdutoEntrada(null)}
         onConfirm={async (id, data) => {
-          await entradaEstoque({ produtoId: id, ...data })
+          await entradaEstoque({ productId: id, ...data })
           setProdutoEntrada(null)
         }}
       />

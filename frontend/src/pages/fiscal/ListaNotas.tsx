@@ -42,7 +42,7 @@ export default function ListaNotas() {
     if (!cancelModal || !motivo.trim()) return
     setActionId(cancelModal.id)
     try {
-      await cancelar(cancelModal.id, { motivo })
+      await cancelar(cancelModal.id, { reason: motivo })
       setCancelModal(null)
       setMotivo('')
     } catch (e) {
@@ -97,17 +97,17 @@ export default function ListaNotas() {
               {notas.map(nota => (
                 <tr key={nota.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3 font-mono">
-                    {nota.numero ? `${nota.serie ?? 1}-${nota.numero}` : '—'}
+                    {nota.number ? `${nota.series ?? 1}-${nota.number}` : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span className="rounded bg-primary/10 text-primary px-1.5 py-0.5 text-xs font-semibold">
-                      {nota.modelo}
+                      {nota.model}
                     </span>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={nota.status} /></td>
-                  <td className="px-4 py-3 text-muted-foreground">{fmtDate(nota.criadaEm)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{fmtDate(nota.createdAt)}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground max-w-[160px] truncate">
-                    {nota.chaveAcesso ?? '—'}
+                    {nota.accessKey ?? '—'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5 justify-end">
@@ -154,7 +154,7 @@ export default function ListaNotas() {
           <div className="bg-background rounded-xl border shadow-xl w-full max-w-md p-6 space-y-4">
             <h3 className="text-base font-semibold">Cancelar Nota Fiscal</h3>
             <p className="text-sm text-muted-foreground">
-              NF {cancelModal.serie ?? 1}-{cancelModal.numero} — informe o motivo (mínimo 15 caracteres).
+              NF {cancelModal.series ?? 1}-{cancelModal.number} — informe o motivo (mínimo 15 caracteres).
             </p>
             <div className="space-y-1.5">
               <Label>Motivo</Label>

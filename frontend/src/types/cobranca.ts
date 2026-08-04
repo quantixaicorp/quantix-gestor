@@ -2,18 +2,18 @@ export type CobrancaStatus = 'Pendente' | 'Pago' | 'Cancelado' | 'Vencido'
 
 export interface CobrancaResponse {
   id: string
-  clienteNome: string
+  customerName: string
   clienteWhatsapp: string
-  contratoId: string | null
+  contractId: string | null
   contratoTitulo: string | null
-  referencia: string
-  valor: number
-  dataVencimento: string
-  dataPagamento: string | null
+  reference: string
+  amount: number
+  dueDate: string
+  paymentDate: string | null
   status: CobrancaStatus
-  formaPagamento: string | null
-  observacao: string | null
-  criadoEm: string
+  paymentMethod: string | null
+  notes: string | null
+  createdAt: string
   asaasId: string | null
   asaasPaymentLink: string | null
   asaasPixQrCode: string | null
@@ -22,26 +22,26 @@ export interface CobrancaResponse {
 
 export interface CobrancaListItem {
   id: string
-  clienteNome: string
-  contratoId: string | null
+  customerName: string
+  contractId: string | null
   contratoTitulo: string | null
-  referencia: string
-  valor: number
-  dataVencimento: string
+  reference: string
+  amount: number
+  dueDate: string
   status: CobrancaStatus
 }
 
 export interface CreateCobrancaRequest {
-  clienteId: string
-  referencia: string
-  valor: number
-  dataVencimento: string
-  observacao?: string
+  customerId: string
+  reference: string
+  amount: number
+  dueDate: string
+  notes?: string
 }
 
 export interface PagarCobrancaRequest {
-  dataPagamento: string
-  formaPagamento: string
+  paymentDate: string
+  paymentMethod: string
 }
 
 export interface CobrancaAsaasResponse {

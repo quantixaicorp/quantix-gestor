@@ -216,7 +216,7 @@ export default function NovaVendaPDV() {
                 <select value={clienteId} onChange={e => setClienteId(e.target.value)}
                   className="flex h-9 flex-1 rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
                   <option value="">Balcão (sem cliente)</option>
-                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <Button type="button" variant="outline" size="icon"
                   title="Criar novo cliente"

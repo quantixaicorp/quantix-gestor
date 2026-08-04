@@ -2,50 +2,50 @@ export type AgendamentoStatus = 'Agendado' | 'Confirmado' | 'Concluido' | 'Cance
 
 export interface AgendamentoListItem {
   id: string
-  profissionalId: string
-  profissionalNome: string
-  clienteNome: string
+  professionalId: string
+  professionalName: string
+  customerName: string
   servicoNome: string
-  dataHoraInicio: string
-  dataHoraFim: string
+  startAt: string
+  endAt: string
   status: AgendamentoStatus
 }
 
 export interface AgendamentoResponse {
   id: string
-  profissionalNome: string
-  clienteNome: string
-  clienteTelefone: string
-  clienteId: string | null
+  professionalName: string
+  customerName: string
+  customerPhone: string
+  customerId: string | null
   servicoNome: string
-  duracaoMinutos: number
-  dataHoraInicio: string
-  dataHoraFim: string
+  durationMinutes: number
+  startAt: string
+  endAt: string
   status: AgendamentoStatus
-  observacao: string | null
-  vendaId: string | null
-  criadoEm: string
+  notes: string | null
+  saleId: string | null
+  createdAt: string
 }
 
 export interface CriarAgendamentoRequest {
-  profissionalId: string
-  clienteNome: string
-  clienteTelefone: string
-  clienteId?: string
-  servicoId: string
-  dataHoraInicio: string
-  observacao?: string
+  professionalId: string
+  customerName: string
+  customerPhone: string
+  customerId?: string
+  serviceId: string
+  startAt: string
+  notes?: string
 }
 
 export interface ConcluirResponse {
-  vendaId: string
+  saleId: string
 }
 
 export interface ProfissionalResponse {
   id: string
-  nome: string
-  telefone: string | null
-  ativo: boolean
+  name: string
+  phone: string | null
+  isActive: boolean
 }
 
 export type TipoPeriodo = 'semana' | 'mes' | 'trimestre' | 'semestre' | 'ano'
@@ -57,22 +57,22 @@ export interface DisponibilidadeItem {
 }
 
 export interface DisponibilidadePeriodoResponse {
-  dataInicio: string   // YYYY-MM-DD
-  dataFim: string      // YYYY-MM-DD
+  startDate: string   // YYYY-MM-DD
+  endDate: string      // YYYY-MM-DD
   faixas: DisponibilidadeItem[]
 }
 
 export interface SalvarDisponibilidadeRequest {
-  dataInicio: string
-  dataFim: string
+  startDate: string
+  endDate: string
   faixas: DisponibilidadeItem[]
 }
 
 export interface BloqueioResponse {
   id: string
-  profissionalId: string | null
-  profissionalNome: string | null
-  dataInicio: string
-  dataFim: string
-  motivo: string | null
+  professionalId: string | null
+  professionalName: string | null
+  startDate: string
+  endDate: string
+  reason: string | null
 }

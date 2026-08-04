@@ -6,7 +6,7 @@ import type { PlanoAssinaturaResponse } from '@/types/assinaturas'
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
 interface EmpresaInfo { nomeFantasia: string | null; logoUrl: string | null; corPrimaria: string | null }
-interface AssinarResponse { assinaturaId: string; pixQrCode: string | null; boletoUrl: string | null; valor: number; vencimento: string }
+interface AssinarResponse { assinaturaId: string; pixQrCode: string | null; boletoUrl: string | null; amount: number; vencimento: string }
 
 export default function AssinarPlano() {
   const { slug, planoId } = useParams<{ slug: string; planoId: string }>()
@@ -37,7 +37,7 @@ export default function AssinarPlano() {
       const res = await fetch(`${API_BASE}/public/${slug}/planos/${planoId}/assinar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: form.nome, whatsapp: form.whatsapp, email: form.email || null }),
+        body: JSON.stringify({ name: form.nome, whatsApp: form.whatsapp, email: form.email || null }),
       })
       if (!res.ok) {
         const body = await res.json().catch(() => null) as { error?: string } | null
@@ -65,17 +65,17 @@ export default function AssinarPlano() {
 
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
         <div className="rounded-xl border bg-white p-5 space-y-2">
-          <p className="font-bold text-lg">{plano.nome}</p>
-          {plano.descricao && <p className="text-sm text-gray-500">{plano.descricao}</p>}
+          <p className="font-bold text-lg">{plano.name}</p>
+          {plano.description && <p className="text-sm text-gray-500">{plano.description}</p>}
           <p className="text-2xl font-extrabold" style={{ color: cor }}>
-            R$ {plano.preco.toFixed(2).replace('.', ',')}
-            <span className="text-sm font-normal text-gray-500">/{plano.periodicidade.toLowerCase()}</span>
+            R$ {plano.price.toFixed(2).replace('.', ',')}
+            <span className="text-sm font-normal text-gray-500">/{plano.frequency.toLowerCase()}</span>
           </p>
           <ul className="text-sm space-y-1 pt-1">
-            {plano.itens.map(i => (
+            {plano.items.map(i => (
               <li key={i.id} className="flex gap-1">
                 <span style={{ color: cor }}>✓</span>
-                {i.quantidadePorCiclo === 0 ? `${i.descricao} (ilimitado)` : `${i.quantidadePorCiclo}x ${i.descricao}`}
+                {i.quantityPerCycle === 0 ? `${i.description} (ilimitado)` : `${i.quantityPerCycle}x ${i.description}`}
               </li>
             ))}
           </ul>
@@ -146,7 +146,7 @@ export default function AssinarPlano() {
 
             <p className="text-xs text-center text-gray-400">
               Vencimento: {new Date(resultado.vencimento).toLocaleDateString('pt-BR')} •
-              R$ {resultado.valor.toFixed(2).replace('.', ',')}
+              R$ {resultado.amount.toFixed(2).replace('.', ',')}
             </p>
           </div>
         )}

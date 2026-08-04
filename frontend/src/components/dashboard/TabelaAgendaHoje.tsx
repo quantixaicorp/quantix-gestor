@@ -30,9 +30,9 @@ export default function TabelaAgendaHoje({ dados }: Props) {
         <tbody>
           {(dados ?? []).map((a, i) => (
             <tr key={i} className="border-t hover:bg-muted/20">
-              <td className="px-4 py-2 font-mono text-sm">{a.horaInicio}</td>
-              <td className="px-4 py-2 font-medium">{a.clienteNome}</td>
-              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{a.servico}</td>
+              <td className="px-4 py-2 font-mono text-sm">{a.startTime}</td>
+              <td className="px-4 py-2 font-medium">{a.customerName}</td>
+              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{a.service}</td>
               <td className="px-4 py-2 text-center">
                 <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', STATUS_COR[a.status] ?? 'bg-muted text-muted-foreground')}>
                   {a.status}

@@ -42,7 +42,7 @@ export default function OrcamentoPublicoPage() {
   if (error) return <div className="flex items-center justify-center min-h-screen text-sm text-destructive">{error}</div>
   if (!orc) return null
 
-  const expirado = new Date(orc.dataValidade) < new Date()
+  const expirado = new Date(orc.expirationDate) < new Date()
   const podeAprovar = orc.status === 'Enviado' && !expirado
   const statusColor: Record<string, string> = {
     Rascunho: 'bg-gray-100 text-gray-700',
@@ -59,14 +59,14 @@ export default function OrcamentoPublicoPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">{orc.titulo}</h1>
+            <h1 className="text-xl font-bold">{orc.title}</h1>
             <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[orc.status] ?? 'bg-gray-100'}`}>
               {orc.status}
             </span>
           </div>
-          {orc.clienteNome && <p className="text-sm text-muted-foreground">Cliente: {orc.clienteNome}</p>}
+          {orc.customerName && <p className="text-sm text-muted-foreground">Cliente: {orc.customerName}</p>}
           <p className="text-sm text-muted-foreground">
-            Válido até: {new Date(orc.dataValidade).toLocaleDateString('pt-BR')}
+            Válido até: {new Date(orc.expirationDate).toLocaleDateString('pt-BR')}
             {expirado && <span className="ml-2 text-orange-600 font-medium">(expirado)</span>}
           </p>
 
@@ -80,11 +80,11 @@ export default function OrcamentoPublicoPage() {
               </tr>
             </thead>
             <tbody>
-              {orc.itens.map((item, i) => (
+              {orc.items.map((item, i) => (
                 <tr key={i} className="border-b last:border-0">
-                  <td className="py-2">{item.descricao}</td>
-                  <td className="py-2 text-right">{item.quantidade}</td>
-                  <td className="py-2 text-right">R$ {item.valorUnitario.toFixed(2)}</td>
+                  <td className="py-2">{item.description}</td>
+                  <td className="py-2 text-right">{item.quantity}</td>
+                  <td className="py-2 text-right">R$ {item.unitPrice.toFixed(2)}</td>
                   <td className="py-2 text-right">R$ {item.total.toFixed(2)}</td>
                 </tr>
               ))}
@@ -94,8 +94,8 @@ export default function OrcamentoPublicoPage() {
             Total: R$ {orc.total.toFixed(2)}
           </div>
 
-          {orc.observacao && (
-            <p className="text-sm text-muted-foreground bg-muted/40 rounded p-3">{orc.observacao}</p>
+          {orc.notes && (
+            <p className="text-sm text-muted-foreground bg-muted/40 rounded p-3">{orc.notes}</p>
           )}
         </div>
 

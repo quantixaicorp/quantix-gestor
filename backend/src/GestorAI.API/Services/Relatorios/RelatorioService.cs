@@ -225,7 +225,7 @@ public class RelatorioService(AppDbContext db)
         var totalDespesas = lancamentos.Where(l => l.Type == TipoLancamento.Despesa).Sum(l => l.Amount);
 
         var analitico = lancamentos
-            .OrderBy(l => l.DueDate)
+            .OrderByDescending(l => l.DueDate)
             .Select(l => new LancamentoAnaliticoResponse(
                 l.Id,
                 l.Type.ToString(),

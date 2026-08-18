@@ -25,7 +25,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
             query = query.Where(l => l.DueDate <= vencimentoAte.Value);
 
         return await query
-            .OrderBy(l => l.DueDate)
+            .OrderByDescending(l => l.DueDate)
             .Select(l => ToResponse(l, hoje))
             .ToListAsync(ct);
     }

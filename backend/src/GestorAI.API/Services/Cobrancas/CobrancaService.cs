@@ -30,7 +30,7 @@ public class CobrancaService(AppDbContext db, TenantContext tenantContext, Asaas
             query = query.Where(c => c.DueDate >= mesDate && c.DueDate <= fimMes);
         }
 
-        var list = await query.OrderBy(c => c.DueDate).ToListAsync(ct);
+        var list = await query.OrderByDescending(c => c.CreatedAt).ToListAsync(ct);
 
         if (status != null)
         {

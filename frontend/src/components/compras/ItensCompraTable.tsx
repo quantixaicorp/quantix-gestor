@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Trash2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,17 +11,17 @@ const DESTINOS: { value: DestinoCompra; label: string }[] = [
 ]
 
 const EMPTY_ITEM: ItemCompraRequest = {
-  descricao: '',
-  destinoCompra: 'EstoqueParaVenda',
-  quantidade: 1,
-  valorUnitario: 0,
-  desconto: 0,
-  freteRateado: 0,
-  impostos: 0,
+  description: '',
+  destination: 'EstoqueParaVenda',
+  quantity: 1,
+  unitPrice: 0,
+  discount: 0,
+  allocatedFreight: 0,
+  taxes: 0,
 }
 
 function calcTotal(item: ItemCompraRequest) {
-  return item.quantidade * item.valorUnitario - item.desconto + item.freteRateado + item.impostos
+  return item.quantity * item.unitPrice - item.discount + item.allocatedFreight + item.taxes
 }
 
 interface Props {
@@ -30,6 +31,17 @@ interface Props {
 }
 
 export default function ItensCompraTable({ itens, onChange, readonly }: Props) {
+  const keysRef = useRef<WeakMap<ItemCompraRequest, string>>(new WeakMap())
+
+  function keyFor(item: ItemCompraRequest) {
+    let key = keysRef.current.get(item)
+    if (!key) {
+      key = crypto.randomUUID()
+      keysRef.current.set(item, key)
+    }
+    return key
+  }
+
   function add() {
     onChange([...itens, { ...EMPTY_ITEM }])
   }
@@ -73,23 +85,23 @@ export default function ItensCompraTable({ itens, onChange, readonly }: Props) {
               </tr>
             )}
             {itens.map((item, idx) => (
-              <tr key={idx} className="border-b">
+              <tr key={keyFor(item)} className="border-b">
                 <td className="px-2 py-1">
                   {readonly
-                    ? <span>{item.descricao}</span>
+                    ? <span>{item.description}</span>
                     : <Input
-                        value={item.descricao}
-                        onChange={e => update(idx, 'descricao', e.target.value)}
+                        value={item.description}
+                        onChange={e => update(idx, 'description', e.target.value)}
                         className="h-8"
                         placeholder="Descrição do item"
                       />}
                 </td>
                 <td className="px-2 py-1">
                   {readonly
-                    ? <span>{DESTINOS.find(d => d.value === item.destinoCompra)?.label}</span>
+                    ? <span>{DESTINOS.find(d => d.value === item.destination)?.label}</span>
                     : <select
-                        value={item.destinoCompra}
-                        onChange={e => update(idx, 'destinoCompra', e.target.value)}
+                        value={item.destination}
+                        onChange={e => update(idx, 'destination', e.target.value)}
                         className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
                       >
                         {DESTINOS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
@@ -97,34 +109,22 @@ export default function ItensCompraTable({ itens, onChange, readonly }: Props) {
                 </td>
                 <td className="px-2 py-1">
                   {readonly
-                    ? <span className="block text-right">{item.quantidade}</span>
+                    ? <span className="block text-right">{item.quantity}</span>
                     : <Input
                         type="number"
-                        value={item.quantidade}
-                        onChange={e => update(idx, 'quantidade', parseFloat(e.target.value) || 0)}
+                        value={item.quantity}
+                        onChange={e => update(idx, 'quantity', parseFloat(e.target.value) || 0)}
                         className="h-8 text-right"
                         min={0}
                       />}
                 </td>
                 <td className="px-2 py-1">
                   {readonly
-                    ? <span className="block text-right">{item.valorUnitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    ? <span className="block text-right">{item.unitPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     : <Input
                         type="number"
-                        value={item.valorUnitario}
-                        onChange={e => update(idx, 'valorUnitario', parseFloat(e.target.value) || 0)}
-                        className="h-8 text-right"
-                        min={0}
-                        step={0.01}
-                      />}
-                </td>
-                <td className="px-2 py-1">
-                  {readonly
-                    ? <span className="block text-right">{item.desconto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    : <Input
-                        type="number"
-                        value={item.desconto}
-                        onChange={e => update(idx, 'desconto', parseFloat(e.target.value) || 0)}
+                        value={item.unitPrice}
+                        onChange={e => update(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
                         className="h-8 text-right"
                         min={0}
                         step={0.01}
@@ -132,11 +132,11 @@ export default function ItensCompraTable({ itens, onChange, readonly }: Props) {
                 </td>
                 <td className="px-2 py-1">
                   {readonly
-                    ? <span className="block text-right">{item.freteRateado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    ? <span className="block text-right">{item.discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     : <Input
                         type="number"
-                        value={item.freteRateado}
-                        onChange={e => update(idx, 'freteRateado', parseFloat(e.target.value) || 0)}
+                        value={item.discount}
+                        onChange={e => update(idx, 'discount', parseFloat(e.target.value) || 0)}
                         className="h-8 text-right"
                         min={0}
                         step={0.01}
@@ -144,11 +144,23 @@ export default function ItensCompraTable({ itens, onChange, readonly }: Props) {
                 </td>
                 <td className="px-2 py-1">
                   {readonly
-                    ? <span className="block text-right">{item.impostos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    ? <span className="block text-right">{item.allocatedFreight.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     : <Input
                         type="number"
-                        value={item.impostos}
-                        onChange={e => update(idx, 'impostos', parseFloat(e.target.value) || 0)}
+                        value={item.allocatedFreight}
+                        onChange={e => update(idx, 'allocatedFreight', parseFloat(e.target.value) || 0)}
+                        className="h-8 text-right"
+                        min={0}
+                        step={0.01}
+                      />}
+                </td>
+                <td className="px-2 py-1">
+                  {readonly
+                    ? <span className="block text-right">{item.taxes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    : <Input
+                        type="number"
+                        value={item.taxes}
+                        onChange={e => update(idx, 'taxes', parseFloat(e.target.value) || 0)}
                         className="h-8 text-right"
                         min={0}
                         step={0.01}

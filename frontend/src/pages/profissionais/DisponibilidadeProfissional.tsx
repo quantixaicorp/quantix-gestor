@@ -131,13 +131,13 @@ export default function DisponibilidadeProfissional() {
   useEffect(() => { void carregarLista() }, [carregarLista])
 
   function adicionarFaixa(dia: number) {
-    const existentes = faixas.filter(f => f.diaSemana === dia)
+    const existentes = faixas.filter(f => f.weekDay === dia)
     if (existentes.length === 0) {
-      setFaixas(prev => [...prev, { diaSemana: dia, horaInicio: '08:00', horaFim: '18:00' }])
+      setFaixas(prev => [...prev, { weekDay: dia, startTime: '08:00', endTime: '18:00' }])
     } else {
       // adiciona faixa de intervalo após a última
       const ultima = existentes[existentes.length - 1]
-      setFaixas(prev => [...prev, { diaSemana: dia, horaInicio: ultima.horaFim, horaFim: '18:00' }])
+      setFaixas(prev => [...prev, { weekDay: dia, startTime: ultima.endTime, endTime: '18:00' }])
     }
   }
 
@@ -150,11 +150,11 @@ export default function DisponibilidadeProfissional() {
   }
 
   function replicarDia(diaOrigem: number, destinos: number[]) {
-    const faixasOrigem = faixas.filter(f => f.diaSemana === diaOrigem)
+    const faixasOrigem = faixas.filter(f => f.weekDay === diaOrigem)
     if (faixasOrigem.length === 0) { toast.error('Sem horários para replicar'); return }
     setFaixas(prev => [
-      ...prev.filter(f => !destinos.includes(f.diaSemana)),
-      ...destinos.flatMap(dia => faixasOrigem.map(f => ({ ...f, diaSemana: dia }))),
+      ...prev.filter(f => !destinos.includes(f.weekDay)),
+      ...destinos.flatMap(dia => faixasOrigem.map(f => ({ ...f, weekDay: dia }))),
     ])
     toast.success(`Horários replicados para ${destinos.length} dia(s)`)
   }
@@ -278,7 +278,7 @@ export default function DisponibilidadeProfissional() {
         ) : (
           <div className="space-y-3" ref={dropdownRef}>
             {DIAS.map((dia, diaIdx) => {
-              const faixasDia = faixas.filter(f => f.diaSemana === diaIdx)
+              const faixasDia = faixas.filter(f => f.weekDay === diaIdx)
               const diasUteis = [1, 2, 3, 4, 5].filter(d => d !== diaIdx)
               const todosDias = [0, 1, 2, 3, 4, 5, 6].filter(d => d !== diaIdx)
               return (
@@ -336,15 +336,15 @@ export default function DisponibilidadeProfissional() {
                         )}
                         <Input
                           type="time"
-                          value={faixa.horaInicio}
-                          onChange={e => atualizarFaixa(idx, 'horaInicio', e.target.value)}
+                          value={faixa.startTime}
+                          onChange={e => atualizarFaixa(idx, 'startTime', e.target.value)}
                           className="w-28"
                         />
                         <span className="text-xs text-muted-foreground">até</span>
                         <Input
                           type="time"
-                          value={faixa.horaFim}
-                          onChange={e => atualizarFaixa(idx, 'horaFim', e.target.value)}
+                          value={faixa.endTime}
+                          onChange={e => atualizarFaixa(idx, 'endTime', e.target.value)}
                           className="w-28"
                         />
                         <Button variant="ghost" size="sm" onClick={() => removerFaixa(idx)}>✕</Button>

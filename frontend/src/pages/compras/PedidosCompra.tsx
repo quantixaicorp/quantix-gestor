@@ -34,7 +34,7 @@ export default function PedidosCompra() {
   }
 
   async function handleCancelar(p: PedidoCompraResponse) {
-    if (!confirm(`Cancelar pedido #${p.numero}?`)) return
+    if (!confirm(`Cancelar pedido #${p.number}?`)) return
     try {
       await cancelar(p.id)
       toast.success('Pedido cancelado.')
@@ -45,7 +45,7 @@ export default function PedidosCompra() {
 
   const filtrados = pedidos.filter(p =>
     p.fornecedorNome.toLowerCase().includes(busca.toLowerCase()) ||
-    String(p.numero).includes(busca)
+    String(p.number).includes(busca)
   )
 
   return (
@@ -91,13 +91,13 @@ export default function PedidosCompra() {
                   className="border-b hover:bg-muted/30 cursor-pointer"
                   onClick={() => navigate(`/compras/pedidos/${p.id}`)}
                 >
-                  <td className="px-4 py-3 font-medium">#{p.numero}</td>
+                  <td className="px-4 py-3 font-medium">#{p.number}</td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(p.data).toLocaleDateString('pt-BR')}
+                    {new Date(p.date).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-4 py-3">{p.fornecedorNome}</td>
                   <td className="px-4 py-3 text-right">
-                    {p.valorEstimado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {p.estimatedAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[p.status] ?? ''}`}>

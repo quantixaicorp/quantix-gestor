@@ -32,9 +32,14 @@ export function useVendas() {
     const result = await api.post<VendaResponse>('/api/vendas', req)
     setVendas(prev => [
       {
-        id: result.id, clienteId: result.clienteId, clienteNome: result.clienteNome,
-        dataHora: result.dataHora, status: result.status,
-        total: result.total, formaPagamento: result.formaPagamento,
+        id: result.id,
+        customerId: result.customerId,
+        customerName: result.customerName,
+        saleDate: result.saleDate,
+        status: result.status,
+        total: result.total,
+        paymentMethod: result.paymentMethod,
+        professionalName: result.professionalName,
       },
       ...prev,
     ])
@@ -60,7 +65,7 @@ export function useVendas() {
   const update = useCallback(async (id: string, req: UpdateVendaRequest) => {
     const result = await api.put<VendaResponse>(`/api/vendas/${id}`, req)
     setVendas(prev => prev.map(v => v.id === id
-      ? { ...v, clienteId: result.clienteId, clienteNome: result.clienteNome, formaPagamento: result.formaPagamento, dataHora: result.dataHora }
+      ? { ...v, customerId: result.customerId, customerName: result.customerName, paymentMethod: result.paymentMethod, saleDate: result.saleDate }
       : v))
     return result
   }, [])

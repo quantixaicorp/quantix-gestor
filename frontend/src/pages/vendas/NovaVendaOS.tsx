@@ -64,21 +64,21 @@ export default function NovaVendaOS() {
     setCarregando(true)
     void get(vendaIdParam).then(venda => {
       vendaCarregadaRef.current = venda
-      setItens(venda.itens.map(i => ({
-        produtoId: i.produtoId,
+      setItens(venda.items.map(i => ({
+        produtoId: i.productId,
         produtoNome: i.produtoNome,
-        precoUnitario: i.precoUnitario,
-        quantidade: i.quantidade,
+        precoUnitario: i.unitPrice,
+        quantidade: i.quantity,
         desconto: 0,
-        total: i.precoUnitario * i.quantidade,
+        total: i.unitPrice * i.quantity,
       })))
-      if (venda.clienteId) setClienteId(venda.clienteId)
+      if (venda.customerId) setClienteId(venda.customerId)
     }).finally(() => setCarregando(false))
   }, [vendaIdParam, get, listClientes, listProfissionais, listProdutos])
 
   useEffect(() => {
     if (!vendaIdParam || profissionais.length === 0 || !vendaCarregadaRef.current) return
-    const nome = vendaCarregadaRef.current.profissionalNome
+    const nome = vendaCarregadaRef.current.professionalName
     if (!nome) return
     const prof = profissionais.find(p => p.name === nome)
     if (prof) setProfissionalId(prof.id)
@@ -119,22 +119,22 @@ export default function NovaVendaOS() {
     try {
       if (vendaIdParam) {
         const req: FecharVendaRequest = {
-          formaPagamento,
-          parcelas: formaPagamento === 'Cartao' ? parcelas : undefined,
-          observacao: observacaoOS || undefined,
+          paymentMethod: formaPagamento,
+          installments: formaPagamento === 'Cartao' ? parcelas : undefined,
+          notes: observacaoOS || undefined,
         }
         const result = await fechar(vendaIdParam, req)
         setVendaFinalizada({ id: result.id, total: result.total })
       } else {
         const req: CreateVendaRequest = {
-          clienteId,
-          itens: itens.map(i => ({ produtoId: i.produtoId, quantidade: i.quantidade, desconto: 0 })),
-          desconto,
-          formaPagamento,
-          parcelas: formaPagamento === 'Cartao' ? parcelas : undefined,
-          observacaoOS: observacaoOS || undefined,
-          profissionalId: profissionalId || undefined,
-          dataHora: dataExecucao !== hoje
+          customerId: clienteId,
+          items: itens.map(i => ({ productId: i.produtoId, quantity: i.quantidade, discount: 0 })),
+          discount: desconto,
+          paymentMethod: formaPagamento,
+          installments: formaPagamento === 'Cartao' ? parcelas : undefined,
+          serviceOrderNotes: observacaoOS || undefined,
+          professionalId: profissionalId || undefined,
+          saleDate: dataExecucao !== hoje
             ? new Date(dataExecucao + 'T12:00:00').toISOString()
             : undefined,
         }

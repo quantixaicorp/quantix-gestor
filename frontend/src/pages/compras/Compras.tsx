@@ -25,7 +25,7 @@ export default function Compras() {
   }, [list, getResumo])
 
   async function handleCancelar(c: CompraResponse) {
-    if (!confirm(`Cancelar compra #${c.numero}?`)) return
+    if (!confirm(`Cancelar compra #${c.number}?`)) return
     try {
       await cancelar(c.id)
       toast.success('Compra cancelada.')
@@ -35,7 +35,7 @@ export default function Compras() {
   }
 
   async function handleDelete(c: CompraResponse) {
-    if (!confirm(`Excluir rascunho #${c.numero}?`)) return
+    if (!confirm(`Excluir rascunho #${c.number}?`)) return
     try {
       await remove(c.id)
       toast.success('Rascunho excluído.')
@@ -46,8 +46,8 @@ export default function Compras() {
 
   const filtradas = compras.filter(c =>
     c.fornecedorNome.toLowerCase().includes(busca.toLowerCase()) ||
-    String(c.numero).includes(busca) ||
-    (c.numeroNota ?? '').includes(busca)
+    String(c.number).includes(busca) ||
+    (c.noteNumber ?? '').includes(busca)
   )
 
   return (
@@ -102,14 +102,14 @@ export default function Compras() {
                   className="border-b hover:bg-muted/30 cursor-pointer"
                   onClick={() => navigate(`/compras/${c.id}`)}
                 >
-                  <td className="px-4 py-3 font-medium">#{c.numero}</td>
+                  <td className="px-4 py-3 font-medium">#{c.number}</td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(c.data).toLocaleDateString('pt-BR')}
+                    {new Date(c.date).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-4 py-3">{c.fornecedorNome}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.tipoCompra}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{c.purchaseType}</td>
                   <td className="px-4 py-3 text-right font-medium">
-                    {c.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {c.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[c.status] ?? ''}`}>

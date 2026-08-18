@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { usePedidosCompra } from '@/hooks/usePedidosCompra'
@@ -11,9 +11,9 @@ import type { CreatePedidoCompraRequest, ItemPedidoCompraRequest } from '@/types
 import { Trash2, Plus } from 'lucide-react'
 
 const EMPTY_ITEM: ItemPedidoCompraRequest = {
-  descricao: '',
-  quantidade: 1,
-  valorEstimado: 0,
+  description: '',
+  quantity: 1,
+  estimatedAmount: 0,
 }
 
 export default function NovoPedidoCompra() {
@@ -26,6 +26,16 @@ export default function NovoPedidoCompra() {
   const [data, setData] = useState(new Date().toISOString().slice(0, 10))
   const [observacoes, setObservacoes] = useState('')
   const [itens, setItens] = useState<ItemPedidoCompraRequest[]>([{ ...EMPTY_ITEM }])
+  const keysRef = useRef<WeakMap<ItemPedidoCompraRequest, string>>(new WeakMap())
+
+  function keyFor(item: ItemPedidoCompraRequest) {
+    let key = keysRef.current.get(item)
+    if (!key) {
+      key = crypto.randomUUID()
+      keysRef.current.set(item, key)
+    }
+    return key
+  }
 
   useEffect(() => { void listFornecedores() }, [listFornecedores])
 
@@ -35,7 +45,7 @@ export default function NovoPedidoCompra() {
     setItens(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item))
   }
 
-  const total = itens.reduce((acc, i) => acc + i.quantidade * i.valorEstimado, 0)
+  const total = itens.reduce((acc, i) => acc + i.quantity * i.estimatedAmount, 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,7 +54,7 @@ export default function NovoPedidoCompra() {
 
     setSaving(true)
     try {
-      const req: CreatePedidoCompraRequest = { fornecedorId, data, observacoes: observacoes || undefined, itens }
+      const req: CreatePedidoCompraRequest = { supplierId: fornecedorId, date: data, notes: observacoes || undefined, items: itens }
       const pedido = await create(req)
       toast.success('Pedido criado!')
       navigate(`/compras/pedidos/${pedido.id}`)
@@ -104,11 +114,11 @@ export default function NovoPedidoCompra() {
               </thead>
               <tbody>
                 {itens.map((item, idx) => (
-                  <tr key={idx} className="border-b">
+                  <tr key={keyFor(item)} className="border-b">
                     <td className="px-2 py-1">
                       <Input
-                        value={item.descricao}
-                        onChange={e => updateItem(idx, 'descricao', e.target.value)}
+                        value={item.description}
+                        onChange={e => updateItem(idx, 'description', e.target.value)}
                         className="h-8"
                         placeholder="Produto ou serviço"
                         required
@@ -117,8 +127,8 @@ export default function NovoPedidoCompra() {
                     <td className="px-2 py-1">
                       <Input
                         type="number"
-                        value={item.quantidade}
-                        onChange={e => updateItem(idx, 'quantidade', parseFloat(e.target.value) || 0)}
+                        value={item.quantity}
+                        onChange={e => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
                         className="h-8 text-right"
                         min={0}
                       />
@@ -126,8 +136,8 @@ export default function NovoPedidoCompra() {
                     <td className="px-2 py-1">
                       <Input
                         type="number"
-                        value={item.valorEstimado}
-                        onChange={e => updateItem(idx, 'valorEstimado', parseFloat(e.target.value) || 0)}
+                        value={item.estimatedAmount}
+                        onChange={e => updateItem(idx, 'estimatedAmount', parseFloat(e.target.value) || 0)}
                         className="h-8 text-right"
                         min={0}
                         step={0.01}

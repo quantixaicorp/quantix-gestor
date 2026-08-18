@@ -18,16 +18,16 @@ const TIPOS = ['Mercadoria', 'Serviço', 'Ativo']
 type Step = 1 | 2 | 3 | 4
 
 interface FormState {
-  fornecedorId: string
-  data: string
-  tipoCompra: string
-  numeroNota: string
-  pedidoCompraId: string
-  observacoes: string
-  itens: ItemCompraRequest[]
-  condicaoPagamento: string
-  formaPagamento: string
-  qtdParcelas: number
+  supplierId: string
+  date: string
+  purchaseType: string
+  noteNumber: string
+  purchaseOrderId: string
+  notes: string
+  items: ItemCompraRequest[]
+  paymentTerms: string
+  paymentMethod: string
+  installmentCount: number
 }
 
 function calcParcelas(condicao: string, total: number, data: string, qtd: number) {
@@ -62,40 +62,40 @@ export default function NovaCompra() {
   const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState<FormState>({
-    fornecedorId: '',
-    data: new Date().toISOString().slice(0, 10),
-    tipoCompra: 'Mercadoria',
-    numeroNota: '',
-    pedidoCompraId: '',
-    observacoes: '',
-    itens: [],
-    condicaoPagamento: 'AVista',
-    formaPagamento: 'PIX',
-    qtdParcelas: 2,
+    supplierId: '',
+    date: new Date().toISOString().slice(0, 10),
+    purchaseType: 'Mercadoria',
+    noteNumber: '',
+    purchaseOrderId: '',
+    notes: '',
+    items: [],
+    paymentTerms: 'AVista',
+    paymentMethod: 'PIX',
+    installmentCount: 2,
   })
 
   useEffect(() => { void listFornecedores() }, [listFornecedores])
 
-  const totalItens = form.itens.reduce(
-    (acc, i) => acc + i.quantidade * i.valorUnitario - i.desconto + i.freteRateado + i.impostos, 0
+  const totalItens = form.items.reduce(
+    (acc, i) => acc + i.quantity * i.unitPrice - i.discount + i.allocatedFreight + i.taxes, 0
   )
 
-  const parcelas = form.condicaoPagamento === 'Personalizado'
+  const parcelas = form.paymentTerms === 'Personalizado'
     ? []
-    : calcParcelas(form.condicaoPagamento, totalItens, form.data, form.qtdParcelas)
+    : calcParcelas(form.paymentTerms, totalItens, form.date, form.installmentCount)
 
   function buildRequest(): CreateCompraRequest {
     return {
-      fornecedorId: form.fornecedorId,
-      data: form.data,
-      tipoCompra: form.tipoCompra,
-      numeroNota: form.numeroNota || undefined,
-      pedidoCompraId: form.pedidoCompraId || undefined,
-      observacoes: form.observacoes || undefined,
-      itens: form.itens,
-      condicaoPagamento: form.condicaoPagamento,
-      formaPagamento: form.formaPagamento,
-      qtdParcelas: form.condicaoPagamento === 'Parcelado' ? form.qtdParcelas : undefined,
+      supplierId: form.supplierId,
+      date: form.date,
+      purchaseType: form.purchaseType,
+      noteNumber: form.noteNumber || undefined,
+      purchaseOrderId: form.purchaseOrderId || undefined,
+      notes: form.notes || undefined,
+      items: form.items,
+      paymentTerms: form.paymentTerms,
+      paymentMethod: form.paymentMethod,
+      installmentCount: form.paymentTerms === 'Parcelado' ? form.installmentCount : undefined,
     }
   }
 
@@ -167,8 +167,8 @@ export default function NovaCompra() {
             <div className="space-y-1">
               <Label>Fornecedor *</Label>
               <select
-                value={form.fornecedorId}
-                onChange={e => setForm(f => ({ ...f, fornecedorId: e.target.value }))}
+                value={form.supplierId}
+                onChange={e => setForm(f => ({ ...f, supplierId: e.target.value }))}
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">Selecione...</option>
@@ -177,13 +177,13 @@ export default function NovaCompra() {
             </div>
             <div className="space-y-1">
               <Label>Data *</Label>
-              <Input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} />
+              <Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label>Tipo de Compra *</Label>
               <select
-                value={form.tipoCompra}
-                onChange={e => setForm(f => ({ ...f, tipoCompra: e.target.value }))}
+                value={form.purchaseType}
+                onChange={e => setForm(f => ({ ...f, purchaseType: e.target.value }))}
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
                 {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -192,16 +192,16 @@ export default function NovaCompra() {
             <div className="space-y-1">
               <Label>Número da Nota</Label>
               <Input
-                value={form.numeroNota}
-                onChange={e => setForm(f => ({ ...f, numeroNota: e.target.value }))}
+                value={form.noteNumber}
+                onChange={e => setForm(f => ({ ...f, noteNumber: e.target.value }))}
                 placeholder="Opcional"
               />
             </div>
             <div className="sm:col-span-2 space-y-1">
               <Label>Observações</Label>
               <Input
-                value={form.observacoes}
-                onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
+                value={form.notes}
+                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Opcional"
               />
             </div>
@@ -209,7 +209,7 @@ export default function NovaCompra() {
           <div className="flex justify-end">
             <Button
               onClick={() => setStep(2)}
-              disabled={!form.fornecedorId || !form.data}
+              disabled={!form.supplierId || !form.date}
             >
               Próximo <ArrowRight size={16} className="ml-2" />
             </Button>
@@ -222,8 +222,8 @@ export default function NovaCompra() {
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <h2 className="font-semibold">Itens</h2>
           <ItensCompraTable
-            itens={form.itens}
-            onChange={itens => setForm(f => ({ ...f, itens }))}
+            itens={form.items}
+            onChange={items => setForm(f => ({ ...f, items }))}
           />
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setStep(1)}>
@@ -231,7 +231,7 @@ export default function NovaCompra() {
             </Button>
             <Button
               onClick={() => setStep(3)}
-              disabled={form.itens.length === 0}
+              disabled={form.items.length === 0}
             >
               Próximo <ArrowRight size={16} className="ml-2" />
             </Button>
@@ -247,8 +247,8 @@ export default function NovaCompra() {
             <div className="space-y-1">
               <Label>Condição de Pagamento *</Label>
               <select
-                value={form.condicaoPagamento}
-                onChange={e => setForm(f => ({ ...f, condicaoPagamento: e.target.value }))}
+                value={form.paymentTerms}
+                onChange={e => setForm(f => ({ ...f, paymentTerms: e.target.value }))}
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
                 {CONDICOES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -257,22 +257,22 @@ export default function NovaCompra() {
             <div className="space-y-1">
               <Label>Forma de Pagamento *</Label>
               <select
-                value={form.formaPagamento}
-                onChange={e => setForm(f => ({ ...f, formaPagamento: e.target.value }))}
+                value={form.paymentMethod}
+                onChange={e => setForm(f => ({ ...f, paymentMethod: e.target.value }))}
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
                 {FORMAS.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
-            {form.condicaoPagamento === 'Parcelado' && (
+            {form.paymentTerms === 'Parcelado' && (
               <div className="space-y-1">
                 <Label>Número de Parcelas</Label>
                 <Input
                   type="number"
                   min={2}
                   max={60}
-                  value={form.qtdParcelas}
-                  onChange={e => setForm(f => ({ ...f, qtdParcelas: parseInt(e.target.value) || 2 }))}
+                  value={form.installmentCount}
+                  onChange={e => setForm(f => ({ ...f, installmentCount: parseInt(e.target.value) || 2 }))}
                 />
               </div>
             )}
@@ -299,17 +299,17 @@ export default function NovaCompra() {
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <h2 className="font-semibold">Revisão</h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            <div><span className="text-muted-foreground">Fornecedor:</span> {fornecedores.find(f => f.id === form.fornecedorId)?.name}</div>
-            <div><span className="text-muted-foreground">Data:</span> {new Date(form.data).toLocaleDateString('pt-BR')}</div>
-            <div><span className="text-muted-foreground">Tipo:</span> {form.tipoCompra}</div>
-            <div><span className="text-muted-foreground">Nº Nota:</span> {form.numeroNota || '—'}</div>
-            <div><span className="text-muted-foreground">Condição:</span> {form.condicaoPagamento}</div>
-            <div><span className="text-muted-foreground">Forma:</span> {form.formaPagamento}</div>
+            <div><span className="text-muted-foreground">Fornecedor:</span> {fornecedores.find(f => f.id === form.supplierId)?.name}</div>
+            <div><span className="text-muted-foreground">Data:</span> {new Date(form.date).toLocaleDateString('pt-BR')}</div>
+            <div><span className="text-muted-foreground">Tipo:</span> {form.purchaseType}</div>
+            <div><span className="text-muted-foreground">Nº Nota:</span> {form.noteNumber || '—'}</div>
+            <div><span className="text-muted-foreground">Condição:</span> {form.paymentTerms}</div>
+            <div><span className="text-muted-foreground">Forma:</span> {form.paymentMethod}</div>
             <div className="col-span-2 font-semibold text-base">
               Total: {totalItens.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </div>
           </div>
-          <ItensCompraTable itens={form.itens} onChange={() => {}} readonly />
+          <ItensCompraTable itens={form.items} onChange={() => {}} readonly />
           {parcelas.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Parcelas</p>

@@ -36,7 +36,7 @@ export default function DetalheCompra() {
     get(id)
       .then(c => {
         setCompra(c)
-        if (c.parcelamento) {
+        if (c.installmentPlan) {
           return listByCompra(c.id).then(ps => {
             if (ps.length > 0) setParcelamento(ps[0])
           })
@@ -82,12 +82,12 @@ export default function DetalheCompra() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Compra #{compra.numero}</h1>
+            <h1 className="text-2xl font-bold">Compra #{compra.number}</h1>
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[compra.status] ?? ''}`}>
               {compra.status}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{new Date(compra.data).toLocaleDateString('pt-BR')} — {compra.fornecedorNome}</p>
+          <p className="text-sm text-muted-foreground">{new Date(compra.date).toLocaleDateString('pt-BR')} — {compra.fornecedorNome}</p>
         </div>
         <div className="flex gap-2">
           {compra.status === 'Rascunho' && (
@@ -103,15 +103,15 @@ export default function DetalheCompra() {
       <div className="rounded-xl border bg-card p-6">
         <h2 className="font-semibold mb-4">Informações</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
-          <div><span className="text-muted-foreground">Tipo:</span> {compra.tipoCompra}</div>
-          <div><span className="text-muted-foreground">Nº Nota:</span> {compra.numeroNota ?? '—'}</div>
-          <div><span className="text-muted-foreground">Condição:</span> {compra.condicaoPagamento}</div>
-          <div><span className="text-muted-foreground">Forma:</span> {compra.formaPagamento}</div>
+          <div><span className="text-muted-foreground">Tipo:</span> {compra.purchaseType}</div>
+          <div><span className="text-muted-foreground">Nº Nota:</span> {compra.noteNumber ?? '—'}</div>
+          <div><span className="text-muted-foreground">Condição:</span> {compra.paymentTerms}</div>
+          <div><span className="text-muted-foreground">Forma:</span> {compra.paymentMethod}</div>
           <div className="col-span-2">
-            <span className="text-muted-foreground">Obs.:</span> {compra.observacoes ?? '—'}
+            <span className="text-muted-foreground">Obs.:</span> {compra.notes ?? '—'}
           </div>
           <div className="col-span-2 sm:col-span-3 font-semibold text-lg mt-2">
-            Total: {compra.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            Total: {compra.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </div>
         </div>
       </div>
@@ -119,17 +119,17 @@ export default function DetalheCompra() {
       {/* Itens */}
       <div className="rounded-xl border bg-card p-6">
         <h2 className="font-semibold mb-4">Itens</h2>
-        <ItensCompraTable itens={compra.itens.map(i => ({
-          produtoId: i.produtoId,
-          descricao: i.descricao,
-          destinoCompra: i.destinoCompra as 'EstoqueParaVenda' | 'ConsumoInterno' | 'AtivoImobilizado',
-          quantidade: i.quantidade,
-          valorUnitario: i.valorUnitario,
-          desconto: i.desconto,
-          freteRateado: i.freteRateado,
-          impostos: i.impostos,
-          categoriaFinanceira: i.categoriaFinanceira,
-          centroCusto: i.centroCusto,
+        <ItensCompraTable itens={compra.items.map(i => ({
+          productId: i.productId,
+          description: i.description,
+          destination: i.destination as 'EstoqueParaVenda' | 'ConsumoInterno' | 'AtivoImobilizado',
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          discount: i.discount,
+          allocatedFreight: i.allocatedFreight,
+          taxes: i.taxes,
+          financialCategory: i.financialCategory,
+          costCenter: i.costCenter,
         }))} onChange={() => {}} readonly />
       </div>
 
@@ -139,8 +139,8 @@ export default function DetalheCompra() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Parcelamento</h2>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              {parcelamento.categoria && (
-                <span className="rounded-full bg-muted px-2.5 py-0.5">{parcelamento.categoria}</span>
+              {parcelamento.category && (
+                <span className="rounded-full bg-muted px-2.5 py-0.5">{parcelamento.category}</span>
               )}
               <span>{parcelamento.status}</span>
             </div>
@@ -157,19 +157,19 @@ export default function DetalheCompra() {
                 </tr>
               </thead>
               <tbody>
-                {parcelamento.parcelas.map(p => (
+                {parcelamento.installments.map(p => (
                   <tr key={p.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">{p.numeroParcela}/{parcelamento.qtdParcelas}</td>
+                    <td className="px-3 py-2">{p.installmentNumber}/{parcelamento.installmentCount}</td>
                     <td className="px-3 py-2">
                       <span className={p.vencido ? 'text-red-500 font-medium' : ''}>
-                        {new Date(p.dataVencimento).toLocaleDateString('pt-BR')}
+                        {new Date(p.dueDate).toLocaleDateString('pt-BR')}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
-                      {p.dataPagamento ? new Date(p.dataPagamento).toLocaleDateString('pt-BR') : '—'}
+                      {p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('pt-BR') : '—'}
                     </td>
                     <td className="px-3 py-2 text-right font-medium">
-                      {p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {p.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </td>
                     <td className={`px-3 py-2 ${PARCELA_COLORS[p.status] ?? ''}`}>
                       {p.status}

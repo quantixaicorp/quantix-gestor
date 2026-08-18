@@ -1,62 +1,62 @@
 export interface ItemVendaRequest {
-  produtoId: string
-  quantidade: number
-  desconto: number
+  productId: string
+  quantity: number
+  discount: number
 }
 
 export interface CreateVendaRequest {
-  clienteId?: string
-  itens: ItemVendaRequest[]
-  desconto: number
-  formaPagamento: 'Dinheiro' | 'Pix' | 'Cartao' | 'Outro'
-  parcelas?: number
-  observacao?: string
-  dataHora?: string
-  profissionalId?: string
-  observacaoOS?: string
+  customerId?: string
+  items: ItemVendaRequest[]
+  discount: number
+  paymentMethod: 'Dinheiro' | 'Pix' | 'Cartao' | 'Outro'
+  installments?: number
+  notes?: string
+  saleDate?: string
+  professionalId?: string
+  serviceOrderNotes?: string
 }
 
 export interface ItemVendaResponse {
-  produtoId: string
+  productId: string
   produtoNome: string
-  quantidade: number
-  precoUnitario: number
-  desconto: number
+  quantity: number
+  unitPrice: number
+  discount: number
   total: number
 }
 
 export interface UpdateVendaRequest {
-  clienteId?: string | null
-  formaPagamento: string
-  dataHora: string
+  customerId?: string | null
+  paymentMethod: string
+  saleDate: string
 }
 
 export interface VendaResponse {
   id: string
-  clienteId: string | null
-  clienteNome: string | null
-  dataHora: string
+  customerId: string | null
+  customerName: string | null
+  saleDate: string
   status: string
   subtotal: number
-  desconto: number
+  discount: number
   total: number
-  formaPagamento: string
-  parcelas: number | null
-  observacao: string | null
-  itens: ItemVendaResponse[]
-  profissionalNome?: string | null
-  observacaoOS?: string | null
+  paymentMethod: string
+  installments: number | null
+  notes: string | null
+  items: ItemVendaResponse[]
+  professionalName?: string | null
+  serviceOrderNotes?: string | null
 }
 
 export interface VendaListItem {
   id: string
-  clienteId: string | null
-  clienteNome: string | null
-  dataHora: string
+  customerId: string | null
+  customerName: string | null
+  saleDate: string
   status: string
   total: number
-  formaPagamento: string
-  profissionalNome?: string | null
+  paymentMethod: string
+  professionalName?: string | null
 }
 
 export interface ItemCarrinho {
@@ -69,7 +69,7 @@ export interface ItemCarrinho {
 }
 
 export interface FecharVendaRequest {
-  formaPagamento: 'Dinheiro' | 'Pix' | 'Cartao' | 'Outro'
-  parcelas?: number
-  observacao?: string
+  paymentMethod: 'Dinheiro' | 'Pix' | 'Cartao' | 'Outro'
+  installments?: number
+  notes?: string
 }

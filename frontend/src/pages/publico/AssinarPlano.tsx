@@ -5,7 +5,7 @@ import type { PlanoAssinaturaResponse } from '@/types/assinaturas'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
-interface EmpresaInfo { nomeFantasia: string | null; logoUrl: string | null; corPrimaria: string | null }
+interface EmpresaInfo { name: string | null; logoUrl: string | null; primaryColor: string | null }
 interface AssinarResponse { assinaturaId: string; pixQrCode: string | null; boletoUrl: string | null; amount: number; vencimento: string }
 
 export default function AssinarPlano() {
@@ -18,7 +18,7 @@ export default function AssinarPlano() {
   const [submitting, setSubmitting] = useState(false)
   const [erro, setErro] = useState('')
 
-  const cor = info?.corPrimaria ?? '#3B82F6'
+  const cor = info?.primaryColor ?? '#3B82F6'
 
   useEffect(() => {
     Promise.all([
@@ -59,7 +59,7 @@ export default function AssinarPlano() {
       <div className="py-4 shadow-sm" style={{ backgroundColor: cor }}>
         <div className="max-w-lg mx-auto px-4 flex items-center gap-3">
           {info?.logoUrl && <img src={info.logoUrl} alt="Logo" className="h-8 object-contain" />}
-          <p className="text-white font-semibold">{info?.nomeFantasia ?? ''}</p>
+          <p className="text-white font-semibold">{info?.name ?? ''}</p>
         </div>
       </div>
 

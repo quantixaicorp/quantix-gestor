@@ -35,7 +35,7 @@ export interface NichoTemplateItem {
 
 export interface NichoTemplate {
   id: string
-  nicho: string
+  niche: string
   planName: string
   description: string | null
   suggestedPrice: number

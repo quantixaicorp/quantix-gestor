@@ -6,10 +6,10 @@ import type { PlanoAssinaturaListItem } from '@/types/assinaturas'
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5002'
 
 interface EmpresaInfo {
-  nomeFantasia: string | null
+  name: string | null
   logoUrl: string | null
-  corPrimaria: string | null
-  descricaoPublica: string | null
+  primaryColor: string | null
+  description: string | null
 }
 
 export default function AssinarSlug() {
@@ -28,7 +28,7 @@ export default function AssinarSlug() {
       .finally(() => setLoading(false))
   }, [slug])
 
-  const cor = info?.corPrimaria ?? '#3B82F6'
+  const cor = info?.primaryColor ?? '#3B82F6'
 
   if (loading) return <div className="flex h-screen items-center justify-center"><p className="text-gray-500">Carregando...</p></div>
   if (erro) return <div className="flex h-screen items-center justify-center"><p className="text-red-500">{erro}</p></div>
@@ -39,8 +39,8 @@ export default function AssinarSlug() {
         <div className="max-w-3xl mx-auto px-4 flex items-center gap-3">
           {info?.logoUrl && <img src={info.logoUrl} alt="Logo" className="h-10 object-contain" />}
           <div>
-            <h1 className="text-white font-bold text-xl">{info?.nomeFantasia ?? 'Empresa'}</h1>
-            {info?.descricaoPublica && <p className="text-white/80 text-sm">{info.descricaoPublica}</p>}
+            <h1 className="text-white font-bold text-xl">{info?.name ?? 'Empresa'}</h1>
+            {info?.description && <p className="text-white/80 text-sm">{info.description}</p>}
           </div>
         </div>
       </div>

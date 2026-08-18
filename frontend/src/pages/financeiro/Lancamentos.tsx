@@ -416,9 +416,9 @@ export default function Lancamentos() {
                           </div>
                         ))}
                       <div className="flex items-center justify-between p-3 pl-6 bg-muted/20">
-                        {cached?.compraId ? (
+                        {cached?.purchaseId ? (
                           <Button size="sm" variant="ghost" className="gap-1 text-xs"
-                            onClick={() => navigate(`/compras/${cached.compraId}`)}>
+                            onClick={() => navigate(`/compras/${cached.purchaseId}`)}>
                             <ExternalLink size={12} /> Ver compra
                           </Button>
                         ) : <span />}
@@ -508,9 +508,9 @@ export default function Lancamentos() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
-                            {cached?.compraId && (
+                            {cached?.purchaseId && (
                               <Button size="sm" variant="ghost" className="gap-1 text-xs h-7"
-                                onClick={() => navigate(`/compras/${cached.compraId}`)}>
+                                onClick={() => navigate(`/compras/${cached.purchaseId}`)}>
                                 <ExternalLink size={12} /> Ver compra
                               </Button>
                             )}

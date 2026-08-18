@@ -37,9 +37,9 @@ export default function Historico() {
   const [excluindo, setExcluindo] = useState<string | null>(null)
   const [editandoVenda, setEditandoVenda] = useState<{
     id: string
-    clienteId: string | null
-    formaPagamento: string
-    dataHora: string
+    customerId: string | null
+    paymentMethod: string
+    saleDate: string
   } | null>(null)
   const [salvandoEdit, setSalvandoEdit] = useState(false)
   const { confirm, ConfirmDialogNode } = useConfirm()
@@ -139,25 +139,25 @@ export default function Historico() {
               <div key={v.id} className="rounded-lg border bg-card p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{v.clienteNome ?? 'Balcão'}</p>
-                    {isPrestador && v.profissionalNome && (
+                    <p className="font-medium truncate">{v.customerName ?? 'Balcão'}</p>
+                    {isPrestador && v.professionalName && (
                       <p className="text-xs text-muted-foreground">
-                        Profissional: {v.profissionalNome}
+                        Profissional: {v.professionalName}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground">{new Date(v.dataHora).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(v.saleDate).toLocaleString('pt-BR')}</p>
                   </div>
                   <Badge variant={statusVariant(v.status)} className="shrink-0">{v.status}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{v.formaPagamento}</span>
+                  <span className="text-muted-foreground">{v.paymentMethod}</span>
                   <span className="font-semibold">{fmt(v.total)}</span>
                 </div>
                 {(v.status === 'Concluida' || isAdmin) && (
                   <div className="flex gap-1 pt-1">
                     {v.status === 'Concluida' && (
                       <Button size="sm" variant="outline"
-                        onClick={() => setEditandoVenda({ id: v.id, clienteId: v.clienteId, formaPagamento: v.formaPagamento, dataHora: v.dataHora })}>
+                        onClick={() => setEditandoVenda({ id: v.id, customerId: v.customerId, paymentMethod: v.paymentMethod, saleDate: v.saleDate })}>
                         <Pencil size={13} />
                       </Button>
                     )}
@@ -198,14 +198,14 @@ export default function Historico() {
               <tbody>
                 {vendas.map(v => (
                   <tr key={v.id} className="border-b">
-                    <td className="px-4 py-3">{new Date(v.dataHora).toLocaleString('pt-BR')}</td>
-                    <td className="px-4 py-3">{v.clienteNome ?? 'Balcão'}</td>
+                    <td className="px-4 py-3">{new Date(v.saleDate).toLocaleString('pt-BR')}</td>
+                    <td className="px-4 py-3">{v.customerName ?? 'Balcão'}</td>
                     {isPrestador && (
                       <td className="px-4 py-3 text-muted-foreground">
-                        {v.profissionalNome ?? '—'}
+                        {v.professionalName ?? '—'}
                       </td>
                     )}
-                    <td className="px-4 py-3 text-muted-foreground">{v.formaPagamento}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{v.paymentMethod}</td>
                     <td className="px-4 py-3 text-right font-medium">{fmt(v.total)}</td>
                     <td className="px-4 py-3">
                       <Badge variant={statusVariant(v.status)}>{v.status}</Badge>
@@ -214,7 +214,7 @@ export default function Historico() {
                       <div className="flex items-center gap-2">
                         {v.status === 'Concluida' && (
                           <Button size="sm" variant="ghost"
-                            onClick={() => setEditandoVenda({ id: v.id, clienteId: v.clienteId, formaPagamento: v.formaPagamento, dataHora: v.dataHora })}>
+                            onClick={() => setEditandoVenda({ id: v.id, customerId: v.customerId, paymentMethod: v.paymentMethod, saleDate: v.saleDate })}>
                             <Pencil size={14} />
                           </Button>
                         )}
@@ -253,8 +253,8 @@ export default function Historico() {
               <div className="space-y-1.5">
                 <Label>Cliente</Label>
                 <select
-                  value={editandoVenda.clienteId ?? ''}
-                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, clienteId: e.target.value || null } : prev)}
+                  value={editandoVenda.customerId ?? ''}
+                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, customerId: e.target.value || null } : prev)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
                   <option value="">Balcão (sem cliente)</option>
                   {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -263,8 +263,8 @@ export default function Historico() {
               <div className="space-y-1.5">
                 <Label>Forma de pagamento</Label>
                 <select
-                  value={editandoVenda.formaPagamento}
-                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, formaPagamento: e.target.value } : prev)}
+                  value={editandoVenda.paymentMethod}
+                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, paymentMethod: e.target.value } : prev)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
                   {[{ v: 'Pix', l: 'Pix' }, { v: 'Dinheiro', l: 'Dinheiro' }, { v: 'Cartao', l: 'Cartão' }, { v: 'Outro', l: 'Outro' }].map(f => <option key={f.v} value={f.v}>{f.l}</option>)}
                 </select>
@@ -272,13 +272,13 @@ export default function Historico() {
               <div className="space-y-1.5">
                 <Label>Data da venda</Label>
                 <Input type="date"
-                  value={editandoVenda.dataHora.slice(0, 10)}
-                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, dataHora: e.target.value + 'T12:00:00Z' } : prev)}
+                  value={editandoVenda.saleDate.slice(0, 10)}
+                  onChange={e => setEditandoVenda(prev => prev ? { ...prev, saleDate: e.target.value + 'T12:00:00Z' } : prev)}
                   className="h-9" />
               </div>
               <div className="flex gap-2 pt-2">
                 <Button disabled={salvandoEdit}
-                  onClick={() => void handleSalvarEdit({ clienteId: editandoVenda.clienteId, formaPagamento: editandoVenda.formaPagamento, dataHora: editandoVenda.dataHora })}>
+                  onClick={() => void handleSalvarEdit({ customerId: editandoVenda.customerId, paymentMethod: editandoVenda.paymentMethod, saleDate: editandoVenda.saleDate })}>
                   {salvandoEdit ? 'Salvando...' : 'Salvar'}
                 </Button>
                 <Button variant="outline" onClick={() => setEditandoVenda(null)}>Cancelar</Button>

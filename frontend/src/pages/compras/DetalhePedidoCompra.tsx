@@ -55,7 +55,7 @@ export default function DetalhePedidoCompra() {
   if (loading) return <p className="text-muted-foreground">Carregando...</p>
   if (!pedido) return <p className="text-muted-foreground">Pedido não encontrado.</p>
 
-  const total = pedido.itens.reduce((acc, i) => acc + i.quantidade * i.valorEstimado, 0)
+  const total = pedido.items.reduce((acc, i) => acc + i.quantity * i.estimatedAmount, 0)
 
   return (
     <div className="space-y-4 max-w-3xl">
@@ -65,12 +65,12 @@ export default function DetalhePedidoCompra() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Pedido #{pedido.numero}</h1>
+            <h1 className="text-2xl font-bold">Pedido #{pedido.number}</h1>
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[pedido.status] ?? ''}`}>
               {pedido.status}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{new Date(pedido.data).toLocaleDateString('pt-BR')} — {pedido.fornecedorNome}</p>
+          <p className="text-sm text-muted-foreground">{new Date(pedido.date).toLocaleDateString('pt-BR')} — {pedido.fornecedorNome}</p>
         </div>
         <div className="flex gap-2">
           {pedido.status !== 'Cancelado' && pedido.status !== 'RecebidoTotalmente' && (
@@ -82,8 +82,8 @@ export default function DetalhePedidoCompra() {
         </div>
       </div>
 
-      {pedido.observacoes && (
-        <p className="text-sm text-muted-foreground rounded-xl border bg-card p-4">{pedido.observacoes}</p>
+      {pedido.notes && (
+        <p className="text-sm text-muted-foreground rounded-xl border bg-card p-4">{pedido.notes}</p>
       )}
 
       <div className="rounded-xl border bg-card p-6">
@@ -99,15 +99,15 @@ export default function DetalhePedidoCompra() {
               </tr>
             </thead>
             <tbody>
-              {pedido.itens.map(i => (
+              {pedido.items.map(i => (
                 <tr key={i.id} className="border-b last:border-0">
-                  <td className="px-3 py-2">{i.descricao}</td>
-                  <td className="px-3 py-2 text-right">{i.quantidade}</td>
+                  <td className="px-3 py-2">{i.description}</td>
+                  <td className="px-3 py-2 text-right">{i.quantity}</td>
                   <td className="px-3 py-2 text-right">
-                    {i.valorEstimado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {i.estimatedAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>
                   <td className="px-3 py-2 text-right font-medium">
-                    {(i.quantidade * i.valorEstimado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {(i.quantity * i.estimatedAmount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>
                 </tr>
               ))}

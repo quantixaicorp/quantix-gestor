@@ -51,9 +51,9 @@ export interface ProfissionalResponse {
 export type TipoPeriodo = 'semana' | 'mes' | 'trimestre' | 'semestre' | 'ano'
 
 export interface DisponibilidadeItem {
-  diaSemana: number
-  horaInicio: string
-  horaFim: string
+  weekDay: number
+  startTime: string
+  endTime: string
 }
 
 export interface DisponibilidadePeriodoResponse {

@@ -44,13 +44,13 @@ export default function PlanoWizard() {
     api.get<NichoTemplate[]>('/api/nicho-templates').then(setTemplates).catch(() => {})
   }, [])
 
-  const templatesByNicho = templates.filter(t => t.nicho === selectedNicho)
+  const templatesByNicho = templates.filter(t => t.niche === selectedNicho)
 
   function applyTemplate(t: NichoTemplate) {
     setForm({
       nome: t.planName,
       descricao: t.description ?? '',
-      nicho: t.nicho,
+      nicho: t.niche,
       preco: String(t.suggestedPrice),
       periodicidade: t.frequency,
       maisVendido: t.bestSeller,

@@ -75,4 +75,7 @@ Frontend uses **Vitest** + **@testing-library/react**. Tests live in `src/test/`
 ```bash
 npx vitest run src/test/agendamentos.test.tsx
 ```
-There are no backend unit tests; backend validation is covered by FluentValidation.
+Backend tests use **xUnit** and live in `backend/tests/GestorAI.Tests/`. Run them from the repository root:
+```bash
+dotnet test backend/tests/GestorAI.Tests/GestorAI.Tests.csproj
+```

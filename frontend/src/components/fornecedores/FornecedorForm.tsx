@@ -11,7 +11,7 @@ const schema = z.object({
   razaoSocial: z.string().max(200).optional().or(z.literal('')),
   nomeFantasia: z.string().max(200).optional().or(z.literal('')),
   cnpjCpf: z.string()
-    .refine(v => !v || /^\d{11}$|^\d{14}$/.test(v), 'Informe 11 dígitos (CPF) ou 14 dígitos (CNPJ)')
+    .refine(v => !v || /^(?:\d{11}|[A-Z0-9]{12}\d{2})$/i.test(v), 'Informe CPF com 11 dígitos ou CNPJ com 14 caracteres')
     .optional()
     .or(z.literal('')),
   inscricaoEstadual: z.string().max(30).optional().or(z.literal('')),
@@ -59,7 +59,7 @@ export default function FornecedorForm({ defaultValues, onSubmit, onCancel }: Pr
       <div className="grid grid-cols-2 gap-3">
         <div className="grid gap-2">
           <Label>CNPJ / CPF</Label>
-          <Input {...register('cnpjCpf')} placeholder="Apenas números" />
+          <Input {...register('cnpjCpf')} className="uppercase" placeholder="CPF numérico ou CNPJ alfanumérico" />
           {errors.cnpjCpf && <p className="text-xs text-destructive">{errors.cnpjCpf.message}</p>}
         </div>
         <div className="grid gap-2">

@@ -36,7 +36,7 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
         {
             CompanyId = tenantContext.CompanyId,
             Name = req.Name,
-            CnpjCpf = req.CnpjCpf,
+            CnpjCpf = req.CnpjCpf?.ToUpperInvariant(),
             Phone = req.Phone,
             Email = req.Email,
             Logradouro = req.Logradouro,
@@ -61,7 +61,7 @@ public class FornecedorService(AppDbContext db, TenantContext tenantContext)
             ?? throw new AppException("Supplier não encontrado", 404);
 
         fornecedor.Name = req.Name;
-        fornecedor.CnpjCpf = req.CnpjCpf;
+        fornecedor.CnpjCpf = req.CnpjCpf?.ToUpperInvariant();
         fornecedor.Phone = req.Phone;
         fornecedor.Email = req.Email;
         fornecedor.Logradouro = req.Logradouro;

@@ -9,8 +9,8 @@ public class CreateFornecedorValidator : AbstractValidator<CreateFornecedorReque
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.CnpjCpf)
-            .Must(v => v == null || System.Text.RegularExpressions.Regex.IsMatch(v, @"^\d{11}$|^\d{14}$"))
-            .WithMessage("CNPJ deve ter 14 dígitos ou CPF 11 dígitos (apenas números)")
+            .Matches(@"(?i)^(?:\d{11}|[A-Z0-9]{12}\d{2})$")
+            .WithMessage("CPF deve ter 11 dígitos ou CNPJ 12 caracteres alfanuméricos e 2 dígitos verificadores")
             .When(x => !string.IsNullOrEmpty(x.CnpjCpf));
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrEmpty(x.Email));
         RuleFor(x => x.Phone).MaximumLength(20);

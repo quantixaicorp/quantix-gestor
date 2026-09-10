@@ -50,7 +50,7 @@ public class ConfiguracaoEmpresaService(AppDbContext db, TenantContext tenantCon
 
         if (req.RazaoSocial is not null) config.RazaoSocial = req.RazaoSocial;
         if (req.NomeFantasia is not null) config.NomeFantasia = req.NomeFantasia;
-        if (req.Cnpj is not null) config.Cnpj = req.Cnpj;
+        if (req.Cnpj is not null) config.Cnpj = req.Cnpj.ToUpperInvariant();
         if (req.InscricaoEstadual is not null) config.InscricaoEstadual = req.InscricaoEstadual;
         if (req.InscricaoMunicipal is not null) config.InscricaoMunicipal = req.InscricaoMunicipal;
         if (req.Logradouro is not null) config.Logradouro = req.Logradouro;

@@ -4,31 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/useToast'
-
-function maskCnpj(v: string) {
-  const d = v.replace(/\D/g, '').slice(0, 14)
-  return d
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2')
-}
+import { isValidCnpj, maskCnpj, normalizeCnpj } from '@/lib/cnpj'
 
 function maskCep(v: string) {
   const d = v.replace(/\D/g, '').slice(0, 8)
   return d.replace(/^(\d{5})(\d)/, '$1-$2')
 }
 
-function isValidCnpj(cnpj: string) {
-  const d = cnpj.replace(/\D/g, '')
-  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false
-  const calc = (n: number) => {
-    let s = 0, p = n - 7
-    for (let i = 0; i < n; i++) { s += parseInt(d[i]) * (p--); if (p < 2) p = 9 }
-    const r = s % 11; return r < 2 ? 0 : 11 - r
-  }
-  return calc(12) === parseInt(d[12]) && calc(13) === parseInt(d[13])
-}
 import type { ConfiguracaoEmpresaResponse } from '@/types/fiscal'
 import { useDashboardLayout } from '@/hooks/useDashboardLayout'
 import { ALL_WIDGETS, WIDGET_CATEGORY } from '@/components/dashboard/widgetRegistry'
@@ -172,7 +154,7 @@ export default function ConfiguracaoEmpresa() {
   }
 
   async function saveIdent() {
-    const cnpjRaw = ident.cnpj.replace(/\D/g, '')
+    const cnpjRaw = normalizeCnpj(ident.cnpj)
     if (cnpjRaw && !isValidCnpj(cnpjRaw)) {
       setCnpjErro('CNPJ inválido')
       return

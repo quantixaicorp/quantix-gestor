@@ -47,7 +47,7 @@ public static class ConciliacaoEndpoints
             if (!Guid.TryParse(form["bankAccountId"], out var bankAccountId))
                 return Results.BadRequest("Campo 'bankAccountId' inválido.");
 
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var ext = Path.GetExtension(file.FileName ?? "").ToLowerInvariant();
             BankStatementFormat format;
             List<ParsedTransaction> parsed;
 

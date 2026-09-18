@@ -48,7 +48,7 @@ async function requestText(path: string): Promise<string> {
 
 async function request<T>(path: string, options: RequestInit = {}, retried = false): Promise<T> {
   const token = localStorage.getItem('ga_token')
-  const hasCustomHeaders = options.headers && Object.keys(options.headers).length > 0
+  const hasCustomHeaders = options.headers !== undefined
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,

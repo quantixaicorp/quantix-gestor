@@ -45,18 +45,18 @@ public class BankReconciliationService(
 
         foreach (var parsed in transactions)
         {
+            var absAmount = Math.Abs(parsed.Amount);
             var item = new BankStatementItem
             {
                 BankStatementId = statement.Id,
                 Date = parsed.Date,
-                Amount = parsed.Amount,
+                Amount = absAmount,
                 Description = parsed.Description,
                 BankTransactionId = parsed.BankTransactionId,
             };
             db.BankStatementItems.Add(item);
 
             var expectedType = parsed.Amount > 0 ? TipoLancamento.Receita : TipoLancamento.Despesa;
-            var absAmount = Math.Abs(parsed.Amount);
             var parsedDateTime = parsed.Date.ToDateTime(TimeOnly.MinValue);
 
             // try exact match first
@@ -271,7 +271,14 @@ public class BankReconciliationService(
             ?? throw new AppException("Item não encontrado.", 404);
 
         if (item.Reconciliation != null)
+        {
             db.BankReconciliations.Remove(item.Reconciliation);
+            if (item.Reconciliation.CreatedByImport)
+            {
+                var tx = await db.Transactions.FindAsync([item.Reconciliation.TransactionId], ct);
+                if (tx != null) db.Transactions.Remove(tx);
+            }
+        }
 
         item.Status = BankStatementItemStatus.ManuallyIgnored;
         await db.SaveChangesAsync(ct);

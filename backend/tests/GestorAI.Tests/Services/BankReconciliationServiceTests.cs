@@ -112,9 +112,10 @@ public class BankReconciliationServiceTests
     }
 
     [Fact]
-    public async Task IgnoreAsync_SetsManuallyIgnored()
+    public async Task IgnoreAsync_SetsManuallyIgnoredAndDeletesAutoTransaction()
     {
         var (db, svc, account) = Setup();
+        // import a transaction with no match → creates auto Transaction + BankReconciliation(CreatedByImport=true)
         var parsed = new List<ParsedTransaction>
         {
             new(new DateOnly(2025, 8, 1), 10m, "IOF", null)
@@ -123,19 +124,15 @@ public class BankReconciliationServiceTests
             BankStatementFormat.OFX, parsed, default);
 
         var item = db.BankStatementItems.First();
-        // delete auto-created transaction (and its reconciliation) so we can ignore
-        var tx = db.Transactions.FirstOrDefault(t => t.Source == TransactionSource.BankImport);
-        if (tx != null)
-        {
-            var recon = db.BankReconciliations.FirstOrDefault(r => r.TransactionId == tx.Id);
-            if (recon != null) db.BankReconciliations.Remove(recon);
-            db.Transactions.Remove(tx);
-        }
-        db.SaveChanges();
+        Assert.Equal(BankStatementItemStatus.Unmatched, item.Status);
+        var autoTx = db.Transactions.Single(t => t.Source == TransactionSource.BankImport);
+        Assert.NotNull(autoTx);
 
         await svc.IgnoreAsync(item.Id, default);
 
         var updated = db.BankStatementItems.Find(item.Id)!;
         Assert.Equal(BankStatementItemStatus.ManuallyIgnored, updated.Status);
+        Assert.Null(db.BankReconciliations.Find(autoTx.Id)); // recon removed
+        Assert.False(db.Transactions.Any(t => t.Source == TransactionSource.BankImport)); // auto tx deleted
     }
 }

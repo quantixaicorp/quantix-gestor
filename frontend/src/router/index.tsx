@@ -13,6 +13,9 @@ import Lancamentos from '@/pages/financeiro/Lancamentos'
 import ContasPagar from '@/pages/financeiro/ContasPagar'
 import ContasReceber from '@/pages/financeiro/ContasReceber'
 import Categorias from '@/pages/financeiro/Categorias'
+import ContasBancarias from '@/pages/financeiro/ContasBancarias'
+import Conciliacao from '@/pages/financeiro/Conciliacao'
+import ConciliacaoRevisao from '@/pages/financeiro/ConciliacaoRevisao'
 import Relatorios from '@/pages/relatorios/Relatorios'
 import Orcamentos from '@/pages/orcamentos/Orcamentos'
 import NovoOrcamento from '@/pages/orcamentos/NovoOrcamento'
@@ -83,6 +86,9 @@ export const router = createBrowserRouter([
       { path: '/financeiro/pagar', element: <ContasPagar /> },
       { path: '/financeiro/receber', element: <ContasReceber /> },
       { path: '/financeiro/categorias', element: <Categorias /> },
+      { path: '/financeiro/contas-bancarias', element: <ContasBancarias /> },
+      { path: '/financeiro/conciliacao', element: <Conciliacao /> },
+      { path: '/financeiro/conciliacao/:id', element: <ConciliacaoRevisao /> },
       { path: '/clientes', element: <Clientes /> },
       { path: '/fornecedores', element: <Fornecedores /> },
       { path: '/compras', element: <Compras /> },

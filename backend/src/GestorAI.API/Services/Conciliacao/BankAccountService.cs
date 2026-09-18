@@ -33,7 +33,7 @@ public class BankAccountService(AppDbContext db, TenantContext tenantContext)
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var account = await db.BankAccounts.FindAsync([id], ct)
+        var account = await db.BankAccounts.FirstOrDefaultAsync(a => a.Id == id, ct)
             ?? throw new AppException("Conta bancária não encontrada.", 404);
         account.IsActive = false;
         await db.SaveChangesAsync(ct);

@@ -27,7 +27,7 @@ public static class ConciliacaoEndpoints
         {
             await svc.DeleteAsync(id, ct);
             return Results.NoContent();
-        });
+        }).RequireAuthorization("AdminOnly");
 
         // Bank Statements
         group.MapPost("/bank-statements/import", async (
@@ -88,7 +88,7 @@ public static class ConciliacaoEndpoints
         {
             await svc.DeleteStatementAsync(id, ct);
             return Results.NoContent();
-        });
+        }).RequireAuthorization("AdminOnly");
 
         // Reconciliation actions
         group.MapPost("/bank-reconciliation/match", async (
@@ -103,7 +103,7 @@ public static class ConciliacaoEndpoints
         {
             await svc.UndoMatchAsync(id, ct);
             return Results.NoContent();
-        });
+        }).RequireAuthorization("AdminOnly");
 
         group.MapPost("/bank-reconciliation/{itemId:guid}/ignore", async (
             Guid itemId, BankReconciliationService svc, CancellationToken ct) =>

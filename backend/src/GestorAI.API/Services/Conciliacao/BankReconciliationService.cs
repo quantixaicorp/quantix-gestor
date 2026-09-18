@@ -20,8 +20,16 @@ public class BankReconciliationService(
         List<ParsedTransaction> transactions,
         CancellationToken ct)
     {
-        var account = await db.BankAccounts.FindAsync([bankAccountId], ct)
+        var account = await db.BankAccounts.FirstOrDefaultAsync(a => a.Id == bankAccountId, ct)
             ?? throw new AppException("Conta bancária não encontrada.", 404);
+
+        // Prevent re-import of same file for same account
+        var existingStatement = await db.BankStatements
+            .FirstOrDefaultAsync(s =>
+                s.BankAccountId == bankAccountId &&
+                s.FileName == fileName, ct);
+        if (existingStatement != null)
+            throw new AppException($"Um extrato com o nome '{fileName}' já foi importado para esta conta. Exclua o existente antes de reimportar.", 409);
 
         var statement = new BankStatement
         {
@@ -175,6 +183,10 @@ public class BankReconciliationService(
     public async Task<List<BankStatementItemResponse>> GetItemsAsync(
         Guid statementId, CancellationToken ct)
     {
+        // Verify the statement belongs to this tenant (global filter on BankStatement scopes it)
+        _ = await db.BankStatements.FirstOrDefaultAsync(s => s.Id == statementId, ct)
+            ?? throw new AppException("Extrato não encontrado.", 404);
+
         var items = await db.BankStatementItems
             .Where(i => i.BankStatementId == statementId)
             .Include(i => i.Reconciliation)
@@ -211,10 +223,15 @@ public class BankReconciliationService(
     {
         var item = await db.BankStatementItems
             .Include(i => i.Reconciliation)
+            .Include(i => i.BankStatement)
             .FirstOrDefaultAsync(i => i.Id == req.ItemId, ct)
             ?? throw new AppException("Item não encontrado.", 404);
 
-        var tx = await db.Transactions.FindAsync([req.TransactionId], ct)
+        // Tenant check — BankStatement global filter ensures it belongs to this tenant
+        var stmt = await db.BankStatements.FirstOrDefaultAsync(s => s.Id == item.BankStatementId, ct)
+            ?? throw new AppException("Acesso negado.", 403);
+
+        var tx = await db.Transactions.FirstOrDefaultAsync(t => t.Id == req.TransactionId, ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
         if (item.Reconciliation != null)
@@ -244,8 +261,13 @@ public class BankReconciliationService(
     {
         var recon = await db.BankReconciliations
             .Include(r => r.BankStatementItem)
+                .ThenInclude(i => i!.BankStatement)
             .FirstOrDefaultAsync(r => r.Id == reconciliationId, ct)
             ?? throw new AppException("Conciliação não encontrada.", 404);
+
+        // Tenant check — BankStatement has global filter; null means wrong tenant
+        if (recon.BankStatementItem?.BankStatement == null)
+            throw new AppException("Acesso negado.", 403);
 
         if (recon.CreatedByImport)
         {
@@ -267,8 +289,13 @@ public class BankReconciliationService(
     {
         var item = await db.BankStatementItems
             .Include(i => i.Reconciliation)
+            .Include(i => i.BankStatement)
             .FirstOrDefaultAsync(i => i.Id == itemId, ct)
             ?? throw new AppException("Item não encontrado.", 404);
+
+        // Tenant check — BankStatement has global filter; null means wrong tenant
+        if (item.BankStatement == null)
+            throw new AppException("Acesso negado.", 403);
 
         if (item.Reconciliation != null)
         {

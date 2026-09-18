@@ -38,6 +38,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<DashboardLayout> DashboardLayouts => Set<DashboardLayout>();
     public DbSet<ReportLayout> ReportLayouts => Set<ReportLayout>();
     public DbSet<InstallmentPlan> InstallmentPlans => Set<InstallmentPlan>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<BankStatement> BankStatements => Set<BankStatement>();
+    public DbSet<BankStatementItem> BankStatementItems => Set<BankStatementItem>();
+    public DbSet<BankReconciliation> BankReconciliations => Set<BankReconciliation>();
     public DbSet<Purchase> Purchases => Set<Purchase>();
     public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
@@ -197,5 +201,33 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .WithOne(i => i.PurchaseOrder)
             .HasForeignKey(i => i.PurchaseOrderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Bank Reconciliation
+        modelBuilder.Entity<BankAccount>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<BankStatement>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+
+        modelBuilder.Entity<BankStatement>()
+            .HasOne(s => s.BankAccount)
+            .WithMany(a => a.Statements)
+            .HasForeignKey(s => s.BankAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<BankStatementItem>()
+            .HasOne(i => i.BankStatement)
+            .WithMany(s => s.Items)
+            .HasForeignKey(i => i.BankStatementId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BankStatementItem>()
+            .HasOne(i => i.Reconciliation)
+            .WithOne(r => r.BankStatementItem)
+            .HasForeignKey<BankReconciliation>(r => r.BankStatementItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BankReconciliation>()
+            .HasOne(r => r.Transaction)
+            .WithMany()
+            .HasForeignKey(r => r.TransactionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

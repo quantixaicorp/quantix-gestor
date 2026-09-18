@@ -48,13 +48,16 @@ async function requestText(path: string): Promise<string> {
 
 async function request<T>(path: string, options: RequestInit = {}, retried = false): Promise<T> {
   const token = localStorage.getItem('ga_token')
+  const hasCustomHeaders = options.headers && Object.keys(options.headers).length > 0
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
+    headers: hasCustomHeaders ? {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
+    } : {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   })
 
@@ -91,4 +94,10 @@ export const api = {
   put: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  postForm: <T>(path: string, body: FormData) =>
+    request<T>(path, {
+      method: 'POST',
+      body,
+      headers: {},
+    }),
 }

@@ -22,6 +22,7 @@ using GestorAI.API.Services.Automacao;
 using GestorAI.API.Services.Cobrancas;
 using GestorAI.API.Services.Orcamentos;
 using GestorAI.API.Services.Assinaturas;
+using GestorAI.API.Services.Conciliacao;
 using GestorAI.API.Services.PublicBooking;
 using GestorAI.API.Services.Relatorios;
 using GestorAI.API.Services.Vendas;
@@ -128,6 +129,10 @@ builder.Services.AddScoped<LembreteCobrancaService>();
 builder.Services.AddScoped<GeracaoCobrancaService>();
 builder.Services.AddHostedService<AutomacaoHostedService>();
 builder.Services.AddScoped<CobrancaService>();
+// Services — Conciliação Bancária
+builder.Services.AddScoped<BankStatementParserService>();
+builder.Services.AddScoped<BankAccountService>();
+builder.Services.AddScoped<BankReconciliationService>();
 builder.Services.AddScoped<PublicBookingService>();
 builder.Services.AddScoped<PlanoAssinaturaService>();
 builder.Services.AddScoped<AssinaturaService>();
@@ -191,6 +196,7 @@ app.MapPublicBooking();
 app.MapPlanosAssinatura();
 app.MapAssinaturas();
 app.MapAssinaturasPublicas();
+app.MapConciliacao();
 app.MapAdmin();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))

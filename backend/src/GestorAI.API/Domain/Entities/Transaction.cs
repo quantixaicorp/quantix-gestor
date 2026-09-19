@@ -15,6 +15,7 @@ public class Transaction : ITenantEntity
     public required string Category { get; set; }
     public Guid? SaleId { get; set; }
     public string? Notes { get; set; }
+    public TransactionSource Source { get; set; } = TransactionSource.Manual;
     public Sale? Sale { get; set; }
     public Guid? InstallmentPlanId { get; set; }
     public int? InstallmentNumber { get; set; }

@@ -5,7 +5,7 @@ import {
   CalendarDays, UserCog, Package, ArrowDownToLine, Wallet, TrendingDown,
   TrendingUp, Tag, Users, BarChart3, Scissors, Receipt, DollarSign,
   Truck, Plug, Bot, Building2, CreditCard, LogOut, Sun, Moon, ChevronDown,
-  Link as LinkIcon, MoreHorizontal,
+  Link as LinkIcon, MoreHorizontal, Landmark, GitMerge,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -58,6 +58,8 @@ const PRIMARY_GROUPS: NavGroup[] = [
       { icon: TrendingDown, label: 'Contas a Pagar',   path: '/financeiro/pagar' },
       { icon: TrendingUp,   label: 'Contas a Receber', path: '/financeiro/receber' },
       { icon: Tag,          label: 'Categorias',       path: '/financeiro/categorias' },
+      { icon: Landmark, label: 'Contas Bancárias', path: '/financeiro/contas-bancarias' },
+      { icon: GitMerge,  label: 'Conciliação',      path: '/financeiro/conciliacao' },
     ],
   },
   {

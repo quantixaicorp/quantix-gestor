@@ -75,6 +75,30 @@ public class BankStatementParserServiceTests
     }
 
     [Fact]
+    public async Task ParseOfxAsync_CommaDecimalSeparator()
+    {
+        var ofx = """
+            OFXHEADER:100
+            DATA:OFXSGML
+            <OFX>
+            <STMTTRN>
+            <TRNTYPE>DEBIT
+            <DTPOSTED>20250801
+            <TRNAMT>-250,50
+            <FITID>X1
+            <MEMO>BOLETO PAGO
+            </STMTTRN>
+            </OFX>
+            """;
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ofx));
+
+        var result = await _svc.ParseOfxAsync(stream);
+
+        Assert.Single(result);
+        Assert.Equal(-250.50m, result[0].Amount);
+    }
+
+    [Fact]
     public async Task ParseCsvAsync_ExtractsColumnsCorrectly()
     {
         var csv = """

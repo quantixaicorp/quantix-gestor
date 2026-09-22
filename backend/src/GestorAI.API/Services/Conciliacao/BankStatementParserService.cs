@@ -12,7 +12,18 @@ public class BankStatementParserService
 {
     public async Task<List<ParsedTransaction>> ParseOfxAsync(Stream stream)
     {
-        using var reader = new StreamReader(stream);
+        // Detect encoding from OFX header (Brazilian banks often use WIN1252)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        using var peekReader = new StreamReader(stream, System.Text.Encoding.ASCII, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+        var header = await peekReader.ReadToEndAsync();
+        stream.Position = 0;
+
+        System.Text.Encoding encoding = System.Text.Encoding.UTF8;
+        if (Regex.IsMatch(header, @"ENCODING\s*:\s*(WIN1252|WINDOWS-1252|1252)", RegexOptions.IgnoreCase) ||
+            Regex.IsMatch(header, @"CHARSET\s*:\s*1252", RegexOptions.IgnoreCase))
+            encoding = System.Text.Encoding.GetEncoding(1252);
+
+        using var reader = new StreamReader(stream, encoding);
         var content = await reader.ReadToEndAsync();
         var results = new List<ParsedTransaction>();
 
@@ -49,7 +60,11 @@ public class BankStatementParserService
         var memo = GetTag(text, "MEMO") ?? GetTag(text, "NAME") ?? "";
         var fitid = GetTag(text, "FITID");
 
-        if (date is null || !decimal.TryParse(amountStr,
+        if (date is null || amountStr is null) return null;
+
+        // Support both period (standard) and comma (common in Brazilian OFX files)
+        var normalized = amountStr.Replace(',', '.');
+        if (!decimal.TryParse(normalized,
             System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture,
             out var amount))

@@ -16,28 +16,46 @@ public class BankStatementParserService
         var content = await reader.ReadToEndAsync();
         var results = new List<ParsedTransaction>();
 
-        var trnBlocks = Regex.Matches(content,
+        // Try XML format first (closing </STMTTRN> tags present)
+        var xmlBlocks = Regex.Matches(content,
             @"<STMTTRN>(.*?)</STMTTRN>",
             RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-        foreach (Match block in trnBlocks)
+        if (xmlBlocks.Count > 0)
         {
-            var text = block.Groups[1].Value;
-            var date = ExtractOfxDate(GetTag(text, "DTPOSTED"));
-            var amountStr = GetTag(text, "TRNAMT");
-            var memo = GetTag(text, "MEMO") ?? GetTag(text, "NAME") ?? "";
-            var fitid = GetTag(text, "FITID");
+            foreach (Match block in xmlBlocks)
+            {
+                var parsed = ParseOfxBlock(block.Groups[1].Value);
+                if (parsed != null) results.Add(parsed);
+            }
+            return results;
+        }
 
-            if (date is null || !decimal.TryParse(amountStr,
-                System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture,
-                out var amount))
-                continue;
-
-            results.Add(new ParsedTransaction(date.Value, amount, memo.Trim(), fitid));
+        // Fallback: SGML format (no closing tags) — split on <STMTTRN>
+        var sgmlBlocks = Regex.Split(content, @"<STMTTRN>", RegexOptions.IgnoreCase);
+        foreach (var block in sgmlBlocks.Skip(1))
+        {
+            var parsed = ParseOfxBlock(block);
+            if (parsed != null) results.Add(parsed);
         }
 
         return results;
+    }
+
+    private static ParsedTransaction? ParseOfxBlock(string text)
+    {
+        var date = ExtractOfxDate(GetTag(text, "DTPOSTED"));
+        var amountStr = GetTag(text, "TRNAMT");
+        var memo = GetTag(text, "MEMO") ?? GetTag(text, "NAME") ?? "";
+        var fitid = GetTag(text, "FITID");
+
+        if (date is null || !decimal.TryParse(amountStr,
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var amount))
+            return null;
+
+        return new ParsedTransaction(date.Value, amount, memo.Trim(), fitid);
     }
 
     public async Task<List<ParsedTransaction>> ParseCsvAsync(Stream stream)

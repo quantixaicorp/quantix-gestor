@@ -69,16 +69,19 @@ async function request<T>(path: string, options: RequestInit = {}, retried = fal
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => null)
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> | null = null
+    try { body = JSON.parse(text) } catch { /* plain text response */ }
     if (body) {
       // ValidationProblem: { errors: { campo: ['msg', ...] } }
       if (body.errors && typeof body.errors === 'object') {
         const msgs = (Object.values(body.errors) as string[][]).flat().join('; ')
-        throw new Error(msgs || body.title || 'Erro de validação')
+        throw new Error(msgs || (body.title as string) || 'Erro de validação')
       }
-      if (body.error) throw new Error(body.error)
-      if (body.title) throw new Error(body.title)
+      if (body.error) throw new Error(body.error as string)
+      if (body.title) throw new Error(body.title as string)
     }
+    if (text) throw new Error(text)
     throw new Error(res.statusText || `Erro ${res.status}`)
   }
 

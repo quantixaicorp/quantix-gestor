@@ -1,22 +1,22 @@
 export interface ClienteResponse {
   id: string
-  nome: string
-  whatsapp: string
+  name: string
+  whatsApp: string
   email: string | null
-  observacoes: string | null
-  dataCadastro: string
+  notes: string | null
+  createdAt: string
 }
 
 export interface CreateClienteRequest {
-  nome: string
-  whatsapp: string
+  name: string
+  whatsApp: string
   email?: string
-  observacoes?: string
+  notes?: string
 }
 
 export interface UpdateClienteRequest {
-  nome: string
-  whatsapp: string
+  name: string
+  whatsApp: string
   email?: string
-  observacoes?: string
+  notes?: string
 }

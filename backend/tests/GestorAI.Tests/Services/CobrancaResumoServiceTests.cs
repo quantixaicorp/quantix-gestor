@@ -13,23 +13,23 @@ public class CobrancaResumoServiceTests
 
     private (AppDbContext db, CobrancaService svc) Setup()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tenant);
         return (db, new CobrancaService(db, tenant, null!));
     }
 
-    private Cobranca MakeCobranca(DateOnly vencimento, CobrancaStatus status,
+    private Charge MakeCobranca(DateOnly vencimento, CobrancaStatus status,
         DateTime? dataPagamento = null) => new()
     {
-        EmpresaId = _empresaId,
-        ClienteId = Guid.NewGuid(),
-        Referencia = "REF",
-        Valor = 100m,
-        DataVencimento = vencimento,
+        CompanyId = _empresaId,
+        CustomerId = Guid.NewGuid(),
+        Reference = "REF",
+        Amount = 100m,
+        DueDate = vencimento,
         Status = status,
-        DataPagamento = dataPagamento,
+        PaymentDate = dataPagamento,
     };
 
     [Fact]
@@ -40,13 +40,13 @@ public class CobrancaResumoServiceTests
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         // Pendente com vencimento futuro → TotalAReceber
-        db.Cobrancas.Add(MakeCobranca(hoje.AddDays(5), CobrancaStatus.Pendente));
+        db.Charges.Add(MakeCobranca(hoje.AddDays(5), CobrancaStatus.Pendente));
         // Pendente com vencimento passado → TotalVencido
-        db.Cobrancas.Add(MakeCobranca(hoje.AddDays(-3), CobrancaStatus.Pendente));
+        db.Charges.Add(MakeCobranca(hoje.AddDays(-3), CobrancaStatus.Pendente));
         // Pago no mês atual → TotalRecebidoNoMes
-        db.Cobrancas.Add(MakeCobranca(hoje, CobrancaStatus.Pago, inicioMes.AddDays(2)));
+        db.Charges.Add(MakeCobranca(hoje, CobrancaStatus.Pago, inicioMes.AddDays(2)));
         // Cancelado — não entra em nada
-        db.Cobrancas.Add(MakeCobranca(hoje, CobrancaStatus.Cancelado));
+        db.Charges.Add(MakeCobranca(hoje, CobrancaStatus.Cancelado));
         await db.SaveChangesAsync();
 
         var resumo = await svc.GetResumoAsync(default);
@@ -63,15 +63,15 @@ public class CobrancaResumoServiceTests
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
         var mesAnterior = DateTime.UtcNow.AddMonths(-1);
 
-        db.Cobrancas.Add(new Cobranca
+        db.Charges.Add(new Charge
         {
-            EmpresaId = _empresaId,
-            ClienteId = Guid.NewGuid(),
-            Referencia = "REF-ANT",
-            Valor = 500m,
-            DataVencimento = hoje.AddMonths(-1),
+            CompanyId = _empresaId,
+            CustomerId = Guid.NewGuid(),
+            Reference = "REF-ANT",
+            Amount = 500m,
+            DueDate = hoje.AddMonths(-1),
             Status = CobrancaStatus.Pago,
-            DataPagamento = mesAnterior,
+            PaymentDate = mesAnterior,
         });
         await db.SaveChangesAsync();
 

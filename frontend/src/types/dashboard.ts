@@ -91,11 +91,11 @@ export interface KpiResponse {
   saldoProjetado: number
 }
 
-export interface VendasDiaResponse { data: string; total: number; quantidade: number }
+export interface VendasDiaResponse { data: string; total: number; quantity: number }
 export interface FluxoDiaResponse { data: string; receitas: number; despesas: number }
-export interface TopProdutoResponse { nome: string; quantidadeVendida: number; totalFaturado: number }
-export interface TopClienteResponse { nome: string; totalGasto: number }
-export interface CategoriaDespesaDashResponse { categoria: string; total: number }
+export interface TopProdutoResponse { name: string; quantidadeVendida: number; totalFaturado: number }
+export interface TopClienteResponse { name: string; totalGasto: number }
+export interface CategoriaDespesaDashResponse { category: string; total: number }
 
 export interface DashboardResponse {
   kpis: KpiResponse
@@ -107,14 +107,14 @@ export interface DashboardResponse {
 }
 
 // ─── Dashboard Extras ───────────────────────────────────────────────────────
-export interface UltimaVendaItem { id: string; dataHora: string; clienteNome: string; total: number; formaPagamento: string }
-export interface VendaFormaPgtoItem { formaPagamento: string; quantidade: number; total: number }
-export interface ReceitaCategoriaItem { categoria: string; total: number }
+export interface UltimaVendaItem { id: string; saleDate: string; customerName: string; total: number; paymentMethod: string }
+export interface VendaFormaPgtoItem { paymentMethod: string; quantity: number; total: number }
+export interface ReceitaCategoriaItem { category: string; total: number }
 export interface FluxoMensalItem { mes: string; receitas: number; despesas: number; saldo: number }
-export interface ContaVencidaDetalheItem { id: string; descricao: string; categoria: string; valor: number; dataVencimento: string; diasAtraso: number }
-export interface ProximoVencimentoItem { id: string; descricao: string; categoria: string; valor: number; dataVencimento: string; diasParaVencer: number }
-export interface EstoqueCategoriaItem { categoria: string; quantidade: number; valor: number }
-export interface EstoqueBaixoDetalheItem { nome: string; estoqueAtual: number; estoqueMinimo: number; precoVenda: number }
+export interface ContaVencidaDetalheItem { id: string; description: string; category: string; amount: number; dueDate: string; diasAtraso: number }
+export interface ProximoVencimentoItem { id: string; description: string; category: string; amount: number; dueDate: string; diasParaVencer: number }
+export interface EstoqueCategoriaItem { category: string; quantity: number; amount: number }
+export interface EstoqueBaixoDetalheItem { name: string; currentStock: number; minimumStock: number; salePrice: number }
 
 export interface DashboardExtrasResponse {
   maiorVendaDia: number
@@ -132,8 +132,8 @@ export interface DashboardExtrasResponse {
 
 // ─── Módulos (estendido) ────────────────────────────────────────────────────
 export interface AgendamentoStatusItem { status: string; count: number }
-export interface AgendamentoProfissionalItem { profissional: string; total: number; concluidos: number }
-export interface AgendamentoDoDiaItem { clienteNome: string; servico: string; horaInicio: string; status: string }
+export interface AgendamentoProfissionalItem { professional: string; total: number; concluidos: number }
+export interface AgendamentoDoDiaItem { customerName: string; service: string; startTime: string; status: string }
 export interface AgendamentosDashResponse {
   hoje: number
   confirmadosHoje: number
@@ -145,13 +145,13 @@ export interface AgendamentosDashResponse {
   agendaHoje: AgendamentoDoDiaItem[]
 }
 
-export interface ContratoVencendoItem { titulo: string; clienteNome: string; valor: number; dataFim: string; diasRestantes: number }
+export interface ContratoVencendoItem { title: string; customerName: string; amount: number; endDate: string; diasRestantes: number }
 export interface ContratosDashResponse {
   ativos: number; mrr: number; vencendoEm30: number
   contratosVencendo: ContratoVencendoItem[]
 }
 
-export interface CobrancaVencidaItem { referencia: string; clienteNome: string; valor: number; dataVencimento: string; diasAtraso: number }
+export interface CobrancaVencidaItem { reference: string; customerName: string; amount: number; dueDate: string; diasAtraso: number }
 export interface AgingFaixa { faixa: string; count: number; total: number }
 export interface CobrancasDashResponse {
   totalReceber: number; vencidosCount: number; totalVencido: number
@@ -172,9 +172,9 @@ export interface AssinaturasDashResponse {
 }
 
 export interface ModulosDashboardResponse {
-  agendamentos: AgendamentosDashResponse
+  appointments: AgendamentosDashResponse
   contratos: ContratosDashResponse
-  cobrancas: CobrancasDashResponse
+  charges: CobrancasDashResponse
   orcamentos: OrcamentosDashResponse
   assinaturas: AssinaturasDashResponse
 }

@@ -28,10 +28,10 @@ export default function TabelaEstoqueBaixo({ dados }: Props) {
         <tbody>
           {(dados ?? []).map((p, i) => (
             <tr key={i} className="border-t hover:bg-muted/20">
-              <td className="px-4 py-2 font-medium">{p.nome}</td>
-              <td className="px-4 py-2 text-right text-red-600 font-medium">{fmtN(p.estoqueAtual)}</td>
-              <td className="px-4 py-2 text-right text-muted-foreground">{fmtN(p.estoqueMinimo)}</td>
-              <td className="px-4 py-2 text-right hidden md:table-cell">{fmt(p.precoVenda)}</td>
+              <td className="px-4 py-2 font-medium">{p.name}</td>
+              <td className="px-4 py-2 text-right text-red-600 font-medium">{fmtN(p.currentStock)}</td>
+              <td className="px-4 py-2 text-right text-muted-foreground">{fmtN(p.minimumStock)}</td>
+              <td className="px-4 py-2 text-right hidden md:table-cell">{fmt(p.salePrice)}</td>
             </tr>
           ))}
           {!dados?.length && (

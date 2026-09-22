@@ -16,7 +16,7 @@ public class OrcamentoServiceTests
 
     private (AppDbContext db, OrcamentoService service) Setup()
     {
-        var tenantContext = new TenantContext { EmpresaId = _empresaId };
+        var tenantContext = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
@@ -35,7 +35,7 @@ public class OrcamentoServiceTests
         var result = await service.CreateAsync(req, default);
 
         Assert.Equal("Rascunho", result.Status);
-        Assert.Equal(1, result.Numero);
+        Assert.Equal(1, result.Number);
         Assert.Equal(50m, result.Total);
     }
 
@@ -43,14 +43,14 @@ public class OrcamentoServiceTests
     public async Task ListAsync_ExpiraOrcamentosVencidos()
     {
         var (db, service) = Setup();
-        var cat = new Categoria { EmpresaId = _empresaId, Nome = "Cat" };
-        db.Categorias.Add(cat);
-        db.Orcamentos.Add(new Orcamento
+        var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
+        db.Categories.Add(cat);
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId,
-            Numero = 1,
-            Titulo = "Vencido",
-            DataValidade = DateTime.UtcNow.AddDays(-1),
+            CompanyId = _empresaId,
+            Number = 1,
+            Title = "Vencido",
+            ExpirationDate = DateTime.UtcNow.AddDays(-1),
             Status = OrcamentoStatus.Enviado,
         });
         await db.SaveChangesAsync();
@@ -65,12 +65,12 @@ public class OrcamentoServiceTests
     public async Task EnviarAsync_RascunhoViraEnviado()
     {
         var (db, service) = Setup();
-        var o = new Orcamento
+        var o = new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.Today.AddDays(7), Status = OrcamentoStatus.Rascunho
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.Today.AddDays(7), Status = OrcamentoStatus.Rascunho
         };
-        db.Orcamentos.Add(o);
+        db.Quotes.Add(o);
         await db.SaveChangesAsync();
 
         var result = await service.EnviarAsync(o.Id, default);
@@ -82,51 +82,51 @@ public class OrcamentoServiceTests
     public async Task ConvertAsync_CriaVendaApenasComItensProduto()
     {
         var (db, service) = Setup();
-        var cat = new Categoria { EmpresaId = _empresaId, Nome = "Cat" };
-        db.Categorias.Add(cat);
-        var produto = new Produto
+        var cat = new Category { CompanyId = _empresaId, Name = "Cat" };
+        db.Categories.Add(cat);
+        var produto = new Product
         {
-            EmpresaId = _empresaId, CategoriaId = cat.Id,
-            Nome = "Shampoo", PrecoVenda = 30m, EstoqueAtual = 10
+            CompanyId = _empresaId, CategoryId = cat.Id,
+            Name = "Shampoo", SalePrice = 30m, CurrentStock = 10
         };
-        db.Produtos.Add(produto);
-        var o = new Orcamento
+        db.Products.Add(produto);
+        var o = new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.Today.AddDays(7), Status = OrcamentoStatus.Aprovado
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.Today.AddDays(7), Status = OrcamentoStatus.Aprovado
         };
-        o.Itens.Add(new OrcamentoItem
+        o.Items.Add(new QuoteItem
         {
-            Tipo = OrcamentoItemTipo.Produto, ProdutoId = produto.Id,
-            Descricao = "Shampoo", Quantidade = 2, ValorUnitario = 30m
+            Type = OrcamentoItemTipo.Produto, ProductId = produto.Id,
+            Description = "Shampoo", Quantity = 2, UnitPrice = 30m
         });
-        o.Itens.Add(new OrcamentoItem
+        o.Items.Add(new QuoteItem
         {
-            Tipo = OrcamentoItemTipo.Livre, Descricao = "Aplicação",
-            Quantidade = 1, ValorUnitario = 50m
+            Type = OrcamentoItemTipo.Livre, Description = "Aplicação",
+            Quantity = 1, UnitPrice = 50m
         });
-        db.Orcamentos.Add(o);
+        db.Quotes.Add(o);
         await db.SaveChangesAsync();
 
         var result = await service.ConvertAsync(o.Id, default);
 
         Assert.Equal("Convertido", result.Status);
-        Assert.NotNull(result.VendaId);
-        var venda = await db.Vendas.Include(v => v.Itens).FirstAsync();
-        Assert.Single(venda.Itens);
-        Assert.Equal(produto.Id, venda.Itens.First().ProdutoId);
+        Assert.NotNull(result.SaleId);
+        var venda = await db.Sales.Include(v => v.Items).FirstAsync();
+        Assert.Single(venda.Items);
+        Assert.Equal(produto.Id, venda.Items.First().ProductId);
     }
 
     [Fact]
     public async Task ConvertAsync_QuandoNaoAprovado_LancaExcecao()
     {
         var (db, service) = Setup();
-        var o = new Orcamento
+        var o = new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.Today.AddDays(7), Status = OrcamentoStatus.Enviado
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.Today.AddDays(7), Status = OrcamentoStatus.Enviado
         };
-        db.Orcamentos.Add(o);
+        db.Quotes.Add(o);
         await db.SaveChangesAsync();
 
         await Assert.ThrowsAsync<AppException>(() => service.ConvertAsync(o.Id, default));
@@ -136,12 +136,12 @@ public class OrcamentoServiceTests
     public async Task AprovarAsync_QuandoExpirado_LancaExcecao()
     {
         var (db, service) = Setup();
-        var o = new Orcamento
+        var o = new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.Today.AddDays(-1), Status = OrcamentoStatus.Enviado
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.Today.AddDays(-1), Status = OrcamentoStatus.Enviado
         };
-        db.Orcamentos.Add(o);
+        db.Quotes.Add(o);
         await db.SaveChangesAsync();
 
         await Assert.ThrowsAsync<AppException>(() => service.AprovarAsync(o.Id, default));
@@ -158,8 +158,8 @@ public class OrcamentoServiceTests
 
         var result = await service.EnviarAsync(created.Id, default);
 
-        Assert.NotNull(result.TokenPublico);
-        Assert.NotEqual(Guid.Empty, result.TokenPublico);
+        Assert.NotNull(result.PublicToken);
+        Assert.NotEqual(Guid.Empty, result.PublicToken);
     }
 
     [Fact]
@@ -167,18 +167,18 @@ public class OrcamentoServiceTests
     {
         var (db, service) = Setup();
         var token = Guid.NewGuid();
-        db.Orcamentos.Add(new Orcamento
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "Teste Público",
-            DataValidade = DateTime.UtcNow.AddDays(7),
+            CompanyId = _empresaId, Number = 1, Title = "Teste Público",
+            ExpirationDate = DateTime.UtcNow.AddDays(7),
             Status = OrcamentoStatus.Enviado,
-            TokenPublico = token,
+            PublicToken = token,
         });
         await db.SaveChangesAsync();
 
         var result = await service.GetPublicoAsync(token, default);
 
-        Assert.Equal("Teste Público", result.Titulo);
+        Assert.Equal("Teste Público", result.Title);
         Assert.Equal("Enviado", result.Status);
     }
 
@@ -196,12 +196,12 @@ public class OrcamentoServiceTests
     {
         var (db, service) = Setup();
         var token = Guid.NewGuid();
-        db.Orcamentos.Add(new Orcamento
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.UtcNow.AddDays(7),
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.UtcNow.AddDays(7),
             Status = OrcamentoStatus.Enviado,
-            TokenPublico = token,
+            PublicToken = token,
         });
         await db.SaveChangesAsync();
 
@@ -215,12 +215,12 @@ public class OrcamentoServiceTests
     {
         var (db, service) = Setup();
         var token = Guid.NewGuid();
-        db.Orcamentos.Add(new Orcamento
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.UtcNow.AddDays(7),
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.UtcNow.AddDays(7),
             Status = OrcamentoStatus.Enviado,
-            TokenPublico = token,
+            PublicToken = token,
         });
         await db.SaveChangesAsync();
 
@@ -234,12 +234,12 @@ public class OrcamentoServiceTests
     {
         var (db, service) = Setup();
         var token = Guid.NewGuid();
-        db.Orcamentos.Add(new Orcamento
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.UtcNow.AddDays(-1),
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.UtcNow.AddDays(-1),
             Status = OrcamentoStatus.Enviado,
-            TokenPublico = token,
+            PublicToken = token,
         });
         await db.SaveChangesAsync();
 
@@ -253,12 +253,12 @@ public class OrcamentoServiceTests
     {
         var (db, service) = Setup();
         var token = Guid.NewGuid();
-        db.Orcamentos.Add(new Orcamento
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.UtcNow.AddDays(7),
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.UtcNow.AddDays(7),
             Status = OrcamentoStatus.Aprovado,
-            TokenPublico = token,
+            PublicToken = token,
         });
         await db.SaveChangesAsync();
 
@@ -271,12 +271,12 @@ public class OrcamentoServiceTests
     {
         var (db, service) = Setup();
         var token = Guid.NewGuid();
-        db.Orcamentos.Add(new Orcamento
+        db.Quotes.Add(new Quote
         {
-            EmpresaId = _empresaId, Numero = 1, Titulo = "T",
-            DataValidade = DateTime.UtcNow.AddDays(7),
+            CompanyId = _empresaId, Number = 1, Title = "T",
+            ExpirationDate = DateTime.UtcNow.AddDays(7),
             Status = OrcamentoStatus.Rejeitado,
-            TokenPublico = token,
+            PublicToken = token,
         });
         await db.SaveChangesAsync();
 

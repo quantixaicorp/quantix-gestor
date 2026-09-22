@@ -76,8 +76,10 @@ export default function ResumoPedido({ itens, desconto, onChangeQuantidade, onRe
           </div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-muted-foreground shrink-0">Desconto (R$)</span>
-            <Input type="number" min="0" step="0.01" value={desconto}
-              onChange={e => onChangeDesconto(Number(e.target.value))}
+            <Input type="number" min="0" step="0.01"
+              value={desconto || ''}
+              placeholder="0"
+              onChange={e => onChangeDesconto(Number(e.target.value) || 0)}
               className="h-8 w-28 text-right" />
           </div>
           <div className="flex justify-between items-center pt-2 border-t">

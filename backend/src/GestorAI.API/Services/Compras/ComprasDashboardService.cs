@@ -13,71 +13,71 @@ public class ComprasDashboardService(AppDbContext db)
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
         var inicioAno = new DateTime(hoje.Year, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-        var comprasConfirmadas = await db.Compras
-            .Include(c => c.Itens)
+        var comprasConfirmadas = await db.Purchases
+            .Include(c => c.Items)
             .Where(c => c.Status == StatusCompra.Confirmada)
             .ToListAsync(ct);
 
         var totalMes = comprasConfirmadas
-            .Where(c => c.Data >= inicioMes)
-            .Sum(c => c.ValorTotal);
+            .Where(c => c.Date >= inicioMes)
+            .Sum(c => c.TotalAmount);
 
         var totalAno = comprasConfirmadas
-            .Where(c => c.Data >= inicioAno)
-            .Sum(c => c.ValorTotal);
+            .Where(c => c.Date >= inicioAno)
+            .Sum(c => c.TotalAmount);
 
         var comprasMes = comprasConfirmadas
-            .Where(c => c.Data >= inicioMes)
+            .Where(c => c.Date >= inicioMes)
             .ToList();
 
         var qtdComprasMes = comprasMes.Count;
         var ticketMedio = qtdComprasMes > 0 ? totalMes / qtdComprasMes : 0m;
 
-        var fornecedoresAtivos = await db.Compras
-            .Where(c => c.Status == StatusCompra.Confirmada && c.Data >= inicioAno)
-            .Select(c => c.FornecedorId)
+        var fornecedoresAtivos = await db.Purchases
+            .Where(c => c.Status == StatusCompra.Confirmada && c.Date >= inicioAno)
+            .Select(c => c.SupplierId)
             .Distinct()
             .CountAsync(ct);
 
         // Série mensal (período solicitado)
         var comprasPeriodo = comprasConfirmadas
-            .Where(c => c.Data >= de && c.Data <= ate)
+            .Where(c => c.Date >= de && c.Date <= ate)
             .ToList();
 
         var seriesMensal = comprasPeriodo
-            .GroupBy(c => new { c.Data.Year, c.Data.Month })
+            .GroupBy(c => new { c.Date.Year, c.Date.Month })
             .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
             .Select(g => new ComprasMensalSerieItem(
                 $"{g.Key.Year}-{g.Key.Month:D2}",
-                g.Sum(c => c.ValorTotal),
+                g.Sum(c => c.TotalAmount),
                 g.Count()))
             .ToList();
 
         // Por fornecedor
-        var fornecedorIds = comprasPeriodo.Select(c => c.FornecedorId).Distinct().ToList();
-        var fornecedores = await db.Fornecedores
+        var fornecedorIds = comprasPeriodo.Select(c => c.SupplierId).Distinct().ToList();
+        var fornecedores = await db.Suppliers
             .Where(f => fornecedorIds.Contains(f.Id))
-            .ToDictionaryAsync(f => f.Id, f => f.Nome, ct);
+            .ToDictionaryAsync(f => f.Id, f => f.Name, ct);
 
         var porFornecedor = comprasPeriodo
-            .GroupBy(c => c.FornecedorId)
+            .GroupBy(c => c.SupplierId)
             .Select(g => new ComprasPorFornecedorItem(
                 fornecedores.GetValueOrDefault(g.Key, "Desconhecido"),
-                g.Sum(c => c.ValorTotal)))
+                g.Sum(c => c.TotalAmount)))
             .OrderByDescending(x => x.Total)
             .Take(10)
             .ToList();
 
         // Top produtos
         var topProdutos = comprasPeriodo
-            .SelectMany(c => c.Itens)
-            .Where(i => !string.IsNullOrEmpty(i.Descricao))
-            .GroupBy(i => i.Descricao)
+            .SelectMany(c => c.Items)
+            .Where(i => !string.IsNullOrEmpty(i.Description))
+            .GroupBy(i => i.Description)
             .Select(g => new TopProdutoCompradoItem(
                 g.Key,
-                g.Sum(i => i.Quantidade),
-                g.Sum(i => i.ValorTotal)))
-            .OrderByDescending(x => x.ValorTotal)
+                g.Sum(i => i.Quantity),
+                g.Sum(i => i.TotalAmount)))
+            .OrderByDescending(x => x.TotalAmount)
             .Take(10)
             .ToList();
 

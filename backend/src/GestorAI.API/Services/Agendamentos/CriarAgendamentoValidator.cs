@@ -7,11 +7,11 @@ public class CriarAgendamentoValidator : AbstractValidator<CriarAgendamentoReque
 {
     public CriarAgendamentoValidator()
     {
-        RuleFor(x => x.ProfissionalId).NotEmpty();
-        RuleFor(x => x.ClienteNome).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.ClienteTelefone).NotEmpty().MaximumLength(20);
-        RuleFor(x => x.ServicoId).NotEmpty();
-        RuleFor(x => x.DataHoraInicio).GreaterThan(DateTime.UtcNow.AddMinutes(-5))
-            .WithMessage("DataHoraInicio deve ser no futuro.");
+        RuleFor(x => x.ProfessionalId).NotEmpty();
+        RuleFor(x => x.CustomerName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.CustomerPhone).NotEmpty().MaximumLength(20);
+        RuleFor(x => x.ServiceId).NotEmpty();
+        RuleFor(x => x.StartAt).GreaterThan(DateTime.UtcNow.AddMinutes(-5))
+            .WithMessage("StartAt deve ser no futuro.");
     }
 }

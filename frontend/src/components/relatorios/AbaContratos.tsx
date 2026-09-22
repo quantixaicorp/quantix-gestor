@@ -35,11 +35,11 @@ export default function AbaContratos({ dados }: Props) {
           <tbody>
             {dados.contratos.map((c, i) => (
               <tr key={i} className="border-t hover:bg-muted/30">
-                <td className="px-4 py-2.5 font-medium">{c.titulo}</td>
-                <td className="px-4 py-2.5 hidden sm:table-cell text-muted-foreground">{c.clienteNome}</td>
-                <td className="px-4 py-2.5 text-right font-medium">{fmt(c.valor)}</td>
-                <td className="px-4 py-2.5 hidden md:table-cell text-muted-foreground">{c.periodicidade}</td>
-                <td className="px-4 py-2.5 hidden lg:table-cell text-muted-foreground">{c.dataFim ?? '—'}</td>
+                <td className="px-4 py-2.5 font-medium">{c.title}</td>
+                <td className="px-4 py-2.5 hidden sm:table-cell text-muted-foreground">{c.customerName}</td>
+                <td className="px-4 py-2.5 text-right font-medium">{fmt(c.amount)}</td>
+                <td className="px-4 py-2.5 hidden md:table-cell text-muted-foreground">{c.frequency}</td>
+                <td className="px-4 py-2.5 hidden lg:table-cell text-muted-foreground">{c.endDate ?? '—'}</td>
                 <td className="px-4 py-2.5 text-center">
                   <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                     c.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'

@@ -24,11 +24,11 @@ export default function NovoContrato() {
   const [periodicidade, setPeriodicidade] = useState<Periodicidade>('Mensal')
   const [diaVencimento, setDiaVencimento] = useState('10')
   const [observacao, setObservacao] = useState('')
-  const [itens, setItens] = useState<ContratoItemRequest[]>([{ descricao: '', quantidade: 1, valorUnitario: 0 }])
+  const [itens, setItens] = useState<ContratoItemRequest[]>([{ description: '', quantity: 1, unitPrice: 0 }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const addItem = () => setItens(prev => [...prev, { descricao: '', quantidade: 1, valorUnitario: 0 }])
+  const addItem = () => setItens(prev => [...prev, { description: '', quantity: 1, unitPrice: 0 }])
   const removeItem = (i: number) => setItens(prev => prev.filter((_, idx) => idx !== i))
   const updateItem = (i: number, field: keyof ContratoItemRequest, val: string | number) =>
     setItens(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
@@ -39,14 +39,14 @@ export default function NovoContrato() {
     setSaving(true)
     try {
       const result = await create({
-        clienteId, titulo, objeto, tipoCobranca,
-        valor: Number(valor),
-        dataInicio,
-        dataFim: dataFim || undefined,
-        periodicidade,
-        diaVencimento: Number(diaVencimento),
-        observacao: observacao || undefined,
-        itens,
+        customerId: clienteId, title: titulo, subject: objeto, chargeType: tipoCobranca,
+        amount: Number(valor),
+        startDate: dataInicio,
+        endDate: dataFim || undefined,
+        frequency: periodicidade,
+        dueDay: Number(diaVencimento),
+        notes: observacao || undefined,
+        items: itens,
       })
       navigate(`/contratos/${result.id}`)
     } catch (e) {
@@ -77,7 +77,7 @@ export default function NovoContrato() {
             <label className={labelClass}>Cliente *</label>
             <select value={clienteId} onChange={e => setClienteId(e.target.value)} required className={inputClass}>
               <option value="">Selecione...</option>
-              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
@@ -144,18 +144,18 @@ export default function NovoContrato() {
               <div key={i} className="flex gap-2 items-end">
                 <div className="flex-1">
                   {i === 0 && <label className="text-xs text-muted-foreground mb-1 block">Descrição</label>}
-                  <input value={item.descricao} onChange={e => updateItem(i, 'descricao', e.target.value)}
+                  <input value={item.description} onChange={e => updateItem(i, 'description', e.target.value)}
                     className={inputClass} placeholder="Descrição do item" />
                 </div>
                 <div className="w-20">
                   {i === 0 && <label className="text-xs text-muted-foreground mb-1 block">Qtd</label>}
-                  <input type="number" min="0" step="0.01" value={item.quantidade}
-                    onChange={e => updateItem(i, 'quantidade', Number(e.target.value))} className={inputClass} />
+                  <input type="number" min="0" step="0.01" value={item.quantity}
+                    onChange={e => updateItem(i, 'quantity', Number(e.target.value))} className={inputClass} />
                 </div>
                 <div className="w-28">
                   {i === 0 && <label className="text-xs text-muted-foreground mb-1 block">Valor Unit.</label>}
-                  <input type="number" min="0" step="0.01" value={item.valorUnitario}
-                    onChange={e => updateItem(i, 'valorUnitario', Number(e.target.value))} className={inputClass} />
+                  <input type="number" min="0" step="0.01" value={item.unitPrice}
+                    onChange={e => updateItem(i, 'unitPrice', Number(e.target.value))} className={inputClass} />
                 </div>
                 <Button type="button" variant="ghost" size="icon" className="mb-0.5 text-destructive" onClick={() => removeItem(i)}>
                   <Trash2 className="h-4 w-4" />

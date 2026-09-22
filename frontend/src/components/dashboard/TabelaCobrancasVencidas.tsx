@@ -28,9 +28,9 @@ export default function TabelaCobrancasVencidas({ dados }: Props) {
         <tbody>
           {(dados ?? []).map((c, i) => (
             <tr key={i} className="border-t hover:bg-muted/20">
-              <td className="px-4 py-2 font-medium">{c.referencia}</td>
-              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{c.clienteNome}</td>
-              <td className="px-4 py-2 text-right font-medium text-red-600">{fmt(c.valor)}</td>
+              <td className="px-4 py-2 font-medium">{c.reference}</td>
+              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{c.customerName}</td>
+              <td className="px-4 py-2 text-right font-medium text-red-600">{fmt(c.amount)}</td>
               <td className="px-4 py-2 text-right">
                 <span className={cn('text-xs px-1.5 py-0.5 rounded font-medium',
                   c.diasAtraso <= 7 ? 'bg-yellow-100 text-yellow-700' :

@@ -5,10 +5,10 @@ namespace GestorAI.API.DTOs.Automacao;
 public record AutomacaoLogResponse(
     Guid Id,
     DateTime EnviadoEm,
-    string ClienteNome,
-    string Referencia,
-    AutomacaoTipoEvento TipoEvento,
-    bool Sucesso,
-    string? ErroMsg);
+    string CustomerName,
+    string Reference,
+    AutomacaoTipoEvento EventType,
+    bool Success,
+    string? ErrorMessage);
 
 public record TestarConexaoRequest(string ApiUrl, string ApiKey);

@@ -50,13 +50,13 @@ export default function NovaVendaPDV() {
     if (!vendaIdParam) return
     setCarregando(true)
     void get(vendaIdParam).then(venda => {
-      setItens(venda.itens.map(i => ({
-        produtoId: i.produtoId,
+      setItens(venda.items.map(i => ({
+        produtoId: i.productId,
         produtoNome: i.produtoNome,
-        precoUnitario: i.precoUnitario,
-        quantidade: i.quantidade,
+        precoUnitario: i.unitPrice,
+        quantidade: i.quantity,
         desconto: 0,
-        total: i.precoUnitario * i.quantidade,
+        total: i.unitPrice * i.quantity,
       })))
     }).finally(() => setCarregando(false))
   }, [vendaIdParam, get, listClientes])
@@ -95,19 +95,19 @@ export default function NovaVendaPDV() {
     try {
       if (vendaIdParam) {
         const req: FecharVendaRequest = {
-          formaPagamento,
-          parcelas: formaPagamento === 'Cartao' ? parcelas : undefined,
+          paymentMethod: formaPagamento,
+          installments: formaPagamento === 'Cartao' ? parcelas : undefined,
         }
         const result = await fechar(vendaIdParam, req)
         setVendaFinalizada({ id: result.id, total: result.total })
       } else {
         const req: CreateVendaRequest = {
-          clienteId: clienteId || undefined,
-          itens: itens.map(i => ({ produtoId: i.produtoId, quantidade: i.quantidade, desconto: 0 })),
-          desconto,
-          formaPagamento,
-          parcelas: formaPagamento === 'Cartao' ? parcelas : undefined,
-          dataHora: dataVenda !== hoje ? new Date(dataVenda + 'T12:00:00').toISOString() : undefined,
+          customerId: clienteId || undefined,
+          items: itens.map(i => ({ productId: i.produtoId, quantity: i.quantidade, discount: 0 })),
+          discount: desconto,
+          paymentMethod: formaPagamento,
+          installments: formaPagamento === 'Cartao' ? parcelas : undefined,
+          saleDate: dataVenda !== hoje ? new Date(dataVenda + 'T12:00:00').toISOString() : undefined,
         }
         const result = await create(req)
         setVendaFinalizada({ id: result.id, total: result.total })
@@ -216,7 +216,7 @@ export default function NovaVendaPDV() {
                 <select value={clienteId} onChange={e => setClienteId(e.target.value)}
                   className="flex h-9 flex-1 rounded-lg border border-input bg-transparent px-3 py-1 text-sm">
                   <option value="">Balcão (sem cliente)</option>
-                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <Button type="button" variant="outline" size="icon"
                   title="Criar novo cliente"

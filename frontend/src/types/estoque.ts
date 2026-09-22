@@ -1,62 +1,62 @@
 export type TipoProduto = 'Produto' | 'Servico'
 
-export interface CategoriaResponse { id: string; nome: string }
+export interface CategoriaResponse { id: string; name: string }
 
 export interface ProdutoResponse {
   id: string
-  categoriaId: string
+  categoryId: string
   categoriaNome: string
-  nome: string
-  descricao: string | null
-  precoVenda: number
-  custoMedio: number
-  estoqueAtual: number
-  estoqueMinimo: number
-  codigoBarras: string | null
-  ativo: boolean
+  name: string
+  description: string | null
+  salePrice: number
+  averageCost: number
+  currentStock: number
+  minimumStock: number
+  barcode: string | null
+  isActive: boolean
   estoqueBaixo: boolean
-  duracaoMinutos: number | null
-  tipo: TipoProduto
+  durationMinutes: number | null
+  type: TipoProduto
 }
 
 export interface CreateProdutoRequest {
-  categoriaId: string
-  nome: string
-  descricao?: string
-  precoVenda: number
-  custoMedio: number
-  estoqueAtual: number
-  estoqueMinimo: number
-  codigoBarras?: string
-  tipo: TipoProduto
-  duracaoMinutos?: number | null
+  categoryId: string
+  name: string
+  description?: string
+  salePrice: number
+  averageCost: number
+  currentStock: number
+  minimumStock: number
+  barcode?: string
+  type: TipoProduto
+  durationMinutes?: number | null
 }
 
 export interface UpdateProdutoRequest {
-  categoriaId: string
-  nome: string
-  descricao?: string
-  precoVenda: number
-  estoqueMinimo: number
-  codigoBarras?: string
-  ativo: boolean
-  duracaoMinutos?: number | null
+  categoryId: string
+  name: string
+  description?: string
+  salePrice: number
+  minimumStock: number
+  barcode?: string
+  isActive: boolean
+  durationMinutes?: number | null
 }
 
 export interface EntradaEstoqueRequest {
-  produtoId: string
-  quantidade: number
+  productId: string
+  quantity: number
   custoUnitario?: number
-  observacao?: string
+  notes?: string
 }
 
 export interface MovimentacaoResponse {
   id: string
-  produtoId: string
+  productId: string
   produtoNome: string
-  tipo: string
-  quantidade: number
-  origem: string
-  dataHora: string
-  observacao: string | null
+  type: string
+  quantity: number
+  source: string
+  movementDate: string
+  notes: string | null
 }

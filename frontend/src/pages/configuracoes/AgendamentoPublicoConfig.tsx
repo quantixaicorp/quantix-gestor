@@ -17,9 +17,9 @@ export default function AgendamentoPublicoConfig() {
     api.get<ConfiguracaoEmpresaResponse>('/api/configuracao-empresa')
       .then(c => {
         setSlug(c.slug ?? '')
-        setAprovarAutomaticamente(c.aprovarAutomaticamente)
-        setValorSinal(c.valorSinal != null ? String(c.valorSinal) : '')
-        setHorasLimiteCancelamento(c.horasLimiteCancelamento != null ? String(c.horasLimiteCancelamento) : '')
+        setAprovarAutomaticamente(c.autoApprove)
+        setValorSinal(c.depositAmount != null ? String(c.depositAmount) : '')
+        setHorasLimiteCancelamento(c.cancellationLimitHours != null ? String(c.cancellationLimitHours) : '')
       })
       .catch(() => {})
   }, [])
@@ -28,9 +28,9 @@ export default function AgendamentoPublicoConfig() {
     setSaving(true)
     try {
       await api.put('/api/configuracao-empresa/agendamento', {
-        aprovarAutomaticamente,
-        valorSinal: valorSinal ? parseFloat(valorSinal) : null,
-        horasLimiteCancelamento: horasLimiteCancelamento ? parseInt(horasLimiteCancelamento) : null,
+        autoApprove: aprovarAutomaticamente,
+        depositAmount: valorSinal ? parseFloat(valorSinal) : null,
+        cancellationLimitHours: horasLimiteCancelamento ? parseInt(horasLimiteCancelamento) : null,
       })
       toast.success('Configurações salvas!')
     } catch (e) {

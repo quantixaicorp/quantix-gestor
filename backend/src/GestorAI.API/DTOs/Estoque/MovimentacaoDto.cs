@@ -2,10 +2,10 @@ namespace GestorAI.API.DTOs.Estoque;
 
 public record MovimentacaoResponse(
     Guid Id,
-    Guid ProdutoId,
+    Guid ProductId,
     string ProdutoNome,
-    string Tipo,
-    decimal Quantidade,
-    string Origem,
-    DateTime DataHora,
-    string? Observacao);
+    string Type,
+    decimal Quantity,
+    string Source,
+    DateTime MovementDate,
+    string? Notes);

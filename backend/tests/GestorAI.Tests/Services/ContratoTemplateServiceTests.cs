@@ -15,7 +15,7 @@ public class ContratoTemplateServiceTests
 
     private (AppDbContext db, ContratoTemplateService service) Setup()
     {
-        var tc = new TenantContext { EmpresaId = _empresaId };
+        var tc = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tc);
@@ -33,9 +33,9 @@ public class ContratoTemplateServiceTests
 
         var result = await svc.CreateAsync(req, default);
 
-        Assert.Equal("Mensalidade Padrão", result.Nome);
-        Assert.Equal(500m, result.ValorPadrao);
-        Assert.Single(result.Itens);
+        Assert.Equal("Mensalidade Padrão", result.Name);
+        Assert.Equal(500m, result.DefaultAmount);
+        Assert.Single(result.Items);
     }
 
     [Fact]
@@ -43,36 +43,36 @@ public class ContratoTemplateServiceTests
     {
         var (db, svc) = Setup();
         var outroTenant = Guid.NewGuid();
-        db.ContratoTemplates.Add(new ContratoTemplate
+        db.ContractTemplates.Add(new ContractTemplate
         {
-            EmpresaId = outroTenant, Nome = "Outro", Objeto = "X",
+            CompanyId = outroTenant, Name = "Outro", Subject = "X",
         });
-        db.ContratoTemplates.Add(new ContratoTemplate
+        db.ContractTemplates.Add(new ContractTemplate
         {
-            EmpresaId = _empresaId, Nome = "Meu", Objeto = "Y",
+            CompanyId = _empresaId, Name = "Meu", Subject = "Y",
         });
         await db.SaveChangesAsync();
 
         var result = await svc.ListAsync(default);
 
         Assert.Single(result);
-        Assert.Equal("Meu", result[0].Nome);
+        Assert.Equal("Meu", result[0].Name);
     }
 
     [Fact]
     public async Task DeleteAsync_Remove()
     {
         var (db, svc) = Setup();
-        db.ContratoTemplates.Add(new ContratoTemplate
+        db.ContractTemplates.Add(new ContractTemplate
         {
-            EmpresaId = _empresaId, Nome = "T", Objeto = "O",
+            CompanyId = _empresaId, Name = "T", Subject = "O",
         });
         await db.SaveChangesAsync();
-        var id = db.ContratoTemplates.First().Id;
+        var id = db.ContractTemplates.First().Id;
 
         await svc.DeleteAsync(id, default);
 
-        Assert.Empty(db.ContratoTemplates.ToList());
+        Assert.Empty(db.ContractTemplates.ToList());
     }
 
     [Fact]

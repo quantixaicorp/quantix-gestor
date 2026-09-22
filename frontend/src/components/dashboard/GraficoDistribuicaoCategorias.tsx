@@ -13,7 +13,7 @@ export default function GraficoDistribuicaoCategorias({ dados }: Props) {
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">Sem produtos ativos</div>
     </div>
   )
-  const data = dados.map(d => ({ name: d.categoria, value: d.valor, qty: d.quantidade }))
+  const data = dados.map(d => ({ name: d.category, value: d.amount, qty: d.quantity }))
   return (
     <div className="rounded-lg border bg-card p-4">
       <p className="text-sm font-medium mb-1">Estoque por Categoria</p>

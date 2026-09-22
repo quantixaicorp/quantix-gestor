@@ -27,13 +27,13 @@ export default function AbaCurvaABC({ produtos, clientes }: Props) {
   const labelItem = visao === 'produtos' ? 'Produto' : 'Cliente'
   const labelQtd = visao === 'produtos' ? 'Qtd vendida' : 'Compras'
 
-  const countA = dados.itens.filter(i => i.classe === 'A').length
-  const countB = dados.itens.filter(i => i.classe === 'B').length
-  const countC = dados.itens.filter(i => i.classe === 'C').length
+  const countA = dados.items.filter(i => i.classe === 'A').length
+  const countB = dados.items.filter(i => i.classe === 'B').length
+  const countC = dados.items.filter(i => i.classe === 'C').length
 
   // Pareto chart: top 20 for readability
-  const chartData = dados.itens.slice(0, 20).map(i => ({
-    nome: i.nome.length > 16 ? i.nome.slice(0, 14) + '…' : i.nome,
+  const chartData = dados.items.slice(0, 20).map(i => ({
+    nome: i.name.length > 16 ? i.name.slice(0, 14) + '…' : i.name,
     participacao: i.percentual,
     acumulado: i.percentualAcumulado,
   }))
@@ -112,11 +112,11 @@ export default function AbaCurvaABC({ produtos, clientes }: Props) {
               </tr>
             </thead>
             <tbody>
-              {dados.itens.map((item, idx) => (
+              {dados.items.map((item, idx) => (
                 <tr key={idx} className="border-t hover:bg-muted/30 transition-colors">
                   <td className="px-3 py-2 text-muted-foreground">{idx + 1}</td>
-                  <td className="px-3 py-2 font-medium">{item.nome}</td>
-                  <td className="px-3 py-2 text-right hidden sm:table-cell">{item.quantidade.toLocaleString('pt-BR')}</td>
+                  <td className="px-3 py-2 font-medium">{item.name}</td>
+                  <td className="px-3 py-2 text-right hidden sm:table-cell">{item.quantity.toLocaleString('pt-BR')}</td>
                   <td className="px-3 py-2 text-right">{fmt(item.total)}</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell">{fmtPct(item.percentual)}</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell">{fmtPct(item.percentualAcumulado)}</td>
@@ -127,7 +127,7 @@ export default function AbaCurvaABC({ produtos, clientes }: Props) {
                   </td>
                 </tr>
               ))}
-              {dados.itens.length === 0 && (
+              {dados.items.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     Nenhuma venda no período

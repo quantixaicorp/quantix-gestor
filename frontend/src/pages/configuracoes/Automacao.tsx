@@ -9,21 +9,21 @@ interface AutomacaoConfig {
   evolutionApiUrl: string
   evolutionApiKey: string
   evolutionInstance: string
-  lembrete3dAntes: boolean
-  lembrete1dAntes: boolean
-  lembreteNoDia: boolean
-  lembrete1dDepois: boolean
-  lembrete3dDepois: boolean
-  lembrete7dDepois: boolean
+  reminder3DaysBefore: boolean
+  reminder1DayBefore: boolean
+  reminderOnDueDate: boolean
+  reminder1DayAfter: boolean
+  reminder3DaysAfter: boolean
+  reminder7DaysAfter: boolean
 }
 
 const TOGGLES: { key: keyof AutomacaoConfig; label: string }[] = [
-  { key: 'lembrete3dAntes',  label: '3 dias antes do vencimento' },
-  { key: 'lembrete1dAntes',  label: '1 dia antes do vencimento' },
-  { key: 'lembreteNoDia',    label: 'No dia do vencimento' },
-  { key: 'lembrete1dDepois', label: '1 dia após o vencimento' },
-  { key: 'lembrete3dDepois', label: '3 dias após o vencimento' },
-  { key: 'lembrete7dDepois', label: '7 dias após o vencimento' },
+  { key: 'reminder3DaysBefore', label: '3 dias antes do vencimento' },
+  { key: 'reminder1DayBefore',  label: '1 dia antes do vencimento' },
+  { key: 'reminderOnDueDate',   label: 'No dia do vencimento' },
+  { key: 'reminder1DayAfter',   label: '1 dia após o vencimento' },
+  { key: 'reminder3DaysAfter',  label: '3 dias após o vencimento' },
+  { key: 'reminder7DaysAfter',  label: '7 dias após o vencimento' },
 ]
 
 export default function Automacao() {
@@ -31,12 +31,12 @@ export default function Automacao() {
     evolutionApiUrl: '',
     evolutionApiKey: '',
     evolutionInstance: '',
-    lembrete3dAntes: true,
-    lembrete1dAntes: true,
-    lembreteNoDia: true,
-    lembrete1dDepois: true,
-    lembrete3dDepois: false,
-    lembrete7dDepois: false,
+    reminder3DaysBefore: true,
+    reminder1DayBefore: true,
+    reminderOnDueDate: true,
+    reminder1DayAfter: true,
+    reminder3DaysAfter: false,
+    reminder7DaysAfter: false,
   })
   const [saving, setSaving] = useState(false)
   const [testando, setTestando] = useState(false)
@@ -45,23 +45,23 @@ export default function Automacao() {
     api.get<{
       evolutionApiUrl?: string | null
       evolutionInstance?: string | null
-      lembrete3dAntes?: boolean
-      lembrete1dAntes?: boolean
-      lembreteNoDia?: boolean
-      lembrete1dDepois?: boolean
-      lembrete3dDepois?: boolean
-      lembrete7dDepois?: boolean
+      reminder3DaysBefore?: boolean
+      reminder1DayBefore?: boolean
+      reminderOnDueDate?: boolean
+      reminder1DayAfter?: boolean
+      reminder3DaysAfter?: boolean
+      reminder7DaysAfter?: boolean
     }>('/api/configuracao-empresa')
       .then(d => setConfig(c => ({
         ...c,
         evolutionApiUrl:  d.evolutionApiUrl  ?? '',
         evolutionInstance: d.evolutionInstance ?? '',
-        lembrete3dAntes:  d.lembrete3dAntes  ?? true,
-        lembrete1dAntes:  d.lembrete1dAntes  ?? true,
-        lembreteNoDia:    d.lembreteNoDia    ?? true,
-        lembrete1dDepois: d.lembrete1dDepois ?? true,
-        lembrete3dDepois: d.lembrete3dDepois ?? false,
-        lembrete7dDepois: d.lembrete7dDepois ?? false,
+        reminder3DaysBefore: d.reminder3DaysBefore ?? true,
+        reminder1DayBefore:  d.reminder1DayBefore  ?? true,
+        reminderOnDueDate:   d.reminderOnDueDate   ?? true,
+        reminder1DayAfter:   d.reminder1DayAfter   ?? true,
+        reminder3DaysAfter:  d.reminder3DaysAfter  ?? false,
+        reminder7DaysAfter:  d.reminder7DaysAfter  ?? false,
       })))
       .catch(() => {})
   }, [])
@@ -73,12 +73,12 @@ export default function Automacao() {
         evolutionApiUrl:  config.evolutionApiUrl  || null,
         evolutionApiKey:  config.evolutionApiKey  || null,
         evolutionInstance: config.evolutionInstance || null,
-        lembrete3dAntes:  config.lembrete3dAntes,
-        lembrete1dAntes:  config.lembrete1dAntes,
-        lembreteNoDia:    config.lembreteNoDia,
-        lembrete1dDepois: config.lembrete1dDepois,
-        lembrete3dDepois: config.lembrete3dDepois,
-        lembrete7dDepois: config.lembrete7dDepois,
+        reminder3DaysBefore: config.reminder3DaysBefore,
+        reminder1DayBefore:  config.reminder1DayBefore,
+        reminderOnDueDate:   config.reminderOnDueDate,
+        reminder1DayAfter:   config.reminder1DayAfter,
+        reminder3DaysAfter:  config.reminder3DaysAfter,
+        reminder7DaysAfter:  config.reminder7DaysAfter,
       })
       toast.success('Configurações salvas!')
     } catch (e) {

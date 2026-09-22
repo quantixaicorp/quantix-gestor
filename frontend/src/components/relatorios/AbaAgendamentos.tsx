@@ -58,7 +58,7 @@ export default function AbaAgendamentos({ dados }: Props) {
               <tbody>
                 {dados.porProfissional.map((p, i) => (
                   <tr key={i} className="border-b last:border-0">
-                    <td className="py-2">{p.profissional}</td>
+                    <td className="py-2">{p.professional}</td>
                     <td className="py-2 text-right hidden sm:table-cell">{p.total}</td>
                     <td className="py-2 text-right text-green-600">{p.concluidos}</td>
                     <td className="py-2 text-right hidden sm:table-cell">{p.taxaConclusao.toFixed(1)}%</td>

@@ -2,30 +2,30 @@ namespace GestorAI.API.DTOs.Fiscal;
 
 public record NotaFiscalItemResponse(
     Guid Id,
-    string NomeProduto,
+    string ProductName,
     string? Ncm,
     string? Cfop,
-    decimal Quantidade,
-    decimal PrecoUnitario,
+    decimal Quantity,
+    decimal UnitPrice,
     decimal Total);
 
 public record NotaFiscalResponse(
     Guid Id,
-    Guid VendaId,
-    string Modelo,
-    int? Numero,
-    int? Serie,
+    Guid SaleId,
+    string Model,
+    int? Number,
+    int? Series,
     string Status,
-    string? ChaveAcesso,
-    string? Protocolo,
+    string? AccessKey,
+    string? Protocol,
     string? XmlUrl,
     string? PdfUrl,
-    string? MensagemErro,
-    DateTime? AutorizadaEm,
-    DateTime? CanceladaEm,
-    DateTime CriadaEm,
-    NotaFiscalItemResponse[] Itens);
+    string? ErrorMessage,
+    DateTime? AuthorizedAt,
+    DateTime? CanceledAt,
+    DateTime CreatedAt,
+    NotaFiscalItemResponse[] Items);
 
-public record EmitirNotaFiscalRequest(Guid VendaId, string Tipo);
+public record EmitirNotaFiscalRequest(Guid SaleId, string Type);
 
-public record CancelarNotaFiscalRequest(string Motivo);
+public record CancelarNotaFiscalRequest(string Reason);

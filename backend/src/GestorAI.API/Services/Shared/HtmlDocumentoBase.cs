@@ -5,9 +5,9 @@ namespace GestorAI.API.Services.Shared;
 public static class HtmlDocumentoBase
 {
     public static string WrapDocument(
-        string titulo, string corpo, ConfiguracaoEmpresa? cfg, string apiBase)
+        string titulo, string corpo, CompanySettings? cfg, string apiBase)
     {
-        var cor = cfg?.CorPrimaria ?? "#2563eb";
+        var cor = cfg?.PrimaryColor ?? "#2563eb";
         var nome = cfg?.NomeFantasia ?? cfg?.RazaoSocial ?? "Empresa";
         var cabecalho = BuildCabecalho(cfg, cor, nome, apiBase);
         var rodape = BuildRodape(cfg);
@@ -44,7 +44,7 @@ public static class HtmlDocumentoBase
     }
 
     private static string BuildCabecalho(
-        ConfiguracaoEmpresa? cfg, string cor, string nome, string apiBase)
+        CompanySettings? cfg, string cor, string nome, string apiBase)
     {
         var logoHtml = "";
         if (!string.IsNullOrWhiteSpace(cfg?.LogoUrl))
@@ -58,7 +58,7 @@ public static class HtmlDocumentoBase
         var linhasDireita = new List<string>();
         if (!string.IsNullOrWhiteSpace(cfg?.Cnpj))
             linhasDireita.Add($"CNPJ: {cfg.Cnpj}");
-        var contato = string.Join(" | ", new[] { cfg?.Telefone, cfg?.Email }
+        var contato = string.Join(" | ", new[] { cfg?.Phone, cfg?.Email }
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Select(s => s!));
         if (!string.IsNullOrWhiteSpace(contato))
@@ -84,7 +84,7 @@ public static class HtmlDocumentoBase
             """;
     }
 
-    private static string BuildRodape(ConfiguracaoEmpresa? cfg)
+    private static string BuildRodape(CompanySettings? cfg)
     {
         if (cfg is null) return "";
 

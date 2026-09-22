@@ -1,16 +1,16 @@
 export interface OrcamentoItemPublico {
-  descricao: string
-  quantidade: number
-  valorUnitario: number
+  description: string
+  quantity: number
+  unitPrice: number
   total: number
 }
 
 export interface OrcamentoPublico {
-  titulo: string
-  clienteNome: string | null
-  dataValidade: string
+  title: string
+  customerName: string | null
+  expirationDate: string
   status: string
-  observacao: string | null
-  itens: OrcamentoItemPublico[]
+  notes: string | null
+  items: OrcamentoItemPublico[]
   total: number
 }

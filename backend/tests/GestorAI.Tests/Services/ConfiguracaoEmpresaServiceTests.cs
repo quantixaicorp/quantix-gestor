@@ -13,7 +13,7 @@ public class ConfiguracaoEmpresaServiceTests
 
     private (AppDbContext db, ConfiguracaoEmpresaService svc) Setup()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tenant);
@@ -27,11 +27,11 @@ public class ConfiguracaoEmpresaServiceTests
         var req = new AtualizarConfiguracaoEmpresaRequest(
             null, null, null, null, null, null, null, null, null, null, null, null, null,
             null, null, null, null, null, null, null,
-            Telefone: "11999990000", Email: "contato@empresa.com");
+            Phone: "11999990000", Email: "contato@empresa.com");
 
         var result = await svc.AtualizarAsync(req, default);
 
-        Assert.Equal("11999990000", result.Telefone);
+        Assert.Equal("11999990000", result.Phone);
         Assert.Equal("contato@empresa.com", result.Email);
     }
 
@@ -44,9 +44,9 @@ public class ConfiguracaoEmpresaServiceTests
         await svc.SalvarAgendamentoAsync(req, default);
         var result = await svc.ObterAsync(default);
 
-        Assert.False(result.AprovarAutomaticamente);
-        Assert.Equal(50.00m, result.ValorSinal);
-        Assert.Equal(24, result.HorasLimiteCancelamento);
+        Assert.False(result.AutoApprove);
+        Assert.Equal(50.00m, result.DepositAmount);
+        Assert.Equal(24, result.CancellationLimitHours);
     }
 
     [Fact]
@@ -56,6 +56,6 @@ public class ConfiguracaoEmpresaServiceTests
 
         var result = await svc.ObterAsync(default);
 
-        Assert.True(result.AprovarAutomaticamente);
+        Assert.True(result.AutoApprove);
     }
 }

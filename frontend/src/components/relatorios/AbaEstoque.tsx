@@ -34,7 +34,7 @@ export default function AbaEstoque({ dados }: Props) {
               <tbody>
                 {dados.giroProdutos.map((p, i) => (
                   <tr key={i} className="border-t hover:bg-muted/30">
-                    <td className="px-4 py-2">{p.nome}</td>
+                    <td className="px-4 py-2">{p.name}</td>
                     <td className="px-4 py-2 text-right font-medium">{fmtN(p.saidas)}</td>
                     <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmtN(p.entradas)}</td>
                   </tr>
@@ -66,8 +66,8 @@ export default function AbaEstoque({ dados }: Props) {
               <tbody>
                 {dados.semMovimentacao.map((p, i) => (
                   <tr key={i} className="border-t hover:bg-muted/30">
-                    <td className="px-4 py-2">{p.nome}</td>
-                    <td className="px-4 py-2 text-right">{fmtN(p.estoqueAtual)}</td>
+                    <td className="px-4 py-2">{p.name}</td>
+                    <td className="px-4 py-2 text-right">{fmtN(p.currentStock)}</td>
                     <td className="px-4 py-2 text-right text-muted-foreground hidden sm:table-cell">{fmt(p.valorEmEstoque)}</td>
                   </tr>
                 ))}

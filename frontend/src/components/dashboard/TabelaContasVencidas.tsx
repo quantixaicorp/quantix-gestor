@@ -28,9 +28,9 @@ export default function TabelaContasVencidas({ dados }: Props) {
         <tbody>
           {(dados ?? []).map((c, i) => (
             <tr key={i} className="border-t hover:bg-muted/20">
-              <td className="px-4 py-2">{c.descricao}</td>
-              <td className="px-4 py-2 hidden md:table-cell text-muted-foreground">{c.categoria}</td>
-              <td className="px-4 py-2 text-right font-medium text-red-600">{fmt(c.valor)}</td>
+              <td className="px-4 py-2">{c.description}</td>
+              <td className="px-4 py-2 hidden md:table-cell text-muted-foreground">{c.category}</td>
+              <td className="px-4 py-2 text-right font-medium text-red-600">{fmt(c.amount)}</td>
               <td className="px-4 py-2 text-right">
                 <span className={cn(
                   'text-xs px-1.5 py-0.5 rounded font-medium',

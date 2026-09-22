@@ -42,6 +42,15 @@ public static class DashboardEndpoints
             DateTime de, DateTime ate, RelatorioService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetClientesAsync(de, ate, ct)));
 
+        group.MapGet("/relatorios/clientes/historico", async (
+            RelatorioService svc, CancellationToken ct) =>
+            Results.Ok(await svc.GetHistoricoClientesAsync(ct)));
+
+        group.MapGet("/relatorios/clientes/{id:guid}/historico", async (
+            Guid id, RelatorioService svc, CancellationToken ct) =>
+            await svc.GetHistoricoClienteDetalheAsync(id, ct) is { } d
+                ? Results.Ok(d) : Results.NotFound());
+
         group.MapGet("/relatorios/curva-abc/produtos", async (
             DateTime de, DateTime ate, RelatorioService svc, CancellationToken ct) =>
             Results.Ok(await svc.GetCurvaAbcProdutosAsync(de, ate, ct)));

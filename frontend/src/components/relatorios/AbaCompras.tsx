@@ -79,7 +79,7 @@ export default function AbaCompras() {
                     <Pie
                       data={data.porFornecedor}
                       dataKey="total"
-                      nameKey="fornecedor"
+                      nameKey="supplier"
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
@@ -103,9 +103,9 @@ export default function AbaCompras() {
                   <BarChart data={data.topProdutos.slice(0, 8)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => toMoeda(v as number)} />
-                    <YAxis type="category" dataKey="produto" tick={{ fontSize: 11 }} width={100} />
+                    <YAxis type="category" dataKey="product" tick={{ fontSize: 11 }} width={100} />
                     <Tooltip formatter={(v: unknown) => toMoeda(v as number)} />
-                    <Bar dataKey="valorTotal" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="totalAmount" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

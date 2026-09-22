@@ -93,7 +93,7 @@ export default function DetalheContrato() {
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-xl font-bold">Contrato {String(c.numero).padStart(3, '0')}</h1>
+          <h1 className="text-xl font-bold">Contrato {String(c.number).padStart(3, '0')}</h1>
           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
             {c.status}
           </span>
@@ -142,23 +142,23 @@ export default function DetalheContrato() {
 
       <div className="rounded-xl border p-4 flex flex-col gap-3 text-sm">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <div><span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{c.clienteNome}</span></div>
-          <div><span className="text-muted-foreground">Tipo:</span> {c.tipoCobranca === 'ParceladoPrazoFixo' ? 'Parcelado' : 'Recorrente'}</div>
-          <div><span className="text-muted-foreground">Valor:</span> <span className="font-medium">{fmtVal(c.valor)}</span></div>
-          <div><span className="text-muted-foreground">Periodicidade:</span> {c.periodicidade}</div>
-          <div><span className="text-muted-foreground">Início:</span> {fmtDate(c.dataInicio)}</div>
-          <div><span className="text-muted-foreground">Término:</span> {c.dataFim ? fmtDate(c.dataFim) : '—'}</div>
-          <div><span className="text-muted-foreground">Vencimento:</span> dia {c.diaVencimento}</div>
+          <div><span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{c.customerName}</span></div>
+          <div><span className="text-muted-foreground">Tipo:</span> {c.chargeType === 'ParceladoPrazoFixo' ? 'Parcelado' : 'Recorrente'}</div>
+          <div><span className="text-muted-foreground">Valor:</span> <span className="font-medium">{fmtVal(c.amount)}</span></div>
+          <div><span className="text-muted-foreground">Periodicidade:</span> {c.frequency}</div>
+          <div><span className="text-muted-foreground">Início:</span> {fmtDate(c.startDate)}</div>
+          <div><span className="text-muted-foreground">Término:</span> {c.endDate ? fmtDate(c.endDate) : '—'}</div>
+          <div><span className="text-muted-foreground">Vencimento:</span> dia {c.dueDay}</div>
         </div>
 
-        {c.objeto && (
+        {c.subject && (
           <div>
             <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide mb-1">Objeto</div>
-            <div className="rounded bg-muted/40 px-3 py-2 whitespace-pre-wrap text-sm">{c.objeto}</div>
+            <div className="rounded bg-muted/40 px-3 py-2 whitespace-pre-wrap text-sm">{c.subject}</div>
           </div>
         )}
 
-        {c.itens.length > 0 && (
+        {c.items.length > 0 && (
           <div>
             <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide mb-2">Itens</div>
             <table className="w-full text-sm">
@@ -169,12 +169,12 @@ export default function DetalheContrato() {
                 <th className="text-right pb-1">Total</th>
               </tr></thead>
               <tbody>
-                {c.itens.map(item => (
+                {c.items.map(item => (
                   <tr key={item.id} className="border-b last:border-0">
-                    <td className="py-1">{item.descricao}</td>
-                    <td className="py-1 text-right">{item.quantidade}</td>
-                    <td className="py-1 text-right">{fmtVal(item.valorUnitario)}</td>
-                    <td className="py-1 text-right font-medium">{fmtVal(item.quantidade * item.valorUnitario)}</td>
+                    <td className="py-1">{item.description}</td>
+                    <td className="py-1 text-right">{item.quantity}</td>
+                    <td className="py-1 text-right">{fmtVal(item.unitPrice)}</td>
+                    <td className="py-1 text-right font-medium">{fmtVal(item.quantity * item.unitPrice)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -199,7 +199,7 @@ export default function DetalheContrato() {
           <>
             <Button variant="outline" onClick={() => handleAcao(() => encerrar(c.id))}>Encerrar</Button>
             <Button variant="outline" className="text-destructive" onClick={() => handleAcao(() => cancelar(c.id))}>Cancelar</Button>
-            {c.dataFim && (
+            {c.endDate && (
               <Button variant="outline" onClick={handleRenovar} disabled={renovando}>
                 {renovando ? 'Renovando...' : 'Renovar Contrato'}
               </Button>

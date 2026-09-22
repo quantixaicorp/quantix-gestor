@@ -1,2 +1,2 @@
 namespace GestorAI.API.Domain.Entities;
-public interface ITenantEntity { Guid EmpresaId { get; set; } }
+public interface ITenantEntity { Guid CompanyId { get; set; } }

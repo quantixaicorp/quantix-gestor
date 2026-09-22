@@ -4,44 +4,44 @@ namespace GestorAI.API.DTOs.Estoque;
 
 public record ProdutoResponse(
     Guid Id,
-    Guid CategoriaId,
+    Guid CategoryId,
     string CategoriaNome,
-    string Nome,
-    string? Descricao,
-    decimal PrecoVenda,
-    decimal CustoMedio,
-    decimal EstoqueAtual,
-    decimal EstoqueMinimo,
-    string? CodigoBarras,
-    bool Ativo,
+    string Name,
+    string? Description,
+    decimal SalePrice,
+    decimal AverageCost,
+    decimal CurrentStock,
+    decimal MinimumStock,
+    string? Barcode,
+    bool IsActive,
     bool EstoqueBaixo,
-    int? DuracaoMinutos,
-    TipoProduto Tipo);
+    int? DurationMinutes,
+    TipoProduto Type);
 
 public record CreateProdutoRequest(
-    Guid CategoriaId,
-    string Nome,
-    string? Descricao,
-    decimal PrecoVenda,
-    decimal CustoMedio,
-    decimal EstoqueAtual,
-    decimal EstoqueMinimo,
-    string? CodigoBarras,
-    TipoProduto Tipo = TipoProduto.Produto,
-    int? DuracaoMinutos = null);
+    Guid CategoryId,
+    string Name,
+    string? Description,
+    decimal SalePrice,
+    decimal AverageCost,
+    decimal CurrentStock,
+    decimal MinimumStock,
+    string? Barcode,
+    TipoProduto Type = TipoProduto.Produto,
+    int? DurationMinutes = null);
 
 public record UpdateProdutoRequest(
-    Guid CategoriaId,
-    string Nome,
-    string? Descricao,
-    decimal PrecoVenda,
-    decimal EstoqueMinimo,
-    string? CodigoBarras,
-    bool Ativo,
-    int? DuracaoMinutos);
+    Guid CategoryId,
+    string Name,
+    string? Description,
+    decimal SalePrice,
+    decimal MinimumStock,
+    string? Barcode,
+    bool IsActive,
+    int? DurationMinutes);
 
 public record EntradaEstoqueRequest(
-    Guid ProdutoId,
-    decimal Quantidade,
+    Guid ProductId,
+    decimal Quantity,
     decimal? CustoUnitario,
-    string? Observacao);
+    string? Notes);

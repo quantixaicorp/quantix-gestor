@@ -1,51 +1,51 @@
 export interface OrcamentoItemRequest {
-  tipo: 'Produto' | 'Livre'
-  produtoId?: string
-  descricao: string
-  quantidade: number
-  valorUnitario: number
+  type: 'Produto' | 'Livre'
+  productId?: string
+  description: string
+  quantity: number
+  unitPrice: number
 }
 
 export interface CreateOrcamentoRequest {
-  clienteId?: string
-  titulo: string
-  dataValidade: string
-  observacao?: string
-  itens: OrcamentoItemRequest[]
+  customerId?: string
+  title: string
+  expirationDate: string
+  notes?: string
+  items: OrcamentoItemRequest[]
 }
 
 export interface OrcamentoItemResponse {
   id: string
-  tipo: 'Produto' | 'Livre'
-  produtoId: string | null
-  descricao: string
-  quantidade: number
-  valorUnitario: number
+  type: 'Produto' | 'Livre'
+  productId: string | null
+  description: string
+  quantity: number
+  unitPrice: number
 }
 
 export interface OrcamentoResponse {
   id: string
-  numero: number
-  titulo: string
-  clienteId: string | null
-  clienteNome: string | null
+  number: number
+  title: string
+  customerId: string | null
+  customerName: string | null
   clienteWhatsapp: string | null
-  dataValidade: string
+  expirationDate: string
   status: OrcamentoStatus
-  observacao: string | null
-  vendaId: string | null
-  tokenPublico: string | null
-  criadoEm: string
-  itens: OrcamentoItemResponse[]
+  notes: string | null
+  saleId: string | null
+  publicToken: string | null
+  createdAt: string
+  items: OrcamentoItemResponse[]
   total: number
 }
 
 export interface OrcamentoListItem {
   id: string
-  numero: number
-  titulo: string
-  clienteNome: string | null
-  dataValidade: string
+  number: number
+  title: string
+  customerName: string | null
+  expirationDate: string
   status: OrcamentoStatus
   total: number
 }

@@ -23,10 +23,10 @@ export default function TabelaUltimasVendas({ dados }: Props) {
           {(dados ?? []).map((v, i) => (
             <tr key={i} className="border-t hover:bg-muted/20">
               <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
-                {new Date(v.dataHora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                {new Date(v.saleDate).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
               </td>
-              <td className="px-4 py-2">{v.clienteNome}</td>
-              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{v.formaPagamento}</td>
+              <td className="px-4 py-2">{v.customerName}</td>
+              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{v.paymentMethod}</td>
               <td className="px-4 py-2 text-right font-medium">{fmt(v.total)}</td>
             </tr>
           ))}

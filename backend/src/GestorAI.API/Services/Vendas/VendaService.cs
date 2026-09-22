@@ -12,22 +12,22 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<VendaResponse> CreateAsync(CreateVendaRequest req, CancellationToken ct)
     {
-        if (!Enum.TryParse<FormaPagamento>(req.FormaPagamento, out var formaPagamento))
+        if (!Enum.TryParse<FormaPagamento>(req.PaymentMethod, out var formaPagamento))
             throw new AppException("Forma de pagamento inválida.");
 
-        var produtoIds = req.Itens.Select(i => i.ProdutoId).Distinct().ToList();
-        var produtos = await db.Produtos
+        var produtoIds = req.Items.Select(i => i.ProductId).Distinct().ToList();
+        var produtos = await db.Products
             .Where(p => produtoIds.Contains(p.Id))
             .ToListAsync(ct);
 
-        foreach (var item in req.Itens)
+        foreach (var item in req.Items)
         {
-            var produto = produtos.FirstOrDefault(p => p.Id == item.ProdutoId)
-                ?? throw new AppException($"Produto {item.ProdutoId} não encontrado.", 404);
-            if (produto.Tipo == TipoProduto.Produto && produto.EstoqueAtual < item.Quantidade)
+            var produto = produtos.FirstOrDefault(p => p.Id == item.ProductId)
+                ?? throw new AppException($"Product {item.ProductId} não encontrado.", 404);
+            if (produto.Type == TipoProduto.Produto && produto.CurrentStock < item.Quantity)
                 throw new AppException(
-                    $"Estoque insuficiente para '{produto.Nome}'. " +
-                    $"Disponível: {produto.EstoqueAtual}, solicitado: {item.Quantidade}.");
+                    $"Estoque insuficiente para '{produto.Name}'. " +
+                    $"Disponível: {produto.CurrentStock}, solicitado: {item.Quantity}.");
         }
 
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? tx = null;
@@ -35,90 +35,90 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
         {
             try { tx = await db.Database.BeginTransactionAsync(ct); } catch { /* InMemory doesn't support transactions */ }
 
-            var itensEntidade = req.Itens.Select(item =>
+            var itensEntidade = req.Items.Select(item =>
             {
-                var produto = produtos.First(p => p.Id == item.ProdutoId);
-                var total = produto.PrecoVenda * item.Quantidade - item.Desconto;
-                return new ItemVenda
+                var produto = produtos.First(p => p.Id == item.ProductId);
+                var total = produto.SalePrice * item.Quantity - item.Discount;
+                return new SaleItem
                 {
-                    ProdutoId = item.ProdutoId,
-                    Quantidade = item.Quantidade,
-                    PrecoUnitario = produto.PrecoVenda,
-                    Desconto = item.Desconto,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    UnitPrice = produto.SalePrice,
+                    Discount = item.Discount,
                     Total = total,
                 };
             }).ToList();
 
-            var subtotal = itensEntidade.Sum(i => i.PrecoUnitario * i.Quantidade);
-            if (req.Desconto > subtotal)
-                throw new AppException("Desconto não pode exceder o subtotal.");
+            var subtotal = itensEntidade.Sum(i => i.UnitPrice * i.Quantity);
+            if (req.Discount > subtotal)
+                throw new AppException("Discount não pode exceder o subtotal.");
 
-            var total = subtotal - req.Desconto;
+            var total = subtotal - req.Discount;
 
-            var dataHora = req.DataHora.HasValue
-                ? DateTime.SpecifyKind(req.DataHora.Value, DateTimeKind.Unspecified)
+            var dataHora = req.SaleDate.HasValue
+                ? DateTime.SpecifyKind(req.SaleDate.Value, DateTimeKind.Unspecified)
                 : DateTime.UtcNow;
 
-            var venda = new Venda
+            var venda = new Sale
             {
-                EmpresaId = tenantContext.EmpresaId,
-                ClienteId = req.ClienteId,
-                DataHora = dataHora,
+                CompanyId = tenantContext.CompanyId,
+                CustomerId = req.CustomerId,
+                SaleDate = dataHora,
                 Status = StatusVenda.Concluida,
                 Subtotal = subtotal,
-                Desconto = req.Desconto,
+                Discount = req.Discount,
                 Total = total,
-                FormaPagamento = formaPagamento,
-                Parcelas = req.Parcelas,
-                Observacao = req.Observacao,
-                ProfissionalId   = req.ProfissionalId,
-                ObservacaoOS     = req.ObservacaoOS,
+                PaymentMethod = formaPagamento,
+                Installments = req.Installments,
+                Notes = req.Notes,
+                ProfessionalId   = req.ProfessionalId,
+                ServiceOrderNotes     = req.ServiceOrderNotes,
             };
-            db.Vendas.Add(venda);
+            db.Sales.Add(venda);
 
             foreach (var item in itensEntidade)
             {
-                item.VendaId = venda.Id;
-                db.ItensVenda.Add(item);
+                item.SaleId = venda.Id;
+                db.SaleItems.Add(item);
             }
 
-            foreach (var item in req.Itens)
+            foreach (var item in req.Items)
             {
-                var produto = produtos.First(p => p.Id == item.ProdutoId);
-                produto.EstoqueAtual -= item.Quantidade;
-                produto.AtualizadoEm = DateTime.UtcNow;
+                var produto = produtos.First(p => p.Id == item.ProductId);
+                produto.CurrentStock -= item.Quantity;
+                produto.UpdatedAt = DateTime.UtcNow;
 
-                db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+                db.StockMovements.Add(new StockMovement
                 {
-                    EmpresaId = tenantContext.EmpresaId,
-                    ProdutoId = item.ProdutoId,
-                    Tipo = TipoMovimentacao.Saida,
-                    Quantidade = item.Quantidade,
-                    Origem = OrigemMovimentacao.Venda,
-                    ReferenciaId = venda.Id,
+                    CompanyId = tenantContext.CompanyId,
+                    ProductId = item.ProductId,
+                    Type = TipoMovimentacao.Saida,
+                    Quantity = item.Quantity,
+                    Source = OrigemMovimentacao.Venda,
+                    ReferenceId = venda.Id,
                 });
             }
 
-            var nomeCliente = req.ClienteId.HasValue
-                ? (await db.Clientes.FindAsync([req.ClienteId.Value], ct))?.Nome ?? "Cliente"
-                : "Venda balcão";
+            var nomeCliente = req.CustomerId.HasValue
+                ? (await db.Customers.FindAsync([req.CustomerId.Value], ct))?.Name ?? "Customer"
+                : "Sale balcão";
 
             string? nomeProfissional = null;
-            if (req.ProfissionalId.HasValue)
-                nomeProfissional = (await db.Profissionais.FindAsync([req.ProfissionalId.Value], ct))?.Nome;
-            venda.ProfissionalNome = nomeProfissional;
+            if (req.ProfessionalId.HasValue)
+                nomeProfissional = (await db.Professionals.FindAsync([req.ProfessionalId.Value], ct))?.Name;
+            venda.ProfessionalName = nomeProfissional;
 
-            db.Lancamentos.Add(new Lancamento
+            db.Transactions.Add(new Transaction
             {
-                EmpresaId = tenantContext.EmpresaId,
-                Tipo = TipoLancamento.Receita,
-                Descricao = $"Venda — {nomeCliente}",
-                Valor = total,
-                DataVencimento = venda.DataHora,
-                DataPagamento = venda.DataHora,
+                CompanyId = tenantContext.CompanyId,
+                Type = TipoLancamento.Receita,
+                Description = $"Sale — {nomeCliente}",
+                Amount = total,
+                DueDate = venda.SaleDate,
+                PaymentDate = venda.SaleDate,
                 Status = StatusLancamento.Pago,
-                Categoria = "Venda",
-                VendaId = venda.Id,
+                Category = "Sale",
+                SaleId = venda.Id,
             });
 
             await db.SaveChangesAsync(ct);
@@ -135,41 +135,41 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<VendaResponse> CancelarAsync(Guid id, CancellationToken ct)
     {
-        var venda = await db.Vendas.Include(v => v.Itens)
+        var venda = await db.Sales.Include(v => v.Items)
             .FirstOrDefaultAsync(v => v.Id == id, ct)
-            ?? throw new AppException("Venda não encontrada.", 404);
+            ?? throw new AppException("Sale não encontrada.", 404);
 
         if (venda.Status == StatusVenda.Cancelada)
-            throw new AppException("Venda já está cancelada.");
+            throw new AppException("Sale já está cancelada.");
 
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? tx = null;
         try
         {
             try { tx = await db.Database.BeginTransactionAsync(ct); } catch { /* InMemory doesn't support transactions */ }
 
-            foreach (var item in venda.Itens)
+            foreach (var item in venda.Items)
             {
-                var produto = await db.Produtos.FindAsync([item.ProdutoId], ct);
+                var produto = await db.Products.FindAsync([item.ProductId], ct);
                 if (produto is not null)
                 {
-                    produto.EstoqueAtual += item.Quantidade;
-                    produto.AtualizadoEm = DateTime.UtcNow;
+                    produto.CurrentStock += item.Quantity;
+                    produto.UpdatedAt = DateTime.UtcNow;
                 }
 
-                db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+                db.StockMovements.Add(new StockMovement
                 {
-                    EmpresaId = tenantContext.EmpresaId,
-                    ProdutoId = item.ProdutoId,
-                    Tipo = TipoMovimentacao.Entrada,
-                    Quantidade = item.Quantidade,
-                    Origem = OrigemMovimentacao.Venda,
-                    ReferenciaId = venda.Id,
-                    Observacao = "Estorno por cancelamento",
+                    CompanyId = tenantContext.CompanyId,
+                    ProductId = item.ProductId,
+                    Type = TipoMovimentacao.Entrada,
+                    Quantity = item.Quantity,
+                    Source = OrigemMovimentacao.Venda,
+                    ReferenceId = venda.Id,
+                    Notes = "Estorno por cancelamento",
                 });
             }
 
-            var lancamento = await db.Lancamentos
-                .FirstOrDefaultAsync(l => l.VendaId == venda.Id, ct);
+            var lancamento = await db.Transactions
+                .FirstOrDefaultAsync(l => l.SaleId == venda.Id, ct);
             if (lancamento is not null)
                 lancamento.Status = StatusLancamento.Cancelado;
 
@@ -189,29 +189,29 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<VendaResponse> FecharAsync(Guid id, FecharVendaRequest req, CancellationToken ct)
     {
-        if (!Enum.TryParse<FormaPagamento>(req.FormaPagamento, out var formaPagamento))
+        if (!Enum.TryParse<FormaPagamento>(req.PaymentMethod, out var formaPagamento))
             throw new AppException("Forma de pagamento inválida.");
 
-        var venda = await db.Vendas
-            .Include(v => v.Itens)
-            .Include(v => v.Cliente)
+        var venda = await db.Sales
+            .Include(v => v.Items)
+            .Include(v => v.Customer)
             .FirstOrDefaultAsync(v => v.Id == id, ct)
-            ?? throw new AppException("Venda não encontrada.", 404);
+            ?? throw new AppException("Sale não encontrada.", 404);
 
         if (venda.Status != StatusVenda.Aberta)
             throw new AppException("Apenas vendas abertas podem ser fechadas.");
 
-        var produtoIds = venda.Itens.Select(i => i.ProdutoId).Distinct().ToList();
-        var produtos = await db.Produtos.Where(p => produtoIds.Contains(p.Id)).ToListAsync(ct);
+        var produtoIds = venda.Items.Select(i => i.ProductId).Distinct().ToList();
+        var produtos = await db.Products.Where(p => produtoIds.Contains(p.Id)).ToListAsync(ct);
 
-        foreach (var item in venda.Itens)
+        foreach (var item in venda.Items)
         {
-            var produto = produtos.FirstOrDefault(p => p.Id == item.ProdutoId)
-                ?? throw new AppException($"Produto não encontrado.", 404);
-            if (produto.Tipo == TipoProduto.Produto && produto.EstoqueAtual < item.Quantidade)
+            var produto = produtos.FirstOrDefault(p => p.Id == item.ProductId)
+                ?? throw new AppException($"Product não encontrado.", 404);
+            if (produto.Type == TipoProduto.Produto && produto.CurrentStock < item.Quantity)
                 throw new AppException(
-                    $"Estoque insuficiente para '{produto.Nome}'. " +
-                    $"Disponível: {produto.EstoqueAtual}, solicitado: {item.Quantidade}.");
+                    $"Estoque insuficiente para '{produto.Name}'. " +
+                    $"Disponível: {produto.CurrentStock}, solicitado: {item.Quantity}.");
         }
 
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? tx = null;
@@ -219,41 +219,41 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 
         try
         {
-            foreach (var item in venda.Itens)
+            foreach (var item in venda.Items)
             {
-                var produto = produtos.First(p => p.Id == item.ProdutoId);
-                produto.EstoqueAtual -= item.Quantidade;
-                produto.AtualizadoEm = DateTime.UtcNow;
+                var produto = produtos.First(p => p.Id == item.ProductId);
+                produto.CurrentStock -= item.Quantity;
+                produto.UpdatedAt = DateTime.UtcNow;
 
-                db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+                db.StockMovements.Add(new StockMovement
                 {
-                    EmpresaId = tenantContext.EmpresaId,
-                    ProdutoId = item.ProdutoId,
-                    Tipo = TipoMovimentacao.Saida,
-                    Quantidade = item.Quantidade,
-                    Origem = OrigemMovimentacao.Venda,
-                    ReferenciaId = venda.Id,
+                    CompanyId = tenantContext.CompanyId,
+                    ProductId = item.ProductId,
+                    Type = TipoMovimentacao.Saida,
+                    Quantity = item.Quantity,
+                    Source = OrigemMovimentacao.Venda,
+                    ReferenceId = venda.Id,
                 });
             }
 
-            var nomeCliente = venda.Cliente?.Nome ?? "Venda balcão";
-            db.Lancamentos.Add(new Lancamento
+            var nomeCliente = venda.Customer?.Name ?? "Sale balcão";
+            db.Transactions.Add(new Transaction
             {
-                EmpresaId = tenantContext.EmpresaId,
-                Tipo = TipoLancamento.Receita,
-                Descricao = $"Venda — {nomeCliente}",
-                Valor = venda.Total,
-                DataVencimento = DateTime.UtcNow,
-                DataPagamento = DateTime.UtcNow,
+                CompanyId = tenantContext.CompanyId,
+                Type = TipoLancamento.Receita,
+                Description = $"Sale — {nomeCliente}",
+                Amount = venda.Total,
+                DueDate = DateTime.UtcNow,
+                PaymentDate = DateTime.UtcNow,
                 Status = StatusLancamento.Pago,
-                Categoria = "Venda",
-                VendaId = venda.Id,
+                Category = "Sale",
+                SaleId = venda.Id,
             });
 
             venda.Status = StatusVenda.Concluida;
-            venda.FormaPagamento = formaPagamento;
-            venda.Parcelas = req.Parcelas;
-            if (req.Observacao is not null) venda.Observacao = req.Observacao;
+            venda.PaymentMethod = formaPagamento;
+            venda.Installments = req.Installments;
+            if (req.Notes is not null) venda.Notes = req.Notes;
 
             await db.SaveChangesAsync(ct);
             if (tx is not null) await tx.CommitAsync(ct);
@@ -270,72 +270,72 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
     public async Task<List<VendaListItem>> ListAsync(
         DateTime? de, DateTime? ate, string? status, CancellationToken ct)
     {
-        var query = db.Vendas.Include(v => v.Cliente).AsQueryable();
+        var query = db.Sales.Include(v => v.Customer).AsQueryable();
 
-        if (de.HasValue) query = query.Where(v => v.DataHora >= de.Value);
-        if (ate.HasValue) query = query.Where(v => v.DataHora <= ate.Value.AddDays(1));
+        if (de.HasValue) query = query.Where(v => v.SaleDate >= de.Value);
+        if (ate.HasValue) query = query.Where(v => v.SaleDate <= ate.Value.AddDays(1));
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusVenda>(status, out var s))
             query = query.Where(v => v.Status == s);
 
         return await query
-            .OrderByDescending(v => v.DataHora)
+            .OrderByDescending(v => v.SaleDate)
             .Select(v => new VendaListItem(
-                v.Id, v.ClienteId, v.Cliente != null ? v.Cliente.Nome : null,
-                v.DataHora, v.Status.ToString(),
-                v.Total, v.FormaPagamento.ToString(),
-                v.ProfissionalNome))
+                v.Id, v.CustomerId, v.Customer != null ? v.Customer.Name : null,
+                v.SaleDate, v.Status.ToString(),
+                v.Total, v.PaymentMethod.ToString(),
+                v.ProfessionalName))
             .ToListAsync(ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var venda = await db.Vendas
-            .Include(v => v.Lancamento)
-            .Include(v => v.Itens)
+        var venda = await db.Sales
+            .Include(v => v.Transaction)
+            .Include(v => v.Items)
             .FirstOrDefaultAsync(v => v.Id == id, ct)
-            ?? throw new AppException("Venda não encontrada.", 404);
+            ?? throw new AppException("Sale não encontrada.", 404);
 
-        foreach (var item in venda.Itens)
+        foreach (var item in venda.Items)
         {
-            var produto = await db.Produtos.FindAsync([item.ProdutoId], ct);
+            var produto = await db.Products.FindAsync([item.ProductId], ct);
             if (produto is not null)
-                produto.EstoqueAtual += item.Quantidade;
+                produto.CurrentStock += item.Quantity;
         }
 
-        if (venda.Lancamento is not null)
-            db.Lancamentos.Remove(venda.Lancamento);
+        if (venda.Transaction is not null)
+            db.Transactions.Remove(venda.Transaction);
 
-        db.ItensVenda.RemoveRange(venda.Itens);
-        db.Vendas.Remove(venda);
+        db.SaleItems.RemoveRange(venda.Items);
+        db.Sales.Remove(venda);
         await db.SaveChangesAsync(ct);
     }
 
     public async Task<VendaResponse> UpdateAsync(Guid id, UpdateVendaRequest req, CancellationToken ct)
     {
-        var venda = await db.Vendas
+        var venda = await db.Sales
             .FirstOrDefaultAsync(v => v.Id == id, ct)
-            ?? throw new AppException("Venda não encontrada.", 404);
+            ?? throw new AppException("Sale não encontrada.", 404);
 
         if (venda.Status != StatusVenda.Concluida)
             throw new AppException("Apenas vendas concluídas podem ser editadas.", 400);
 
-        if (!Enum.TryParse<FormaPagamento>(req.FormaPagamento, out var forma))
-            throw new AppException($"FormaPagamento inválida: {req.FormaPagamento}.", 400);
+        if (!Enum.TryParse<FormaPagamento>(req.PaymentMethod, out var forma))
+            throw new AppException($"FormaPagamento inválida: {req.PaymentMethod}.", 400);
 
-        venda.ClienteId = req.ClienteId;
-        venda.FormaPagamento = forma;
-        venda.DataHora = req.DataHora;
+        venda.CustomerId = req.CustomerId;
+        venda.PaymentMethod = forma;
+        venda.SaleDate = req.SaleDate;
 
-        var lancamento = await db.Lancamentos
-            .FirstOrDefaultAsync(l => l.VendaId == id, ct);
+        var lancamento = await db.Transactions
+            .FirstOrDefaultAsync(l => l.SaleId == id, ct);
         if (lancamento is not null)
         {
-            var nomeCliente = req.ClienteId.HasValue
-                ? (await db.Clientes.FindAsync([req.ClienteId.Value], ct))?.Nome ?? "Cliente"
-                : "Venda balcão";
-            lancamento.Descricao = $"Venda — {nomeCliente}";
-            lancamento.DataVencimento = req.DataHora;
-            lancamento.DataPagamento = req.DataHora;
+            var nomeCliente = req.CustomerId.HasValue
+                ? (await db.Customers.FindAsync([req.CustomerId.Value], ct))?.Name ?? "Customer"
+                : "Sale balcão";
+            lancamento.Description = $"Sale — {nomeCliente}";
+            lancamento.DueDate = req.SaleDate;
+            lancamento.PaymentDate = req.SaleDate;
         }
 
         await db.SaveChangesAsync(ct);
@@ -344,29 +344,29 @@ public class VendaService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<VendaResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var venda = await db.Vendas
-            .Include(v => v.Cliente)
-            .Include(v => v.Itens).ThenInclude(i => i.Produto)
+        var venda = await db.Sales
+            .Include(v => v.Customer)
+            .Include(v => v.Items).ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(v => v.Id == id, ct)
-            ?? throw new AppException("Venda não encontrada.", 404);
+            ?? throw new AppException("Sale não encontrada.", 404);
 
         return new VendaResponse(
             venda.Id,
-            venda.ClienteId,
-            venda.Cliente?.Nome,
-            venda.DataHora,
+            venda.CustomerId,
+            venda.Customer?.Name,
+            venda.SaleDate,
             venda.Status.ToString(),
             venda.Subtotal,
-            venda.Desconto,
+            venda.Discount,
             venda.Total,
-            venda.FormaPagamento.ToString(),
-            venda.Parcelas,
-            venda.Observacao,
-            venda.Itens.Select(i => new ItemVendaResponse(
-                i.ProdutoId, i.Produto?.Nome ?? "",
-                i.Quantidade, i.PrecoUnitario,
-                i.Desconto, i.Total)).ToList(),
-            venda.ProfissionalNome,
-            venda.ObservacaoOS);
+            venda.PaymentMethod.ToString(),
+            venda.Installments,
+            venda.Notes,
+            venda.Items.Select(i => new ItemVendaResponse(
+                i.ProductId, i.Product?.Name ?? "",
+                i.Quantity, i.UnitPrice,
+                i.Discount, i.Total)).ToList(),
+            venda.ProfessionalName,
+            venda.ServiceOrderNotes);
     }
 }

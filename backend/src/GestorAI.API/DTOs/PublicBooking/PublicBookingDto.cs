@@ -2,42 +2,42 @@
 namespace GestorAI.API.DTOs.PublicBooking;
 
 public record PublicEmpresaInfo(
-    string Nome,
+    string Name,
     string? LogoUrl,
-    string? CorPrimaria,
-    string? Descricao);
+    string? PrimaryColor,
+    string? Description);
 
 public record PublicServicoResponse(
     Guid Id,
-    string Nome,
-    decimal Preco,
-    int? DuracaoMinutos);
+    string Name,
+    decimal Price,
+    int? DurationMinutes);
 
 public record PublicProfissionalResponse(
     Guid Id,
-    string Nome);
+    string Name);
 
 public record PublicDisponibilidadeResponse(
     List<int> DiasComDisponibilidade);
 
 public record PublicCriarAgendamentoRequest(
-    Guid ServicoId,
-    Guid ProfissionalId,
-    DateTime DataHoraInicio,
-    string ClienteNome,
-    string ClienteTelefone);
+    Guid ServiceId,
+    Guid ProfessionalId,
+    DateTime StartAt,
+    string CustomerName,
+    string CustomerPhone);
 
 public record PublicAgendamentoConfirmado(
     Guid Id,
     string ServicoNome,
-    string ProfissionalNome,
-    DateTime DataHoraInicio,
-    DateTime DataHoraFim,
-    string? SinalPixQrCode = null,
+    string ProfessionalName,
+    DateTime StartAt,
+    DateTime EndAt,
+    string? DepositPixQrCode = null,
     decimal? SinalValor = null);
 
 public record ConfigurarBrandingRequest(
     string Slug,
     string? NomeExibicao,
-    string? CorPrimaria,
-    string? DescricaoPublica);
+    string? PrimaryColor,
+    string? PublicDescription);

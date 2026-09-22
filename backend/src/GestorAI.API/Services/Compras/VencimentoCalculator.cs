@@ -4,7 +4,7 @@ namespace GestorAI.API.Services.Compras;
 
 public static class VencimentoCalculator
 {
-    public static List<(DateTime DataVencimento, decimal Valor)> Calcular(
+    public static List<(DateTime DueDate, decimal Amount)> Calcular(
         string condicaoPagamento,
         DateTime dataCompra,
         decimal valorTotal,
@@ -18,8 +18,8 @@ public static class VencimentoCalculator
             "30_60_90d" => GerarParcelas(dataCompra, valorTotal, 3, 30),
             "Parcelado" => GerarParcelas(dataCompra, valorTotal, qtdParcelas ?? 1, 30),
             "Personalizado" => parcelasPersonalizadas?
-                .OrderBy(p => p.Numero)
-                .Select(p => (p.DataVencimento, p.Valor))
+                .OrderBy(p => p.Number)
+                .Select(p => (p.DueDate, p.Amount))
                 .ToList() ?? [(dataCompra, valorTotal)],
             _ => [(dataCompra, valorTotal)],
         };

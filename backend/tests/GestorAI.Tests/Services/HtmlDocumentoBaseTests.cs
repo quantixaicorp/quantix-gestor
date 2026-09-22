@@ -8,13 +8,13 @@ public class HtmlDocumentoBaseTests
     [Fact]
     public void WrapDocument_ComCorPrimaria_ContemCorNoCabecalho()
     {
-        var cfg = new ConfiguracaoEmpresa
+        var cfg = new CompanySettings
         {
             NomeFantasia = "Barbearia do João",
-            CorPrimaria = "#ff5500",
+            PrimaryColor = "#ff5500",
         };
 
-        var html = HtmlDocumentoBase.WrapDocument("Titulo", "<p>corpo</p>", cfg, "");
+        var html = HtmlDocumentoBase.WrapDocument("Title", "<p>corpo</p>", cfg, "");
 
         Assert.Contains("#ff5500", html);
     }
@@ -22,7 +22,7 @@ public class HtmlDocumentoBaseTests
     [Fact]
     public void WrapDocument_SemCfg_UsaCorFallback()
     {
-        var html = HtmlDocumentoBase.WrapDocument("Titulo", "<p>corpo</p>", null, "");
+        var html = HtmlDocumentoBase.WrapDocument("Title", "<p>corpo</p>", null, "");
 
         Assert.Contains("#2563eb", html);
         Assert.DoesNotContain("NullReference", html);
@@ -31,7 +31,7 @@ public class HtmlDocumentoBaseTests
     [Fact]
     public void WrapDocument_ComEndereco_ContemRodape()
     {
-        var cfg = new ConfiguracaoEmpresa
+        var cfg = new CompanySettings
         {
             Logradouro = "Rua das Flores", Numero = "10",
             Municipio = "São Paulo", Uf = "SP", Cep = "01310-100"
@@ -46,7 +46,7 @@ public class HtmlDocumentoBaseTests
     [Fact]
     public void WrapDocument_SemEndereco_SemRodape()
     {
-        var cfg = new ConfiguracaoEmpresa { NomeFantasia = "Empresa" };
+        var cfg = new CompanySettings { NomeFantasia = "Empresa" };
 
         var html = HtmlDocumentoBase.WrapDocument("T", "<p>corpo</p>", cfg, "");
 
@@ -56,7 +56,7 @@ public class HtmlDocumentoBaseTests
     [Fact]
     public void WrapDocument_ComLogo_ContemImgTag()
     {
-        var cfg = new ConfiguracaoEmpresa
+        var cfg = new CompanySettings
         {
             LogoUrl = "/uploads/logos/logo.png",
             NomeFantasia = "Empresa X",

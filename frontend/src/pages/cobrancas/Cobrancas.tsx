@@ -39,8 +39,8 @@ export default function Cobrancas() {
     setSalvandoPag(true)
     try {
       await pagar(id, {
-        dataPagamento: new Date(dataPagamento + 'T12:00:00').toISOString(),
-        formaPagamento,
+        paymentDate: new Date(dataPagamento + 'T12:00:00').toISOString(),
+        paymentMethod: formaPagamento,
       })
       setPagando(null)
       void list({ status: filtroStatus || undefined, mes: filtroMes || undefined })
@@ -98,16 +98,16 @@ export default function Cobrancas() {
                 onClick={() => navigate(`/cobrancas/${c.id}`)}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{c.clienteNome}</p>
-                    <p className="text-xs text-muted-foreground">{c.referencia}{c.contratoTitulo ? ` · ${c.contratoTitulo}` : ''}</p>
+                    <p className="font-medium truncate">{c.customerName}</p>
+                    <p className="text-xs text-muted-foreground">{c.reference}{c.contratoTitulo ? ` · ${c.contratoTitulo}` : ''}</p>
                   </div>
                   <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium shrink-0', STATUS_STYLES[c.status])}>
                     {c.status}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Vence: {fmtDate(c.dataVencimento)}</span>
-                  <span className="font-semibold">{fmtVal(c.valor)}</span>
+                  <span className="text-sm text-muted-foreground">Vence: {fmtDate(c.dueDate)}</span>
+                  <span className="font-semibold">{fmtVal(c.amount)}</span>
                 </div>
                 {(c.status === 'Pendente' || c.status === 'Vencido') && (
                   <div onClick={e => e.stopPropagation()}>
@@ -136,11 +136,11 @@ export default function Cobrancas() {
                   <tr key={c.id}
                     className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
                     onClick={() => navigate(`/cobrancas/${c.id}`)}>
-                    <td className="px-4 py-3 font-medium">{c.referencia}</td>
-                    <td className="px-4 py-3">{c.clienteNome}</td>
+                    <td className="px-4 py-3 font-medium">{c.reference}</td>
+                    <td className="px-4 py-3">{c.customerName}</td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{c.contratoTitulo ?? '—'}</td>
-                    <td className="px-4 py-3 font-medium">{fmtVal(c.valor)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dataVencimento)}</td>
+                    <td className="px-4 py-3 font-medium">{fmtVal(c.amount)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dueDate)}</td>
                     <td className="px-4 py-3">
                       <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
                         {c.status}

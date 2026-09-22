@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
 import { api } from '@/services/api'
 
-export interface ComprasMensalSerieItem { mes: string; total: number; quantidade: number }
-export interface ComprasPorFornecedorItem { fornecedor: string; total: number }
-export interface TopProdutoCompradoItem { produto: string; quantidadeTotal: number; valorTotal: number }
+export interface ComprasMensalSerieItem { mes: string; total: number; quantity: number }
+export interface ComprasPorFornecedorItem { supplier: string; total: number }
+export interface TopProdutoCompradoItem { product: string; quantidadeTotal: number; totalAmount: number }
 
 export interface ComprasDashboardData {
   totalMes: number

@@ -98,11 +98,11 @@ export function usePublicBooking(slug: string) {
     setLoading(true)
     try {
       const result = await publicBookingApi.criarAgendamento(slug, {
-        servicoId: servicoSelecionado.id,
-        profissionalId: profissionalSelecionado.id,
-        dataHoraInicio: slotSelecionado,
-        clienteNome,
-        clienteTelefone,
+        serviceId: servicoSelecionado.id,
+        professionalId: profissionalSelecionado.id,
+        startAt: slotSelecionado,
+        customerName: clienteNome,
+        customerPhone: clienteTelefone,
       })
       setConfirmado(result)
       setStep('confirmado')

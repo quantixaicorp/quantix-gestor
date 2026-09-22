@@ -11,7 +11,7 @@ const fmt = (v: unknown) =>
 
 export default function TopClientes({ dados }: Props) {
   const data = (dados ?? []).map(d => ({
-    nome: d.nome.length > 15 ? d.nome.slice(0, 15) + '…' : d.nome,
+    nome: d.name.length > 15 ? d.name.slice(0, 15) + '…' : d.name,
     total: d.totalGasto,
   }))
 

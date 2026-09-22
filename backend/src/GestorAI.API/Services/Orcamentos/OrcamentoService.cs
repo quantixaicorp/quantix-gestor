@@ -15,10 +15,10 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<OrcamentoListItem>> ListAsync(string? status, CancellationToken ct)
     {
-        var orcamentos = await db.Orcamentos
-            .Include(o => o.Cliente)
-            .Include(o => o.Itens)
-            .OrderByDescending(o => o.CriadoEm)
+        var orcamentos = await db.Quotes
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
+            .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(ct);
 
         await ExpireIfNeededAsync(orcamentos, ct);
@@ -31,9 +31,9 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<OrcamentoResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var o = await db.Orcamentos
-            .Include(o => o.Cliente)
-            .Include(o => o.Itens)
+        var o = await db.Quotes
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
 
@@ -43,38 +43,38 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<OrcamentoResponse> CreateAsync(CreateOrcamentoRequest req, CancellationToken ct)
     {
-        var numero = (await db.Orcamentos.MaxAsync(o => (int?)o.Numero, ct) ?? 0) + 1;
+        var numero = (await db.Quotes.MaxAsync(o => (int?)o.Number, ct) ?? 0) + 1;
 
-        var orcamento = new Orcamento
+        var orcamento = new Quote
         {
-            EmpresaId = tenantContext.EmpresaId,
-            ClienteId = req.ClienteId,
-            Numero = numero,
-            Titulo = req.Titulo,
-            DataValidade = req.DataValidade,
+            CompanyId = tenantContext.CompanyId,
+            CustomerId = req.CustomerId,
+            Number = numero,
+            Title = req.Title,
+            ExpirationDate = req.ExpirationDate,
             Status = OrcamentoStatus.Rascunho,
-            Observacao = req.Observacao,
+            Notes = req.Notes,
         };
 
-        foreach (var item in req.Itens)
+        foreach (var item in req.Items)
         {
-            if (!Enum.TryParse<OrcamentoItemTipo>(item.Tipo, out var tipo))
-                throw new AppException($"Tipo de item inválido: {item.Tipo}.");
+            if (!Enum.TryParse<OrcamentoItemTipo>(item.Type, out var tipo))
+                throw new AppException($"Type de item inválido: {item.Type}.");
 
-            if (tipo == OrcamentoItemTipo.Produto && item.ProdutoId == null)
-                throw new AppException($"Item '{item.Descricao}' do tipo Produto requer ProdutoId.");
+            if (tipo == OrcamentoItemTipo.Produto && item.ProductId == null)
+                throw new AppException($"Item '{item.Description}' do tipo Product requer ProductId.");
 
-            orcamento.Itens.Add(new OrcamentoItem
+            orcamento.Items.Add(new QuoteItem
             {
-                Tipo = tipo,
-                ProdutoId = item.ProdutoId,
-                Descricao = item.Descricao,
-                Quantidade = item.Quantidade,
-                ValorUnitario = item.ValorUnitario,
+                Type = tipo,
+                ProductId = item.ProductId,
+                Description = item.Description,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
             });
         }
 
-        db.Orcamentos.Add(orcamento);
+        db.Quotes.Add(orcamento);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(orcamento.Id, ct);
@@ -86,7 +86,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         if (o.Status != OrcamentoStatus.Rascunho)
             throw new AppException("Apenas rascunhos podem ser enviados.");
         o.Status = OrcamentoStatus.Enviado;
-        o.TokenPublico = Guid.NewGuid();
+        o.PublicToken = Guid.NewGuid();
         await db.SaveChangesAsync(ct);
         return ToResponse(o);
     }
@@ -94,7 +94,7 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
     public async Task<OrcamentoResponse> AprovarAsync(Guid id, CancellationToken ct)
     {
         var o = await FindAsync(id, ct);
-        if (o.DataValidade.Date < DateTime.UtcNow.Date)
+        if (o.ExpirationDate.Date < DateTime.UtcNow.Date)
             throw new AppException("Orçamento expirado não pode ser aprovado.", 400);
         if (o.Status != OrcamentoStatus.Enviado)
             throw new AppException("Apenas orçamentos enviados podem ser aprovados.");
@@ -125,9 +125,9 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<OrcamentoResponse> ConvertAsync(Guid id, CancellationToken ct)
     {
-        var o = await db.Orcamentos
-            .Include(o => o.Itens)
-            .Include(o => o.Cliente)
+        var o = await db.Quotes
+            .Include(o => o.Items)
+            .Include(o => o.Customer)
             .FirstOrDefaultAsync(o => o.Id == id, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
 
@@ -137,73 +137,73 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? tx = null;
         try { tx = await db.Database.BeginTransactionAsync(ct); } catch { }
 
-        var itensProduto = o.Itens
-            .Where(i => i.Tipo == OrcamentoItemTipo.Produto)
+        var itensProduto = o.Items
+            .Where(i => i.Type == OrcamentoItemTipo.Produto)
             .ToList();
 
-        var subtotal = o.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
+        var subtotal = o.Items.Sum(i => i.Quantity * i.UnitPrice);
 
-        var venda = new Venda
+        var venda = new Sale
         {
-            EmpresaId = tenantContext.EmpresaId,
-            ClienteId = o.ClienteId,
+            CompanyId = tenantContext.CompanyId,
+            CustomerId = o.CustomerId,
             Status = StatusVenda.Concluida,
             Subtotal = subtotal,
-            Desconto = 0,
+            Discount = 0,
             Total = subtotal,
-            FormaPagamento = FormaPagamento.Outro,
-            Observacao = $"Gerado do Orçamento ORC-{o.Numero:D3}",
+            PaymentMethod = FormaPagamento.Outro,
+            Notes = $"Gerado do Orçamento ORC-{o.Number:D3}",
         };
-        db.Vendas.Add(venda);
+        db.Sales.Add(venda);
 
         foreach (var item in itensProduto)
         {
-            db.ItensVenda.Add(new ItemVenda
+            db.SaleItems.Add(new SaleItem
             {
-                VendaId = venda.Id,
-                ProdutoId = item.ProdutoId!.Value,
-                Quantidade = item.Quantidade,
-                PrecoUnitario = item.ValorUnitario,
-                Desconto = 0,
-                Total = item.Quantidade * item.ValorUnitario,
+                SaleId = venda.Id,
+                ProductId = item.ProductId!.Value,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                Discount = 0,
+                Total = item.Quantity * item.UnitPrice,
             });
 
-            var produto = await db.Produtos.FindAsync([item.ProdutoId!.Value], ct);
+            var produto = await db.Products.FindAsync([item.ProductId!.Value], ct);
             if (produto is not null)
             {
-                produto.EstoqueAtual -= item.Quantidade;
-                produto.AtualizadoEm = DateTime.UtcNow;
+                produto.CurrentStock -= item.Quantity;
+                produto.UpdatedAt = DateTime.UtcNow;
 
-                db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+                db.StockMovements.Add(new StockMovement
                 {
-                    EmpresaId = tenantContext.EmpresaId,
-                    ProdutoId = item.ProdutoId!.Value,
-                    Tipo = TipoMovimentacao.Saida,
-                    Quantidade = item.Quantidade,
-                    Origem = OrigemMovimentacao.Venda,
-                    ReferenciaId = venda.Id,
+                    CompanyId = tenantContext.CompanyId,
+                    ProductId = item.ProductId!.Value,
+                    Type = TipoMovimentacao.Saida,
+                    Quantity = item.Quantity,
+                    Source = OrigemMovimentacao.Venda,
+                    ReferenceId = venda.Id,
                 });
             }
         }
 
-        var nomeCliente = o.ClienteId.HasValue
-            ? (await db.Clientes.FindAsync([o.ClienteId.Value], ct))?.Nome ?? "Cliente"
-            : "Venda balcão";
+        var nomeCliente = o.CustomerId.HasValue
+            ? (await db.Customers.FindAsync([o.CustomerId.Value], ct))?.Name ?? "Customer"
+            : "Sale balcão";
 
-        db.Lancamentos.Add(new Lancamento
+        db.Transactions.Add(new Transaction
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Tipo = TipoLancamento.Receita,
-            Descricao = $"Venda — {nomeCliente} (ORC-{o.Numero:D3})",
-            Valor = subtotal,
-            DataVencimento = DateTime.UtcNow,
-            DataPagamento = DateTime.UtcNow,
+            CompanyId = tenantContext.CompanyId,
+            Type = TipoLancamento.Receita,
+            Description = $"Sale — {nomeCliente} (ORC-{o.Number:D3})",
+            Amount = subtotal,
+            DueDate = DateTime.UtcNow,
+            PaymentDate = DateTime.UtcNow,
             Status = StatusLancamento.Pago,
-            Categoria = "Venda",
-            VendaId = venda.Id,
+            Category = "Sale",
+            SaleId = venda.Id,
         });
 
-        o.VendaId = venda.Id;
+        o.SaleId = venda.Id;
         o.Status = OrcamentoStatus.Convertido;
 
         await db.SaveChangesAsync(ct);
@@ -214,30 +214,30 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<string> GetPdfHtmlAsync(Guid id, string apiBase, CancellationToken ct)
     {
-        var o = await db.Orcamentos
-            .Include(o => o.Cliente)
-            .Include(o => o.Itens)
+        var o = await db.Quotes
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
 
         await ExpireIfNeededAsync([o], ct);
 
-        var cfg = await db.ConfiguracoesEmpresa
+        var cfg = await db.CompanySettings
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.EmpresaId == tenantContext.EmpresaId, ct);
+            .FirstOrDefaultAsync(c => c.CompanyId == tenantContext.CompanyId, ct);
 
-        var total = o.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
-        var linhas = string.Join("", o.Itens.Select(i =>
-            $"<tr><td>{i.Descricao}</td><td>{i.Quantidade:N2}</td>" +
-            $"<td>R$ {i.ValorUnitario:N2}</td><td>R$ {i.Quantidade * i.ValorUnitario:N2}</td></tr>"));
-        var clienteHtml = o.Cliente != null ? $"Cliente: {o.Cliente.Nome}<br>" : "";
-        var obsHtml = o.Observacao != null ? $"<div class='obs'>Obs: {o.Observacao}</div>" : "";
+        var total = o.Items.Sum(i => i.Quantity * i.UnitPrice);
+        var linhas = string.Join("", o.Items.Select(i =>
+            $"<tr><td>{i.Description}</td><td>{i.Quantity:N2}</td>" +
+            $"<td>R$ {i.UnitPrice:N2}</td><td>R$ {i.Quantity * i.UnitPrice:N2}</td></tr>"));
+        var clienteHtml = o.Customer != null ? $"Customer: {o.Customer.Name}<br>" : "";
+        var obsHtml = o.Notes != null ? $"<div class='obs'>Obs: {o.Notes}</div>" : "";
 
         var corpo = $$"""
-            <h1>ORC-{{o.Numero:D3}} — {{o.Titulo}}</h1>
+            <h1>ORC-{{o.Number:D3}} — {{o.Title}}</h1>
             <div class="meta">
               {{clienteHtml}}
-              Válido até: {{o.DataValidade:dd/MM/yyyy}} | Status: {{o.Status}}
+              Válido até: {{o.ExpirationDate:dd/MM/yyyy}} | Status: {{o.Status}}
             </div>
             <table>
               <thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
@@ -247,16 +247,16 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
             {{obsHtml}}
             """;
 
-        return HtmlDocumentoBase.WrapDocument($"ORC-{o.Numero:D3}", corpo, cfg, apiBase);
+        return HtmlDocumentoBase.WrapDocument($"ORC-{o.Number:D3}", corpo, cfg, apiBase);
     }
 
     public async Task<OrcamentoPublicoResponse> GetPublicoAsync(Guid token, CancellationToken ct)
     {
-        var o = await db.Orcamentos
+        var o = await db.Quotes
             .IgnoreQueryFilters()
-            .Include(o => o.Cliente)
-            .Include(o => o.Itens)
-            .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.PublicToken == token, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
         await ExpireIfNeededAsync([o], ct);
         return ToPublicoResponse(o);
@@ -264,12 +264,12 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<OrcamentoPublicoResponse> AprovarPublicoAsync(Guid token, CancellationToken ct)
     {
-        var o = await db.Orcamentos
+        var o = await db.Quotes
             .IgnoreQueryFilters()
-            .Include(o => o.Itens)
-            .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.PublicToken == token, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
-        if (o.DataValidade.Date < DateTime.UtcNow.Date)
+        if (o.ExpirationDate.Date < DateTime.UtcNow.Date)
             throw new AppException("Orçamento expirado.", 400);
         if (o.Status != OrcamentoStatus.Enviado)
             throw new AppException("Orçamento não está disponível para aprovação.", 400);
@@ -280,10 +280,10 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<OrcamentoPublicoResponse> RejeitarPublicoAsync(Guid token, CancellationToken ct)
     {
-        var o = await db.Orcamentos
+        var o = await db.Quotes
             .IgnoreQueryFilters()
-            .Include(o => o.Itens)
-            .FirstOrDefaultAsync(o => o.TokenPublico == token, ct)
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.PublicToken == token, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
         if (o.Status != OrcamentoStatus.Enviado)
             throw new AppException("Orçamento não está disponível para rejeição.", 400);
@@ -295,58 +295,58 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
     public async Task<CobrancaResponse> GerarCobrancaAsync(
         Guid id, DateOnly dataVencimento, CancellationToken ct)
     {
-        var orc = await db.Orcamentos
-            .Include(o => o.Itens)
-            .Include(o => o.Cliente)
+        var orc = await db.Quotes
+            .Include(o => o.Items)
+            .Include(o => o.Customer)
             .FirstOrDefaultAsync(o => o.Id == id, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
 
         if (orc.Status != OrcamentoStatus.Aprovado && orc.Status != OrcamentoStatus.Enviado)
             throw new AppException("Apenas orçamentos Aprovados ou Enviados podem gerar cobrança.", 400);
 
-        if (orc.ClienteId is null)
+        if (orc.CustomerId is null)
             throw new AppException("Orçamento sem cliente vinculado.", 400);
 
-        var total = orc.Itens.Sum(i => i.Quantidade * i.ValorUnitario);
-        var referencia = $"Orçamento ORC-{orc.Numero:D3} — {orc.Titulo}";
+        var total = orc.Items.Sum(i => i.Quantity * i.UnitPrice);
+        var referencia = $"Orçamento ORC-{orc.Number:D3} — {orc.Title}";
 
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId = tenantContext.EmpresaId,
-            ClienteId = orc.ClienteId.Value,
-            Referencia = referencia,
-            Valor = total,
-            DataVencimento = dataVencimento,
+            CompanyId = tenantContext.CompanyId,
+            CustomerId = orc.CustomerId.Value,
+            Reference = referencia,
+            Amount = total,
+            DueDate = dataVencimento,
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync(ct);
 
-        var created = await db.Cobrancas
-            .Include(c => c.Cliente)
+        var created = await db.Charges
+            .Include(c => c.Customer)
             .FirstAsync(c => c.Id == cobranca.Id, ct);
 
         return new CobrancaResponse(
-            created.Id, created.Cliente!.Nome, created.Cliente.Whatsapp ?? "",
+            created.Id, created.Customer!.Name, created.Customer.WhatsApp ?? "",
             null, null,
-            created.Referencia, created.Valor, created.DataVencimento,
-            null, created.Status.ToString(), null, null, created.CriadoEm);
+            created.Reference, created.Amount, created.DueDate,
+            null, created.Status.ToString(), null, null, created.CreatedAt);
     }
 
-    private async Task<Orcamento> FindAsync(Guid id, CancellationToken ct)
+    private async Task<Quote> FindAsync(Guid id, CancellationToken ct)
     {
-        var o = await db.Orcamentos
-            .Include(o => o.Cliente)
-            .Include(o => o.Itens)
+        var o = await db.Quotes
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id, ct)
             ?? throw new AppException("Orçamento não encontrado.", 404);
         return o;
     }
 
-    private async Task ExpireIfNeededAsync(List<Orcamento> orcamentos, CancellationToken ct)
+    private async Task ExpireIfNeededAsync(List<Quote> orcamentos, CancellationToken ct)
     {
         var hoje = DateTime.UtcNow.Date;
         var expirar = orcamentos
-            .Where(o => o.DataValidade.Date < hoje
+            .Where(o => o.ExpirationDate.Date < hoje
                 && (o.Status == OrcamentoStatus.Enviado || o.Status == OrcamentoStatus.Aprovado))
             .ToList();
         if (expirar.Count == 0) return;
@@ -354,29 +354,29 @@ public class OrcamentoService(AppDbContext db, TenantContext tenantContext)
         await db.SaveChangesAsync(ct);
     }
 
-    private static OrcamentoListItem ToListItem(Orcamento o) => new(
-        o.Id, o.Numero, o.Titulo, o.Cliente?.Nome,
-        o.DataValidade, o.Status.ToString(),
-        o.Itens.Sum(i => i.Quantidade * i.ValorUnitario));
+    private static OrcamentoListItem ToListItem(Quote o) => new(
+        o.Id, o.Number, o.Title, o.Customer?.Name,
+        o.ExpirationDate, o.Status.ToString(),
+        o.Items.Sum(i => i.Quantity * i.UnitPrice));
 
-    private static OrcamentoPublicoResponse ToPublicoResponse(Orcamento o) => new(
-        o.Titulo,
-        o.Cliente?.Nome,
-        o.DataValidade,
+    private static OrcamentoPublicoResponse ToPublicoResponse(Quote o) => new(
+        o.Title,
+        o.Customer?.Name,
+        o.ExpirationDate,
         o.Status.ToString(),
-        o.Observacao,
-        o.Itens.Select(i => new OrcamentoItemPublicoResponse(
-            i.Descricao, i.Quantidade, i.ValorUnitario,
-            i.Quantidade * i.ValorUnitario)).ToList(),
-        o.Itens.Sum(i => i.Quantidade * i.ValorUnitario));
+        o.Notes,
+        o.Items.Select(i => new OrcamentoItemPublicoResponse(
+            i.Description, i.Quantity, i.UnitPrice,
+            i.Quantity * i.UnitPrice)).ToList(),
+        o.Items.Sum(i => i.Quantity * i.UnitPrice));
 
-    private static OrcamentoResponse ToResponse(Orcamento o) => new(
-        o.Id, o.Numero, o.Titulo, o.ClienteId,
-        o.Cliente?.Nome, o.Cliente?.Whatsapp,
-        o.DataValidade, o.Status.ToString(),
-        o.Observacao, o.VendaId, o.TokenPublico, o.CriadoEm,
-        o.Itens.Select(i => new OrcamentoItemResponse(
-            i.Id, i.Tipo.ToString(), i.ProdutoId,
-            i.Descricao, i.Quantidade, i.ValorUnitario)).ToList(),
-        o.Itens.Sum(i => i.Quantidade * i.ValorUnitario));
+    private static OrcamentoResponse ToResponse(Quote o) => new(
+        o.Id, o.Number, o.Title, o.CustomerId,
+        o.Customer?.Name, o.Customer?.WhatsApp,
+        o.ExpirationDate, o.Status.ToString(),
+        o.Notes, o.SaleId, o.PublicToken, o.CreatedAt,
+        o.Items.Select(i => new OrcamentoItemResponse(
+            i.Id, i.Type.ToString(), i.ProductId,
+            i.Description, i.Quantity, i.UnitPrice)).ToList(),
+        o.Items.Sum(i => i.Quantity * i.UnitPrice));
 }

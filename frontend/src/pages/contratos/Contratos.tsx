@@ -23,7 +23,7 @@ export default function Contratos() {
   const navigate = useNavigate()
   const { contratos, loading, error, list, fetchVencendo } = useContratos()
   const [filtroStatus, setFiltroStatus] = useState('')
-  const [vencendo, setVencendo] = useState<{ id: string; numero: number; clienteNome: string; titulo: string; dataFim: string; valor: number }[]>([])
+  const [vencendo, setVencendo] = useState<{ id: string; number: number; customerName: string; title: string; endDate: string; amount: number }[]>([])
 
   useEffect(() => { void list(filtroStatus || undefined) }, [list, filtroStatus])
 
@@ -59,7 +59,7 @@ export default function Contratos() {
         { label: 'Total', value: String(contratos.length) },
         { label: 'Ativos', value: String(contratos.filter(c => c.status === 'Ativo').length), color: 'text-green-600 dark:text-green-400' },
         { label: 'Vencendo (30 dias)', value: String(vencendo.length), color: vencendo.length > 0 ? 'text-yellow-600 dark:text-yellow-400' : '' },
-        { label: 'Valor total ativo', value: contratos.filter(c => c.status === 'Ativo').reduce((s, c) => s + c.valor, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
+        { label: 'Valor total ativo', value: contratos.filter(c => c.status === 'Ativo').reduce((s, c) => s + c.amount, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
       ]} />
 
       {error && (
@@ -77,10 +77,10 @@ export default function Contratos() {
                 className="underline font-medium hover:opacity-80"
                 onClick={() => navigate(`/contratos/${v.id}`)}
               >
-                {String(v.numero).padStart(3, '0')} — {v.titulo}
+                {String(v.number).padStart(3, '0')} — {v.title}
               </button>
               <span className="text-yellow-600 dark:text-yellow-400">
-                ({new Date(v.dataFim + 'T00:00:00').toLocaleDateString('pt-BR')})
+                ({new Date(v.endDate + 'T00:00:00').toLocaleDateString('pt-BR')})
               </span>
             </span>
           ))}
@@ -101,16 +101,16 @@ export default function Contratos() {
                 onClick={() => navigate(`/contratos/${c.id}`)}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{c.titulo}</p>
-                    <p className="text-sm text-muted-foreground truncate">{c.clienteNome}</p>
+                    <p className="font-medium truncate">{c.title}</p>
+                    <p className="text-sm text-muted-foreground truncate">{c.customerName}</p>
                   </div>
                   <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium shrink-0', STATUS_STYLES[c.status])}>
                     {c.status}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{TIPO_LABEL[c.tipoCobranca]} · {fmtDate(c.dataInicio)}</span>
-                  <span className="font-semibold">{fmtVal(c.valor)}</span>
+                  <span className="text-muted-foreground">{TIPO_LABEL[c.chargeType]} · {fmtDate(c.startDate)}</span>
+                  <span className="font-semibold">{fmtVal(c.amount)}</span>
                 </div>
               </div>
             ))}
@@ -131,17 +131,17 @@ export default function Contratos() {
                   <tr key={c.id}
                     className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
                     onClick={() => navigate(`/contratos/${c.id}`)}>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{String(c.numero).padStart(3, '0')}</td>
-                    <td className="px-4 py-3 font-medium">{c.clienteNome}</td>
-                    <td className="px-4 py-3">{c.titulo}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{TIPO_LABEL[c.tipoCobranca]}</td>
-                    <td className="px-4 py-3 font-medium">{fmtVal(c.valor)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{String(c.number).padStart(3, '0')}</td>
+                    <td className="px-4 py-3 font-medium">{c.customerName}</td>
+                    <td className="px-4 py-3">{c.title}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{TIPO_LABEL[c.chargeType]}</td>
+                    <td className="px-4 py-3 font-medium">{fmtVal(c.amount)}</td>
                     <td className="px-4 py-3">
                       <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[c.status])}>
                         {c.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.dataInicio)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtDate(c.startDate)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -5,16 +5,16 @@ export type StatusPedidoCompra =
 export type DestinoCompra = 'EstoqueParaVenda' | 'ConsumoInterno' | 'AtivoImobilizado'
 
 export interface ItemCompraRequest {
-  produtoId?: string
-  descricao: string
-  destinoCompra: DestinoCompra
-  quantidade: number
-  valorUnitario: number
-  desconto: number
-  freteRateado: number
-  impostos: number
-  categoriaFinanceira?: string
-  centroCusto?: string
+  productId?: string
+  description: string
+  destination: DestinoCompra
+  quantity: number
+  unitPrice: number
+  discount: number
+  allocatedFreight: number
+  taxes: number
+  financialCategory?: string
+  costCenter?: string
 }
 
 export interface ParcelaPersonalizadaRequest {
@@ -24,61 +24,61 @@ export interface ParcelaPersonalizadaRequest {
 }
 
 export interface CreateCompraRequest {
-  fornecedorId: string
-  data: string
-  tipoCompra: string
-  numeroNota?: string
-  condicaoPagamento: string
-  formaPagamento: string
-  qtdParcelas?: number
+  supplierId: string
+  date: string
+  purchaseType: string
+  noteNumber?: string
+  paymentTerms: string
+  paymentMethod: string
+  installmentCount?: number
   parcelasPersonalizadas?: ParcelaPersonalizadaRequest[]
-  pedidoCompraId?: string
-  observacoes?: string
-  itens: ItemCompraRequest[]
+  purchaseOrderId?: string
+  notes?: string
+  items: ItemCompraRequest[]
 }
 
 export interface UpdateCompraRequest extends CreateCompraRequest {}
 
 export interface ItemCompraResponse {
   id: string
-  produtoId?: string
-  descricao: string
-  destinoCompra: string
-  quantidade: number
-  valorUnitario: number
-  desconto: number
-  freteRateado: number
-  impostos: number
-  valorTotal: number
-  categoriaFinanceira?: string
-  centroCusto?: string
+  productId?: string
+  description: string
+  destination: string
+  quantity: number
+  unitPrice: number
+  discount: number
+  allocatedFreight: number
+  taxes: number
+  totalAmount: number
+  financialCategory?: string
+  costCenter?: string
 }
 
 export interface ParcelamentoResumo {
   id: string
-  descricao: string
-  valorTotal: number
-  qtdParcelas: number
+  description: string
+  totalAmount: number
+  installmentCount: number
   status: string
 }
 
 export interface CompraResponse {
   id: string
-  numero: number
-  data: string
-  fornecedorId: string
+  number: number
+  date: string
+  supplierId: string
   fornecedorNome: string
-  pedidoCompraId?: string
-  tipoCompra: string
-  numeroNota?: string
-  condicaoPagamento: string
-  formaPagamento: string
+  purchaseOrderId?: string
+  purchaseType: string
+  noteNumber?: string
+  paymentTerms: string
+  paymentMethod: string
   status: StatusCompra
-  valorTotal: number
-  observacoes?: string
-  criadaEm: string
-  itens: ItemCompraResponse[]
-  parcelamento?: ParcelamentoResumo
+  totalAmount: number
+  notes?: string
+  createdAt: string
+  items: ItemCompraResponse[]
+  installmentPlan?: ParcelamentoResumo
 }
 
 export interface CompraResumoResponse {
@@ -88,38 +88,38 @@ export interface CompraResumoResponse {
 }
 
 export interface ItemPedidoCompraRequest {
-  produtoId?: string
-  descricao: string
-  quantidade: number
-  valorEstimado: number
+  productId?: string
+  description: string
+  quantity: number
+  estimatedAmount: number
 }
 
 export interface CreatePedidoCompraRequest {
-  fornecedorId: string
-  data: string
-  observacoes?: string
-  itens: ItemPedidoCompraRequest[]
+  supplierId: string
+  date: string
+  notes?: string
+  items: ItemPedidoCompraRequest[]
 }
 
 export interface UpdatePedidoCompraRequest extends CreatePedidoCompraRequest {}
 
 export interface ItemPedidoCompraResponse {
   id: string
-  produtoId?: string
-  descricao: string
-  quantidade: number
-  valorEstimado: number
+  productId?: string
+  description: string
+  quantity: number
+  estimatedAmount: number
 }
 
 export interface PedidoCompraResponse {
   id: string
-  numero: number
-  data: string
-  fornecedorId: string
+  number: number
+  date: string
+  supplierId: string
   fornecedorNome: string
   status: StatusPedidoCompra
-  valorEstimado: number
-  observacoes?: string
-  criadoEm: string
-  itens: ItemPedidoCompraResponse[]
+  estimatedAmount: number
+  notes?: string
+  createdAt: string
+  items: ItemPedidoCompraResponse[]
 }

@@ -1,38 +1,38 @@
 export interface FornecedorResponse {
   id: string
-  nome: string
+  name: string
   razaoSocial?: string
   nomeFantasia?: string
   cnpjCpf?: string | null
   inscricaoEstadual?: string
-  telefone?: string | null
-  whatsapp?: string
+  phone?: string | null
+  whatsApp?: string
   email?: string | null
   logradouro?: string | null
-  cidade?: string | null
+  city?: string | null
   uf?: string | null
   cep?: string | null
-  contato?: string | null
-  observacoes?: string | null
+  contactPerson?: string | null
+  notes?: string | null
   status: 'Ativo' | 'Inativo'
-  dataCadastro: string
+  createdAt: string
 }
 
 export interface CreateFornecedorRequest {
-  nome: string
+  name: string
   razaoSocial?: string
   nomeFantasia?: string
   cnpjCpf?: string
   inscricaoEstadual?: string
-  telefone?: string
-  whatsapp?: string
+  phone?: string
+  whatsApp?: string
   email?: string
   logradouro?: string
-  cidade?: string
+  city?: string
   uf?: string
   cep?: string
-  contato?: string
-  observacoes?: string
+  contactPerson?: string
+  notes?: string
 }
 
 export interface UpdateFornecedorRequest extends CreateFornecedorRequest {

@@ -2,28 +2,28 @@ namespace GestorAI.API.DTOs.Financeiro;
 
 public record LancamentoResponse(
     Guid Id,
-    string Tipo,
-    string Descricao,
-    decimal Valor,
-    DateTime DataVencimento,
-    DateTime? DataPagamento,
+    string Type,
+    string Description,
+    decimal Amount,
+    DateTime DueDate,
+    DateTime? PaymentDate,
     string Status,
-    string Categoria,
-    Guid? VendaId,
-    string? Observacao,
+    string Category,
+    Guid? SaleId,
+    string? Notes,
     bool Vencido,
-    Guid? ParcelamentoId = null,
-    int? NumeroParcela = null);
+    Guid? InstallmentPlanId = null,
+    int? InstallmentNumber = null);
 
 public record CreateLancamentoRequest(
-    string Tipo,
-    string Descricao,
-    decimal Valor,
-    DateTime DataVencimento,
-    string Categoria,
-    string? Observacao);
+    string Type,
+    string Description,
+    decimal Amount,
+    DateTime DueDate,
+    string Category,
+    string? Notes);
 
-public record PagarLancamentoRequest(DateTime DataPagamento);
+public record PagarLancamentoRequest(DateTime PaymentDate);
 
 public record FluxoCaixaItemResponse(DateTime Data, decimal Receitas, decimal Despesas, decimal Saldo);
 
@@ -31,7 +31,7 @@ public record FluxoCaixaResponse(
     decimal TotalReceitas,
     decimal TotalDespesas,
     decimal SaldoFinal,
-    List<FluxoCaixaItemResponse> Itens);
+    List<FluxoCaixaItemResponse> Items);
 
 public record LancamentoResumo(
     decimal TotalReceitasMes,
@@ -40,18 +40,18 @@ public record LancamentoResumo(
     decimal TotalPendente);
 
 public record UpdateLancamentoRequest(
-    string Tipo,
-    string Descricao,
-    decimal Valor,
-    DateTime DataVencimento,
-    string Categoria,
-    string? Observacao);
+    string Type,
+    string Description,
+    decimal Amount,
+    DateTime DueDate,
+    string Category,
+    string? Notes);
 
 public record CreateParceladoRequest(
-    string Tipo,
-    string Descricao,
-    string Categoria,
-    string? Observacao,
-    List<ParcelaItemRequest> Parcelas);
+    string Type,
+    string Description,
+    string Category,
+    string? Notes,
+    List<ParcelaItemRequest> Installments);
 
-public record ParcelaItemRequest(decimal Valor, DateTime DataVencimento);
+public record ParcelaItemRequest(decimal Amount, DateTime DueDate);

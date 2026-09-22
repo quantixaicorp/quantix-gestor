@@ -47,10 +47,10 @@ export default function Profissionais() {
 
   function abrirEditar(p: ProfissionalResponse) {
     setEditando(p)
-    setNome(p.nome)
-    setTelefone(p.telefone ? maskTelefone(p.telefone) : '')
+    setNome(p.name)
+    setTelefone(p.phone ? maskTelefone(p.phone) : '')
     setTelefoneErro('')
-    setAtivo(p.ativo)
+    setAtivo(p.isActive)
     setShowForm(true)
   }
 
@@ -61,9 +61,9 @@ export default function Profissionais() {
     setSaving(true)
     try {
       if (editando) {
-        await update(editando.id, { nome: nome.trim(), telefone: telefone.trim() || undefined, ativo })
+        await update(editando.id, { name: nome.trim(), phone: telefone.trim() || undefined, isActive: ativo })
       } else {
-        await create({ nome: nome.trim(), telefone: telefone.trim() || undefined })
+        await create({ name: nome.trim(), phone: telefone.trim() || undefined })
       }
       setShowForm(false)
     } catch (e) {
@@ -91,9 +91,9 @@ export default function Profissionais() {
 
       <KpiRow items={[
         { label: 'Total', value: String(profissionais.length) },
-        { label: 'Ativos', value: String(profissionais.filter(p => p.ativo).length), color: 'text-green-600 dark:text-green-400' },
-        { label: 'Inativos', value: String(profissionais.filter(p => !p.ativo).length), color: 'text-muted-foreground' },
-        { label: 'Com telefone', value: String(profissionais.filter(p => p.telefone).length) },
+        { label: 'Ativos', value: String(profissionais.filter(p => p.isActive).length), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Inativos', value: String(profissionais.filter(p => !p.isActive).length), color: 'text-muted-foreground' },
+        { label: 'Com telefone', value: String(profissionais.filter(p => p.phone).length) },
       ]} />
 
       {showForm && (
@@ -149,13 +149,13 @@ export default function Profissionais() {
               <div key={p.id} className="rounded-lg border bg-card p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{p.nome}</p>
-                    {p.telefone && <p className="text-sm text-muted-foreground">{p.telefone}</p>}
+                    <p className="font-medium truncate">{p.name}</p>
+                    {p.phone && <p className="text-sm text-muted-foreground">{p.phone}</p>}
                   </div>
-                  <span className={p.ativo
+                  <span className={p.isActive
                     ? 'rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 shrink-0'
                     : 'rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 shrink-0'}>
-                    {p.ativo ? 'Ativo' : 'Inativo'}
+                    {p.isActive ? 'Ativo' : 'Inativo'}
                   </span>
                 </div>
                 <div className="flex gap-1">
@@ -187,13 +187,13 @@ export default function Profissionais() {
               <tbody>
                 {profissionais.map(p => (
                   <tr key={p.id} className="border-b">
-                    <td className="px-4 py-3 font-medium">{p.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.telefone ?? '—'}</td>
+                    <td className="px-4 py-3 font-medium">{p.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{p.phone ?? '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={p.ativo
+                      <span className={p.isActive
                         ? 'rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700'
                         : 'rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500'}>
-                        {p.ativo ? 'Ativo' : 'Inativo'}
+                        {p.isActive ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

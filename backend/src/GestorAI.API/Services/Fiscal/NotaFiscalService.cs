@@ -11,52 +11,52 @@ namespace GestorAI.API.Services.Fiscal;
 public class NotaFiscalService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<NotaFiscalResponse>> ListAsync(CancellationToken ct) =>
-        await db.NotasFiscais
-            .Include(n => n.Itens)
-            .OrderByDescending(n => n.CriadaEm)
+        await db.Invoices
+            .Include(n => n.Items)
+            .OrderByDescending(n => n.CreatedAt)
             .Select(n => ToResponse(n))
             .ToListAsync(ct);
 
     public async Task<NotaFiscalResponse> EmitirAsync(EmitirNotaFiscalRequest req, CancellationToken ct)
     {
-        var venda = await db.Vendas
-            .Include(v => v.Itens)
-                .ThenInclude(i => i.Produto)
-            .FirstOrDefaultAsync(v => v.Id == req.VendaId, ct)
-            ?? throw new AppException("Venda não encontrada", 404);
+        var venda = await db.Sales
+            .Include(v => v.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(v => v.Id == req.SaleId, ct)
+            ?? throw new AppException("Sale não encontrada", 404);
 
-        var modelo = req.Tipo.ToLower() switch
+        var modelo = req.Type.ToLower() switch
         {
             "nfce" => ModeloNF.NFCe,
             "nfe" => ModeloNF.NFe,
-            _ => throw new AppException("Tipo inválido. Use 'nfe' ou 'nfce'", 400)
+            _ => throw new AppException("Type inválido. Use 'nfe' ou 'nfce'", 400)
         };
 
-        var nota = new NotaFiscal
+        var nota = new Invoice
         {
             Id = Guid.NewGuid(),
-            EmpresaId = tenantContext.EmpresaId,
-            VendaId = req.VendaId,
-            Modelo = modelo,
+            CompanyId = tenantContext.CompanyId,
+            SaleId = req.SaleId,
+            Model = modelo,
             Status = StatusNF.Processando,
-            CriadaEm = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
         };
 
-        foreach (var item in venda.Itens)
+        foreach (var item in venda.Items)
         {
-            nota.Itens.Add(new NotaFiscalItem
+            nota.Items.Add(new InvoiceItem
             {
                 Id = Guid.NewGuid(),
-                EmpresaId = tenantContext.EmpresaId,
-                NotaFiscalId = nota.Id,
-                NomeProduto = item.Produto?.Nome ?? string.Empty,
-                Quantidade = item.Quantidade,
-                PrecoUnitario = item.PrecoUnitario,
+                CompanyId = tenantContext.CompanyId,
+                InvoiceId = nota.Id,
+                ProductName = item.Product?.Name ?? string.Empty,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
                 Total = item.Total,
             });
         }
 
-        db.NotasFiscais.Add(nota);
+        db.Invoices.Add(nota);
         await db.SaveChangesAsync(ct);
 
         return await ConsultarAsync(nota.Id, ct);
@@ -64,8 +64,8 @@ public class NotaFiscalService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<NotaFiscalResponse> CancelarAsync(Guid id, CancelarNotaFiscalRequest req, CancellationToken ct)
     {
-        var nota = await db.NotasFiscais
-            .Include(n => n.Itens)
+        var nota = await db.Invoices
+            .Include(n => n.Items)
             .FirstOrDefaultAsync(n => n.Id == id, ct)
             ?? throw new AppException("Nota fiscal não encontrada", 404);
 
@@ -73,8 +73,8 @@ public class NotaFiscalService(AppDbContext db, TenantContext tenantContext)
             throw new AppException("Apenas notas com status Autorizada ou Processando podem ser canceladas", 400);
 
         nota.Status = StatusNF.Cancelada;
-        nota.CanceladaEm = DateTime.UtcNow;
-        nota.MensagemErro = req.Motivo;
+        nota.CanceledAt = DateTime.UtcNow;
+        nota.ErrorMessage = req.Reason;
 
         await db.SaveChangesAsync(ct);
         return ToResponse(nota);
@@ -82,35 +82,35 @@ public class NotaFiscalService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<NotaFiscalResponse> ConsultarAsync(Guid id, CancellationToken ct)
     {
-        var nota = await db.NotasFiscais
-            .Include(n => n.Itens)
+        var nota = await db.Invoices
+            .Include(n => n.Items)
             .FirstOrDefaultAsync(n => n.Id == id, ct)
             ?? throw new AppException("Nota fiscal não encontrada", 404);
 
         return ToResponse(nota);
     }
 
-    private static NotaFiscalResponse ToResponse(NotaFiscal n) => new(
+    private static NotaFiscalResponse ToResponse(Invoice n) => new(
         n.Id,
-        n.VendaId,
-        n.Modelo.ToString(),
-        n.Numero,
-        n.Serie,
+        n.SaleId,
+        n.Model.ToString(),
+        n.Number,
+        n.Series,
         n.Status.ToString(),
-        n.ChaveAcesso,
-        n.Protocolo,
+        n.AccessKey,
+        n.Protocol,
         n.XmlUrl,
         n.PdfUrl,
-        n.MensagemErro,
-        n.AutorizadaEm,
-        n.CanceladaEm,
-        n.CriadaEm,
-        n.Itens.Select(i => new NotaFiscalItemResponse(
+        n.ErrorMessage,
+        n.AuthorizedAt,
+        n.CanceledAt,
+        n.CreatedAt,
+        n.Items.Select(i => new NotaFiscalItemResponse(
             i.Id,
-            i.NomeProduto,
+            i.ProductName,
             i.Ncm,
             i.Cfop,
-            i.Quantidade,
-            i.PrecoUnitario,
+            i.Quantity,
+            i.UnitPrice,
             i.Total)).ToArray());
 }

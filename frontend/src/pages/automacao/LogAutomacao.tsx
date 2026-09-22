@@ -58,17 +58,17 @@ export default function LogAutomacao() {
                   <td className="p-3 text-muted-foreground whitespace-nowrap">
                     {new Date(log.enviadoEm).toLocaleString('pt-BR')}
                   </td>
-                  <td className="p-3">{log.clienteNome}</td>
-                  <td className="p-3">{log.referencia}</td>
-                  <td className="p-3">{EVENTO_LABEL[log.tipoEvento]}</td>
+                  <td className="p-3">{log.customerName}</td>
+                  <td className="p-3">{log.reference}</td>
+                  <td className="p-3">{EVENTO_LABEL[log.eventType]}</td>
                   <td className="p-3">
-                    {log.sucesso
+                    {log.success
                       ? <Badge variant="secondary" className="bg-green-100 text-green-700">Enviado</Badge>
                       : <Badge variant="destructive">Falha</Badge>
                     }
                   </td>
                   <td className="p-3 text-muted-foreground text-xs max-w-[200px] truncate">
-                    {log.erroMsg ?? '—'}
+                    {log.errorMessage ?? '—'}
                   </td>
                 </tr>
               ))}

@@ -10,14 +10,14 @@ import { api } from '@/services/api'
 import type { CreateLancamentoRequest, CategoriaLancamentoResponse } from '@/types/financeiro'
 
 const schema = z.object({
-  tipo: z.enum(['Receita', 'Despesa']),
-  descricao: z.string().min(1, 'Descrição obrigatória').max(300),
-  valor: z.string()
+  type: z.enum(['Receita', 'Despesa']),
+  description: z.string().min(1, 'Descrição obrigatória').max(300),
+  amount: z.string()
     .min(1, 'Valor obrigatório')
     .refine(v => !isNaN(parseFloat(v)) && parseFloat(v) > 0, 'Valor deve ser maior que zero'),
-  dataVencimento: z.string().min(1, 'Data obrigatória'),
-  categoria: z.string().min(1, 'Categoria obrigatória').max(100),
-  observacao: z.string().optional(),
+  dueDate: z.string().min(1, 'Data obrigatória'),
+  category: z.string().min(1, 'Categoria obrigatória').max(100),
+  notes: z.string().optional(),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -28,21 +28,21 @@ function addMonths(dateStr: string, months: number): string {
 }
 
 function buildParcelas(
-  descricao: string,
+  description: string,
   valorParcela: number,
-  dataVencimento: string,
+  dueDate: string,
   numParcelas: number,
-  tipo: 'Receita' | 'Despesa',
-  categoria: string,
-  observacao?: string,
+  type: 'Receita' | 'Despesa',
+  category: string,
+  notes?: string,
 ): CreateLancamentoRequest[] {
   return Array.from({ length: numParcelas }, (_, i) => ({
-    tipo,
-    descricao: `${descricao} ${i + 1}/${numParcelas}`,
-    valor: valorParcela,
-    dataVencimento: addMonths(dataVencimento, i),
-    categoria,
-    observacao,
+    type,
+    description: `${description} ${i + 1}/${numParcelas}`,
+    amount: valorParcela,
+    dueDate: addMonths(dueDate, i),
+    category,
+    notes,
   }))
 }
 
@@ -59,13 +59,13 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
   const { register, watch, handleSubmit, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { tipo: defaultTipo ?? 'Despesa', ...defaultValues },
+      defaultValues: { type: defaultTipo ?? 'Despesa', ...defaultValues },
     })
 
-  const tipo = watch('tipo')
-  const descricaoWatch = watch('descricao')
-  const valorWatch = watch('valor')
-  const dataWatch = watch('dataVencimento')
+  const tipo = watch('type')
+  const descricaoWatch = watch('description')
+  const valorWatch = watch('amount')
+  const dataWatch = watch('dueDate')
   const { list: listCategorias } = useCategoriasLancamento()
   const [categorias, setCategorias] = useState<CategoriaLancamentoResponse[]>([])
   const [parcelado, setParcelado] = useState(false)
@@ -77,9 +77,9 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
   useEffect(() => {
     void listCategorias(tipo).then(cats => {
       setCategorias(cats)
-      if (!defaultValues?.categoria) setValue('categoria', '')
+      if (!defaultValues?.category) setValue('category', '')
     })
-  }, [tipo, listCategorias, setValue, defaultValues?.categoria])
+  }, [tipo, listCategorias, setValue, defaultValues?.category])
 
   const previewParcelas = parcelado && valorWatch && dataWatch && descricaoWatch
     ? buildParcelas(
@@ -94,19 +94,19 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
 
   async function handleFormSubmit(data: FormValues) {
     if (parcelado) {
-      const valorParcela = parseFloat(data.valor)
+      const valorParcela = parseFloat(data.amount)
       const parcelas = Array.from({ length: numParcelas }, (_, i) => ({
-        valor: valorParcela,
-        dataVencimento: addMonths(data.dataVencimento, i),
+        amount: valorParcela,
+        dueDate: addMonths(data.dueDate, i),
       }))
       setSaving(true)
       try {
         await api.post('/api/lancamentos/parcelado', {
-          tipo: data.tipo,
-          descricao: data.descricao,
-          categoria: data.categoria,
-          observacao: data.observacao,
-          parcelas,
+          type: data.type,
+          description: data.description,
+          category: data.category,
+          notes: data.notes,
+          installments: parcelas,
         })
         onAllCreated?.(numParcelas)
       } finally {
@@ -114,7 +114,7 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
         setProgresso(null)
       }
     } else {
-      await onSubmit({ ...data, valor: parseFloat(data.valor) })
+      await onSubmit({ ...data, amount: parseFloat(data.amount) })
       onAllCreated?.(1)
     }
   }
@@ -129,7 +129,7 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
         <div className="flex gap-2">
           {(['Despesa', 'Receita'] as const).map(t => (
             <label key={t} className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" value={t} {...register('tipo')} />
+              <input type="radio" value={t} {...register('type')} />
               <span className="text-sm">{t}</span>
             </label>
           ))}
@@ -138,36 +138,36 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
 
       <div className="grid gap-2">
         <Label>Descrição</Label>
-        <Input {...register('descricao')} placeholder="Ex: Aluguel" />
-        {errors.descricao && <p className="text-xs text-destructive">{errors.descricao.message}</p>}
+        <Input {...register('description')} placeholder="Ex: Aluguel" />
+        {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>{parcelado ? 'Valor por parcela (R$)' : 'Valor (R$)'}</Label>
-          <Input type="number" step="0.01" {...register('valor')} />
-          {errors.valor && <p className="text-xs text-destructive">{errors.valor.message}</p>}
+          <Input type="number" step="0.01" {...register('amount')} />
+          {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
         </div>
         <div className="grid gap-2">
           <Label>{parcelado ? 'Vencimento da 1ª parcela' : 'Vencimento'}</Label>
-          <Input type="date" {...register('dataVencimento')} />
-          {errors.dataVencimento && <p className="text-xs text-destructive">{errors.dataVencimento.message}</p>}
+          <Input type="date" {...register('dueDate')} />
+          {errors.dueDate && <p className="text-xs text-destructive">{errors.dueDate.message}</p>}
         </div>
       </div>
 
       <div className="grid gap-2">
         <Label>Categoria</Label>
-        <select {...register('categoria')}
+        <select {...register('category')}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
           <option value="">Selecione...</option>
-          {categorias.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+          {categorias.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
-        {errors.categoria && <p className="text-xs text-destructive">{errors.categoria.message}</p>}
+        {errors.category && <p className="text-xs text-destructive">{errors.category.message}</p>}
       </div>
 
       <div className="grid gap-2">
         <Label>Observação (opcional)</Label>
-        <Input {...register('observacao')} placeholder="Anotações" />
+        <Input {...register('notes')} placeholder="Anotações" />
       </div>
 
       {allowParcelamento && (
@@ -214,14 +214,14 @@ export default function LancamentoForm({ defaultTipo = 'Despesa', defaultValues,
                   <div className="divide-y max-h-48 overflow-y-auto">
                     {previewParcelas.map((p, i) => (
                       <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
-                        <span className="text-muted-foreground">{i + 1}ª · {fmtDate(p.dataVencimento)}</span>
-                        <span className="font-medium">{fmtVal(p.valor)}</span>
+                        <span className="text-muted-foreground">{i + 1}ª · {fmtDate(p.dueDate)}</span>
+                        <span className="font-medium">{fmtVal(p.amount)}</span>
                       </div>
                     ))}
                   </div>
                   <div className="bg-muted/30 px-3 py-1.5 flex justify-between text-xs font-semibold">
                     <span>Total ({numParcelas}x)</span>
-                    <span>{fmtVal(previewParcelas.reduce((s, p) => s + p.valor, 0))}</span>
+                    <span>{fmtVal(previewParcelas.reduce((s, p) => s + p.amount, 0))}</span>
                   </div>
                 </div>
               )}

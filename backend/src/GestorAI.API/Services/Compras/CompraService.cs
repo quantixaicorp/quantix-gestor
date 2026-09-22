@@ -16,22 +16,22 @@ public class CompraService(
     public async Task<List<CompraResponse>> ListAsync(
         string? status, Guid? fornecedorId, DateTime? de, DateTime? ate, CancellationToken ct)
     {
-        var query = db.Compras
-            .Include(c => c.Fornecedor)
-            .Include(c => c.Itens)
-            .Include(c => c.Parcelamento)
+        var query = db.Purchases
+            .Include(c => c.Supplier)
+            .Include(c => c.Items)
+            .Include(c => c.InstallmentPlan)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusCompra>(status, out var s))
             query = query.Where(c => c.Status == s);
         if (fornecedorId.HasValue)
-            query = query.Where(c => c.FornecedorId == fornecedorId.Value);
+            query = query.Where(c => c.SupplierId == fornecedorId.Value);
         if (de.HasValue)
-            query = query.Where(c => c.Data >= de.Value);
+            query = query.Where(c => c.Date >= de.Value);
         if (ate.HasValue)
-            query = query.Where(c => c.Data <= ate.Value);
+            query = query.Where(c => c.Date <= ate.Value);
 
-        var list = await query.OrderByDescending(c => c.Numero).ToListAsync(ct);
+        var list = await query.OrderByDescending(c => c.Number).ToListAsync(ct);
         return list.Select(ToResponse).ToList();
     }
 
@@ -40,31 +40,31 @@ public class CompraService(
         var hoje = DateTime.UtcNow.Date;
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-        var comprasMes = await db.Compras
-            .Where(c => c.Status == StatusCompra.Confirmada && c.Data >= inicioMes)
+        var comprasMes = await db.Purchases
+            .Where(c => c.Status == StatusCompra.Confirmada && c.Date >= inicioMes)
             .ToListAsync(ct);
 
-        var totalContasPagar = await db.Parcelamentos
-            .Include(p => p.Parcelas)
-            .Where(p => p.CompraId != null && p.Status != StatusParcelamento.Cancelado)
-            .SelectMany(p => p.Parcelas)
+        var totalContasPagar = await db.InstallmentPlans
+            .Include(p => p.Installments)
+            .Where(p => p.PurchaseId != null && p.Status != StatusParcelamento.Cancelado)
+            .SelectMany(p => p.Installments)
             .Where(l => l.Status == StatusLancamento.Pendente)
-            .SumAsync(l => (decimal?)l.Valor, ct) ?? 0m;
+            .SumAsync(l => (decimal?)l.Amount, ct) ?? 0m;
 
         return new CompraResumoResponse(
-            comprasMes.Sum(c => c.ValorTotal),
+            comprasMes.Sum(c => c.TotalAmount),
             comprasMes.Count,
             totalContasPagar);
     }
 
     public async Task<CompraResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var c = await db.Compras
-            .Include(x => x.Fornecedor)
-            .Include(x => x.Itens)
-            .Include(x => x.Parcelamento).ThenInclude(p => p!.Parcelas)
+        var c = await db.Purchases
+            .Include(x => x.Supplier)
+            .Include(x => x.Items)
+            .Include(x => x.InstallmentPlan).ThenInclude(p => p!.Installments)
             .FirstOrDefaultAsync(x => x.Id == id, ct)
-            ?? throw new AppException("Compra não encontrada.", 404);
+            ?? throw new AppException("Purchase não encontrada.", 404);
         return ToResponse(c);
     }
 
@@ -73,31 +73,31 @@ public class CompraService(
         await using var tx = await db.Database.BeginTransactionAsync(ct);
 
         var numero = await NextNumeroCompraAsync(ct);
-        var compra = new Compra
+        var compra = new Purchase
         {
-            EmpresaId = tenantContext.EmpresaId,
-            Numero = numero,
-            Data = req.Data,
-            FornecedorId = req.FornecedorId,
-            PedidoCompraId = req.PedidoCompraId,
-            TipoCompra = req.TipoCompra,
-            NumeroNota = req.NumeroNota,
-            CondicaoPagamento = req.CondicaoPagamento,
-            FormaPagamento = req.FormaPagamento,
+            CompanyId = tenantContext.CompanyId,
+            Number = numero,
+            Date = req.Date,
+            SupplierId = req.SupplierId,
+            PurchaseOrderId = req.PurchaseOrderId,
+            PurchaseType = req.PurchaseType,
+            NoteNumber = req.NoteNumber,
+            PaymentTerms = req.PaymentTerms,
+            PaymentMethod = req.PaymentMethod,
             Status = StatusCompra.Rascunho,
-            Observacoes = req.Observacoes,
+            Notes = req.Notes,
         };
 
-        foreach (var itemReq in req.Itens)
+        foreach (var itemReq in req.Items)
         {
             var item = BuildItem(itemReq);
-            item.EmpresaId = tenantContext.EmpresaId;
-            item.CompraId = compra.Id;
-            compra.Itens.Add(item);
+            item.CompanyId = tenantContext.CompanyId;
+            item.PurchaseId = compra.Id;
+            compra.Items.Add(item);
         }
 
-        compra.ValorTotal = compra.Itens.Sum(i => i.ValorTotal);
-        db.Compras.Add(compra);
+        compra.TotalAmount = compra.Items.Sum(i => i.TotalAmount);
+        db.Purchases.Add(compra);
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
@@ -106,35 +106,35 @@ public class CompraService(
 
     public async Task<CompraResponse> UpdateAsync(Guid id, UpdateCompraRequest req, CancellationToken ct)
     {
-        var compra = await db.Compras
-            .Include(c => c.Itens)
+        var compra = await db.Purchases
+            .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Compra não encontrada.", 404);
+            ?? throw new AppException("Purchase não encontrada.", 404);
 
         if (compra.Status != StatusCompra.Rascunho)
             throw new AppException("Apenas rascunhos podem ser editados.", 400);
 
-        compra.FornecedorId = req.FornecedorId;
-        compra.Data = req.Data;
-        compra.NumeroNota = req.NumeroNota;
-        compra.TipoCompra = req.TipoCompra;
-        compra.PedidoCompraId = req.PedidoCompraId;
-        compra.Observacoes = req.Observacoes;
-        compra.CondicaoPagamento = req.CondicaoPagamento;
-        compra.FormaPagamento = req.FormaPagamento;
+        compra.SupplierId = req.SupplierId;
+        compra.Date = req.Date;
+        compra.NoteNumber = req.NoteNumber;
+        compra.PurchaseType = req.PurchaseType;
+        compra.PurchaseOrderId = req.PurchaseOrderId;
+        compra.Notes = req.Notes;
+        compra.PaymentTerms = req.PaymentTerms;
+        compra.PaymentMethod = req.PaymentMethod;
 
-        db.ItensCompra.RemoveRange(compra.Itens);
-        compra.Itens.Clear();
+        db.PurchaseItems.RemoveRange(compra.Items);
+        compra.Items.Clear();
 
-        foreach (var itemReq in req.Itens)
+        foreach (var itemReq in req.Items)
         {
             var item = BuildItem(itemReq);
-            item.EmpresaId = tenantContext.EmpresaId;
-            item.CompraId = compra.Id;
-            compra.Itens.Add(item);
+            item.CompanyId = tenantContext.CompanyId;
+            item.PurchaseId = compra.Id;
+            compra.Items.Add(item);
         }
 
-        compra.ValorTotal = compra.Itens.Sum(i => i.ValorTotal);
+        compra.TotalAmount = compra.Items.Sum(i => i.TotalAmount);
         await db.SaveChangesAsync(ct);
 
         return await GetAsync(id, ct);
@@ -142,10 +142,10 @@ public class CompraService(
 
     public async Task<CompraResponse> ConfirmarAsync(Guid id, CancellationToken ct)
     {
-        var compra = await db.Compras
-            .Include(c => c.Itens)
+        var compra = await db.Purchases
+            .Include(c => c.Items)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Compra não encontrada.", 404);
+            ?? throw new AppException("Purchase não encontrada.", 404);
 
         if (compra.Status != StatusCompra.Rascunho)
             throw new AppException("Apenas rascunhos podem ser confirmados.", 400);
@@ -153,43 +153,43 @@ public class CompraService(
         await using var tx = await db.Database.BeginTransactionAsync(ct);
 
         // Atualizar estoque para itens com destino EstoqueParaVenda
-        foreach (var item in compra.Itens.Where(i => i.DestinoCompra == DestinoCompra.EstoqueParaVenda && i.ProdutoId.HasValue))
+        foreach (var item in compra.Items.Where(i => i.Destination == DestinoCompra.EstoqueParaVenda && i.ProductId.HasValue))
         {
-            var produto = await db.Produtos.FindAsync([item.ProdutoId!.Value], ct)
-                ?? throw new AppException($"Produto {item.ProdutoId} não encontrado.", 404);
+            var produto = await db.Products.FindAsync([item.ProductId!.Value], ct)
+                ?? throw new AppException($"Product {item.ProductId} não encontrado.", 404);
 
-            var novoEstoque = produto.EstoqueAtual + item.Quantidade;
+            var novoEstoque = produto.CurrentStock + item.Quantity;
             if (novoEstoque > 0)
-                produto.CustoMedio = (produto.EstoqueAtual * produto.CustoMedio + item.Quantidade * item.ValorUnitario) / novoEstoque;
+                produto.AverageCost = (produto.CurrentStock * produto.AverageCost + item.Quantity * item.UnitPrice) / novoEstoque;
 
-            produto.EstoqueAtual = novoEstoque;
-            produto.AtualizadoEm = DateTime.UtcNow;
+            produto.CurrentStock = novoEstoque;
+            produto.UpdatedAt = DateTime.UtcNow;
 
-            db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+            db.StockMovements.Add(new StockMovement
             {
-                EmpresaId = tenantContext.EmpresaId,
-                ProdutoId = item.ProdutoId!.Value,
-                Tipo = TipoMovimentacao.Entrada,
-                Quantidade = item.Quantidade,
-                Origem = OrigemMovimentacao.Compra,
-                Observacao = $"Compra #{compra.Numero}",
+                CompanyId = tenantContext.CompanyId,
+                ProductId = item.ProductId!.Value,
+                Type = TipoMovimentacao.Entrada,
+                Quantity = item.Quantity,
+                Source = OrigemMovimentacao.Compra,
+                Notes = $"Purchase #{compra.Number}",
             });
         }
 
         // Gerar parcelamento
-        var categoriaDefault = compra.Itens.Select(i => i.CategoriaFinanceira)
+        var categoriaDefault = compra.Items.Select(i => i.FinancialCategory)
             .FirstOrDefault(c => !string.IsNullOrEmpty(c)) ?? "Compras";
 
         var vencimentos = VencimentoCalculator.Calcular(
-            compra.CondicaoPagamento,
-            compra.Data,
-            compra.ValorTotal,
+            compra.PaymentTerms,
+            compra.Date,
+            compra.TotalAmount,
             null,
             null);
 
-        var descricao = $"Compra #{compra.Numero}";
+        var descricao = $"Purchase #{compra.Number}";
         var parcelamento = await parcelamentoService.CriarAsync(
-            compra.Id, descricao, compra.ValorTotal, vencimentos, categoriaDefault, ct);
+            compra.Id, descricao, compra.TotalAmount, vencimentos, categoriaDefault, ct);
 
         compra.Status = StatusCompra.Confirmada;
         await db.SaveChangesAsync(ct);
@@ -200,42 +200,42 @@ public class CompraService(
 
     public async Task<CompraResponse> CancelarAsync(Guid id, CancellationToken ct)
     {
-        var compra = await db.Compras
-            .Include(c => c.Itens)
-            .Include(c => c.Parcelamento)
+        var compra = await db.Purchases
+            .Include(c => c.Items)
+            .Include(c => c.InstallmentPlan)
             .FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new AppException("Compra não encontrada.", 404);
+            ?? throw new AppException("Purchase não encontrada.", 404);
 
         if (compra.Status == StatusCompra.Cancelada)
-            throw new AppException("Compra já está cancelada.", 400);
+            throw new AppException("Purchase já está cancelada.", 400);
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
 
         if (compra.Status == StatusCompra.Confirmada)
         {
             // Reverter estoque
-            foreach (var item in compra.Itens.Where(i => i.DestinoCompra == DestinoCompra.EstoqueParaVenda && i.ProdutoId.HasValue))
+            foreach (var item in compra.Items.Where(i => i.Destination == DestinoCompra.EstoqueParaVenda && i.ProductId.HasValue))
             {
-                var produto = await db.Produtos.FindAsync([item.ProdutoId!.Value], ct);
+                var produto = await db.Products.FindAsync([item.ProductId!.Value], ct);
                 if (produto is null) continue;
 
-                produto.EstoqueAtual -= item.Quantidade;
-                produto.AtualizadoEm = DateTime.UtcNow;
+                produto.CurrentStock -= item.Quantity;
+                produto.UpdatedAt = DateTime.UtcNow;
 
-                db.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+                db.StockMovements.Add(new StockMovement
                 {
-                    EmpresaId = tenantContext.EmpresaId,
-                    ProdutoId = item.ProdutoId!.Value,
-                    Tipo = TipoMovimentacao.Saida,
-                    Quantidade = item.Quantidade,
-                    Origem = OrigemMovimentacao.Manual,
-                    Observacao = $"Cancelamento Compra #{compra.Numero}",
+                    CompanyId = tenantContext.CompanyId,
+                    ProductId = item.ProductId!.Value,
+                    Type = TipoMovimentacao.Saida,
+                    Quantity = item.Quantity,
+                    Source = OrigemMovimentacao.Manual,
+                    Notes = $"Cancelamento Purchase #{compra.Number}",
                 });
             }
 
             // Cancelar parcelas
-            if (compra.Parcelamento is not null)
-                await parcelamentoService.CancelarParcelasAsync(compra.Parcelamento.Id, ct);
+            if (compra.InstallmentPlan is not null)
+                await parcelamentoService.CancelarParcelasAsync(compra.InstallmentPlan.Id, ct);
         }
 
         compra.Status = StatusCompra.Cancelada;
@@ -247,65 +247,65 @@ public class CompraService(
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var compra = await db.Compras.FindAsync([id], ct)
-            ?? throw new AppException("Compra não encontrada.", 404);
+        var compra = await db.Purchases.FindAsync([id], ct)
+            ?? throw new AppException("Purchase não encontrada.", 404);
 
         if (compra.Status != StatusCompra.Rascunho)
             throw new AppException("Apenas rascunhos podem ser excluídos.", 400);
 
-        db.Compras.Remove(compra);
+        db.Purchases.Remove(compra);
         await db.SaveChangesAsync(ct);
     }
 
     private async Task<int> NextNumeroCompraAsync(CancellationToken ct)
     {
-        var max = await db.Compras
-            .Where(c => c.EmpresaId == tenantContext.EmpresaId)
-            .MaxAsync(c => (int?)c.Numero, ct) ?? 0;
+        var max = await db.Purchases
+            .Where(c => c.CompanyId == tenantContext.CompanyId)
+            .MaxAsync(c => (int?)c.Number, ct) ?? 0;
         return max + 1;
     }
 
-    private static ItemCompra BuildItem(ItemCompraRequest req)
+    private static PurchaseItem BuildItem(ItemCompraRequest req)
     {
-        if (!Enum.TryParse<DestinoCompra>(req.DestinoCompra, out var destino))
-            throw new AppException($"DestinoCompra inválido: {req.DestinoCompra}", 400);
+        if (!Enum.TryParse<DestinoCompra>(req.Destination, out var destino))
+            throw new AppException($"DestinoCompra inválido: {req.Destination}", 400);
 
-        var total = req.Quantidade * req.ValorUnitario - req.Desconto + req.FreteRateado + req.Impostos;
+        var total = req.Quantity * req.UnitPrice - req.Discount + req.AllocatedFreight + req.Taxes;
 
-        return new ItemCompra
+        return new PurchaseItem
         {
             Id = Guid.NewGuid(),
-            ProdutoId = req.ProdutoId,
-            Descricao = req.Descricao,
-            DestinoCompra = destino,
-            Quantidade = req.Quantidade,
-            ValorUnitario = req.ValorUnitario,
-            Desconto = req.Desconto,
-            FreteRateado = req.FreteRateado,
-            Impostos = req.Impostos,
-            ValorTotal = total,
-            CategoriaFinanceira = req.CategoriaFinanceira,
-            CentroCusto = req.CentroCusto,
+            ProductId = req.ProductId,
+            Description = req.Description,
+            Destination = destino,
+            Quantity = req.Quantity,
+            UnitPrice = req.UnitPrice,
+            Discount = req.Discount,
+            AllocatedFreight = req.AllocatedFreight,
+            Taxes = req.Taxes,
+            TotalAmount = total,
+            FinancialCategory = req.FinancialCategory,
+            CostCenter = req.CostCenter,
         };
     }
 
-    private static CompraResponse ToResponse(Compra c)
+    private static CompraResponse ToResponse(Purchase c)
     {
-        var itens = c.Itens.Select(i => new ItemCompraResponse(
-            i.Id, i.ProdutoId, i.Descricao, i.DestinoCompra.ToString(),
-            i.Quantidade, i.ValorUnitario, i.Desconto, i.FreteRateado,
-            i.Impostos, i.ValorTotal, i.CategoriaFinanceira, i.CentroCusto)).ToList();
+        var itens = c.Items.Select(i => new ItemCompraResponse(
+            i.Id, i.ProductId, i.Description, i.Destination.ToString(),
+            i.Quantity, i.UnitPrice, i.Discount, i.AllocatedFreight,
+            i.Taxes, i.TotalAmount, i.FinancialCategory, i.CostCenter)).ToList();
 
-        ParcelamentoResumoResponse? parcelamentoResumo = c.Parcelamento is null ? null :
-            new(c.Parcelamento.Id, c.Parcelamento.Descricao, c.Parcelamento.ValorTotal,
-                c.Parcelamento.QtdParcelas, c.Parcelamento.Status.ToString());
+        ParcelamentoResumoResponse? parcelamentoResumo = c.InstallmentPlan is null ? null :
+            new(c.InstallmentPlan.Id, c.InstallmentPlan.Description, c.InstallmentPlan.TotalAmount,
+                c.InstallmentPlan.InstallmentCount, c.InstallmentPlan.Status.ToString());
 
         return new CompraResponse(
-            c.Id, c.Numero, c.Data, c.FornecedorId,
-            c.Fornecedor?.Nome ?? "",
-            c.PedidoCompraId, c.TipoCompra, c.NumeroNota,
-            c.CondicaoPagamento, c.FormaPagamento,
-            c.Status.ToString(), c.ValorTotal, c.Observacoes,
-            c.CriadaEm, itens, parcelamentoResumo);
+            c.Id, c.Number, c.Date, c.SupplierId,
+            c.Supplier?.Name ?? "",
+            c.PurchaseOrderId, c.PurchaseType, c.NoteNumber,
+            c.PaymentTerms, c.PaymentMethod,
+            c.Status.ToString(), c.TotalAmount, c.Notes,
+            c.CreatedAt, itens, parcelamentoResumo);
     }
 }

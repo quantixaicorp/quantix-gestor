@@ -17,131 +17,131 @@ public class AssinaturaService(
 {
     public async Task<List<AssinaturaListItem>> ListAsync(Guid? planoId, string? status, CancellationToken ct)
     {
-        var query = db.AssinaturasCliente
-            .Include(a => a.Cliente)
-            .Include(a => a.Plano)
+        var query = db.CustomerSubscriptions
+            .Include(a => a.Customer)
+            .Include(a => a.Plan)
             .AsQueryable();
 
         if (planoId.HasValue)
-            query = query.Where(a => a.PlanoAssinaturaId == planoId.Value);
+            query = query.Where(a => a.SubscriptionPlanId == planoId.Value);
 
         if (status != null && Enum.TryParse<AssinaturaStatus>(status, out var s))
             query = query.Where(a => a.Status == s);
 
         return await query
-            .OrderByDescending(a => a.CriadoEm)
+            .OrderByDescending(a => a.CreatedAt)
             .Select(a => new AssinaturaListItem(
-                a.Id, a.Cliente!.Nome, a.Plano!.Nome,
-                a.Status.ToString(), a.DataRenovacao, a.CicloAtual))
+                a.Id, a.Customer!.Name, a.Plan!.Name,
+                a.Status.ToString(), a.RenewalDate, a.CurrentCycle))
             .ToListAsync(ct);
     }
 
     public async Task<AssinaturaResponse> GetAsync(Guid id, CancellationToken ct)
     {
-        var a = await db.AssinaturasCliente
-            .Include(x => x.Cliente)
-            .Include(x => x.Plano)
+        var a = await db.CustomerSubscriptions
+            .Include(x => x.Customer)
+            .Include(x => x.Plan)
             .FirstOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new AppException("Assinatura não encontrada.", 404);
 
         return new AssinaturaResponse(
-            a.Id, a.Cliente!.Nome, a.Cliente.Whatsapp,
-            a.PlanoAssinaturaId, a.Plano!.Nome, a.Plano.Preco,
-            a.Status.ToString(), a.DataInicio, a.DataRenovacao,
-            a.CicloAtual, a.ContratoId);
+            a.Id, a.Customer!.Name, a.Customer.WhatsApp,
+            a.SubscriptionPlanId, a.Plan!.Name, a.Plan.Price,
+            a.Status.ToString(), a.StartDate, a.RenewalDate,
+            a.CurrentCycle, a.ContractId);
     }
 
     public async Task<AssinarResponse> AssinarAsync(
         Guid empresaId, Guid planoId, AssinarRequest req, CancellationToken ct)
     {
-        tenantContext.EmpresaId = empresaId;
+        tenantContext.CompanyId = empresaId;
 
         var (assinaturaId, contratoId, cobrancaId) = await AssinarSemAsaasAsync(empresaId, planoId, req, ct);
 
         var asaasResult = await cobrancaService.EnviarAsaasAsync(
             cobrancaId, new EnviarAsaasRequest("PIX"), ct);
 
-        var cobranca = await db.Cobrancas.FindAsync([cobrancaId], ct);
+        var cobranca = await db.Charges.FindAsync([cobrancaId], ct);
         return new AssinarResponse(
             assinaturaId, contratoId, cobrancaId,
             asaasResult.PixQrCode, asaasResult.BoletoUrl,
-            cobranca!.Valor,
-            cobranca.DataVencimento);
+            cobranca!.Amount,
+            cobranca.DueDate);
     }
 
-    public async Task<(Guid AssinaturaId, Guid ContratoId, Guid CobrancaId)> AssinarSemAsaasAsync(
+    public async Task<(Guid AssinaturaId, Guid ContractId, Guid ChargeId)> AssinarSemAsaasAsync(
         Guid empresaId, Guid planoId, AssinarRequest req, CancellationToken ct)
     {
-        tenantContext.EmpresaId = empresaId;
+        tenantContext.CompanyId = empresaId;
 
-        var plano = await db.PlanosAssinatura.Include(p => p.Itens)
+        var plano = await db.SubscriptionPlans.Include(p => p.Items)
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == planoId && p.EmpresaId == empresaId && p.Ativo, ct)
-            ?? throw new AppException("Plano não encontrado.", 404);
+            .FirstOrDefaultAsync(p => p.Id == planoId && p.CompanyId == empresaId && p.IsActive, ct)
+            ?? throw new AppException("Plan não encontrado.", 404);
 
-        var cliente = await db.Clientes.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.EmpresaId == empresaId && c.Whatsapp == req.Whatsapp, ct);
+        var cliente = await db.Customers.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.CompanyId == empresaId && c.WhatsApp == req.WhatsApp, ct);
         if (cliente is null)
         {
-            cliente = new Cliente { EmpresaId = empresaId, Nome = req.Nome, Whatsapp = req.Whatsapp, Email = req.Email };
-            db.Clientes.Add(cliente);
+            cliente = new Customer { CompanyId = empresaId, Name = req.Name, WhatsApp = req.WhatsApp, Email = req.Email };
+            db.Customers.Add(cliente);
             await db.SaveChangesAsync(ct);
         }
 
-        var numero = (await db.Contratos.IgnoreQueryFilters()
-            .Where(c => c.EmpresaId == empresaId)
-            .MaxAsync(c => (int?)c.Numero, ct) ?? 0) + 1;
+        var numero = (await db.Contracts.IgnoreQueryFilters()
+            .Where(c => c.CompanyId == empresaId)
+            .MaxAsync(c => (int?)c.Number, ct) ?? 0) + 1;
 
-        var objeto = string.Join(", ", plano.Itens.Select(i =>
-            i.QuantidadePorCiclo == 0 ? $"{i.Descricao} (ilimitado)" : $"{i.QuantidadePorCiclo}x {i.Descricao}"));
+        var objeto = string.Join(", ", plano.Items.Select(i =>
+            i.QuantityPerCycle == 0 ? $"{i.Description} (ilimitado)" : $"{i.QuantityPerCycle}x {i.Description}"));
 
-        var contrato = new Contrato
+        var contrato = new Contract
         {
-            EmpresaId = empresaId,
-            Numero = numero,
-            ClienteId = cliente.Id,
-            Titulo = $"Assinatura — {plano.Nome}",
-            Objeto = objeto,
-            TipoCobranca = TipoCobranca.Recorrente,
-            Valor = plano.Preco,
-            DataInicio = DateOnly.FromDateTime(DateTime.UtcNow),
-            Periodicidade = plano.Periodicidade,
-            DiaVencimento = DateTime.UtcNow.Day,
+            CompanyId = empresaId,
+            Number = numero,
+            CustomerId = cliente.Id,
+            Title = $"Assinatura — {plano.Name}",
+            Subject = objeto,
+            ChargeType = TipoCobranca.Recorrente,
+            Amount = plano.Price,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            Frequency = plano.Frequency,
+            DueDay = DateTime.UtcNow.Day,
             Status = ContratoStatus.Ativo,
         };
-        contrato.Itens.Add(new ContratoItem
+        contrato.Items.Add(new ContractItem
         {
-            Descricao = plano.Nome,
-            Quantidade = 1,
-            ValorUnitario = plano.Preco,
+            Description = plano.Name,
+            Quantity = 1,
+            UnitPrice = plano.Price,
         });
-        db.Contratos.Add(contrato);
+        db.Contracts.Add(contrato);
         await db.SaveChangesAsync(ct);
 
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        var assinatura = new AssinaturaCliente
+        var assinatura = new CustomerSubscription
         {
-            EmpresaId = empresaId,
-            ClienteId = cliente.Id,
-            PlanoAssinaturaId = plano.Id,
-            ContratoId = contrato.Id,
-            DataInicio = hoje,
-            DataRenovacao = hoje.AddMonths(1),
+            CompanyId = empresaId,
+            CustomerId = cliente.Id,
+            SubscriptionPlanId = plano.Id,
+            ContractId = contrato.Id,
+            StartDate = hoje,
+            RenewalDate = hoje.AddMonths(1),
         };
-        db.AssinaturasCliente.Add(assinatura);
+        db.CustomerSubscriptions.Add(assinatura);
 
-        contrato.AssinaturaClienteId = assinatura.Id;
+        contrato.CustomerSubscriptionId = assinatura.Id;
 
-        var cobranca = new Cobranca
+        var cobranca = new Charge
         {
-            EmpresaId = empresaId,
-            ClienteId = cliente.Id,
-            ContratoId = contrato.Id,
-            Referencia = $"Assinatura {plano.Nome} — {hoje:MMMM/yyyy}",
-            Valor = plano.Preco,
-            DataVencimento = hoje.AddDays(3),
+            CompanyId = empresaId,
+            CustomerId = cliente.Id,
+            ContractId = contrato.Id,
+            Reference = $"Assinatura {plano.Name} — {hoje:MMMM/yyyy}",
+            Amount = plano.Price,
+            DueDate = hoje.AddDays(3),
         };
-        db.Cobrancas.Add(cobranca);
+        db.Charges.Add(cobranca);
         await db.SaveChangesAsync(ct);
 
         return (assinatura.Id, contrato.Id, cobranca.Id);
@@ -149,19 +149,19 @@ public class AssinaturaService(
 
     public async Task CancelarAsync(Guid id, CancellationToken ct)
     {
-        var assinatura = await db.AssinaturasCliente
+        var assinatura = await db.CustomerSubscriptions
             .FirstOrDefaultAsync(a => a.Id == id, ct)
             ?? throw new AppException("Assinatura não encontrada.", 404);
 
         assinatura.Status = AssinaturaStatus.Cancelada;
 
-        var contrato = await db.Contratos.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Id == assinatura.ContratoId, ct);
+        var contrato = await db.Contracts.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == assinatura.ContractId, ct);
         if (contrato != null && contrato.Status == ContratoStatus.Ativo)
             contrato.Status = ContratoStatus.Encerrado;
 
-        var cobrancasPendentes = await db.Cobrancas.IgnoreQueryFilters()
-            .Where(c => c.ContratoId == assinatura.ContratoId && c.Status == CobrancaStatus.Pendente)
+        var cobrancasPendentes = await db.Charges.IgnoreQueryFilters()
+            .Where(c => c.ContractId == assinatura.ContractId && c.Status == CobrancaStatus.Pendente)
             .ToListAsync(ct);
         foreach (var cob in cobrancasPendentes)
             cob.Status = CobrancaStatus.Cancelado;

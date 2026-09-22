@@ -9,10 +9,10 @@ public static class AdminEndpoints
 {
     private static readonly string[] Tables =
     [
-        "Produtos", "Categorias", "MovimentacoesEstoque", "Vendas", "ItensVenda",
+        "Produtos", "Categorias", "MovimentacoesEstoque", "Vendas", "SaleItems",
         "Clientes", "Lancamentos", "Orcamentos", "OrcamentoItens", "Profissionais",
-        "DisponibilidadeSemanais", "BloqueiosAgenda", "Agendamentos", "NotasFiscais",
-        "NotaFiscalItens", "ConfiguracoesEmpresa", "Contratos", "Cobrancas", "Fornecedores",
+        "DisponibilidadeSemanais", "BloqueiosAgenda", "Appointments", "NotasFiscais",
+        "NotaFiscalItens", "ConfiguracoesEmpresa", "Contratos", "Charges", "Fornecedores",
     ];
 
     public static void MapAdmin(this IEndpointRouteBuilder app)
@@ -46,7 +46,7 @@ public static class AdminEndpoints
                 // table is from a hardcoded constant array — no injection risk
 #pragma warning disable EF1002
                 var rows = await db.Database.ExecuteSqlRawAsync(
-                    $"""UPDATE "{table}" SET "EmpresaId" = @p0 WHERE "EmpresaId" = @p1""",
+                    $"""UPDATE "{table}" SET "CompanyId" = @p0 WHERE "CompanyId" = @p1""",
                     id, Guid.Empty);
 #pragma warning restore EF1002
                 if (rows > 0) updated[table] = rows;

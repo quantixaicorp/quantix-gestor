@@ -11,20 +11,20 @@ public class UpdateLancamentoValidator : AbstractValidator<UpdateLancamentoReque
 {
     public UpdateLancamentoValidator(AppDbContext db, TenantContext tenantContext)
     {
-        RuleFor(x => x.Tipo)
+        RuleFor(x => x.Type)
             .Must(t => t is "Receita" or "Despesa")
-            .WithMessage("Tipo deve ser 'Receita' ou 'Despesa'.");
-        RuleFor(x => x.Descricao).NotEmpty().MaximumLength(300);
-        RuleFor(x => x.Valor).GreaterThan(0);
-        RuleFor(x => x.DataVencimento).NotEmpty();
-        RuleFor(x => x.Categoria)
+            .WithMessage("Type deve ser 'Receita' ou 'Despesa'.");
+        RuleFor(x => x.Description).NotEmpty().MaximumLength(300);
+        RuleFor(x => x.Amount).GreaterThan(0);
+        RuleFor(x => x.DueDate).NotEmpty();
+        RuleFor(x => x.Category)
             .NotEmpty().MaximumLength(100)
             .MustAsync(async (request, categoria, ct) =>
             {
-                if (!Enum.TryParse<TipoLancamento>(request.Tipo, out var tipo)) return false;
-                return await db.CategoriasLancamento
-                    .AnyAsync(c => c.Nome == categoria && c.Tipo == tipo, ct);
+                if (!Enum.TryParse<TipoLancamento>(request.Type, out var tipo)) return false;
+                return await db.TransactionCategories
+                    .AnyAsync(c => c.Name == categoria && c.Type == tipo, ct);
             })
-            .WithMessage("Categoria não encontrada para o tipo informado.");
+            .WithMessage("Category não encontrada para o tipo informado.");
     }
 }

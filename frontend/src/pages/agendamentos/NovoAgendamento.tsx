@@ -125,6 +125,9 @@ export default function NovoAgendamento() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [saving, setSaving] = useState(false)
   const [erros, setErros] = useState<Record<string, string>>({})
+  const [sugestoes, setSugestoes] = useState<typeof clientes>([])
+  const [showSugestoes, setShowSugestoes] = useState(false)
+  const nomeSugRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { void listProfs() }, [listProfs])
   useEffect(() => { void listProdutos() }, [listProdutos])
@@ -133,14 +136,44 @@ export default function NovoAgendamento() {
   useEffect(() => {
     if (!telefone || telefone.replace(/\D/g, '').length < 10) return
     const numeros = telefone.replace(/\D/g, '')
-    const encontrado = clientes.find(c => c.whatsapp?.replace(/\D/g, '') === numeros)
+    const encontrado = clientes.find(c => c.whatsApp?.replace(/\D/g, '') === numeros)
     if (encontrado) {
-      setClienteNome(encontrado.nome)
+      setClienteNome(encontrado.name)
       setClienteId(encontrado.id)
+      setSugestoes([])
+      setShowSugestoes(false)
     } else {
       setClienteId(undefined)
     }
   }, [telefone, clientes])
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (nomeSugRef.current && !nomeSugRef.current.contains(e.target as Node))
+        setShowSugestoes(false)
+    }
+    if (showSugestoes) document.addEventListener('mousedown', fechar)
+    return () => document.removeEventListener('mousedown', fechar)
+  }, [showSugestoes])
+
+  function handleNomeChange(nome: string) {
+    setClienteNome(nome)
+    setClienteId(undefined)
+    if (nome.trim().length < 2) { setSugestoes([]); setShowSugestoes(false); return }
+    const filtrados = clientes
+      .filter(c => c.name.toLowerCase().includes(nome.toLowerCase()))
+      .slice(0, 6)
+    setSugestoes(filtrados)
+    setShowSugestoes(filtrados.length > 0)
+  }
+
+  function selecionarSugestao(c: typeof clientes[0]) {
+    setClienteNome(c.name)
+    setClienteId(c.id)
+    if (c.whatsApp) setTelefone(c.whatsApp)
+    setSugestoes([])
+    setShowSugestoes(false)
+  }
 
   useEffect(() => {
     if (!profissionalId || !servicoId || !data) {
@@ -155,8 +188,8 @@ export default function NovoAgendamento() {
       .finally(() => setLoadingSlots(false))
   }, [profissionalId, servicoId, data, slots])
 
-  const servicos = produtos.filter(p => (p.duracaoMinutos ?? 0) > 0 && p.ativo)
-  const profissionaisAtivos = profissionais.filter(p => p.ativo)
+  const servicos = produtos.filter(p => (p.durationMinutes ?? 0) > 0 && p.isActive)
+  const profissionaisAtivos = profissionais.filter(p => p.isActive)
 
   async function salvar() {
     const novosErros: Record<string, string> = {}
@@ -175,13 +208,13 @@ export default function NovoAgendamento() {
     setSaving(true)
     try {
       await create({
-        profissionalId,
-        servicoId,
-        dataHoraInicio: slot,
-        clienteNome: clienteNome.trim(),
-        clienteTelefone: telefone.trim(),
-        clienteId,
-        observacao: observacao.trim() || undefined,
+        professionalId: profissionalId,
+        serviceId: servicoId,
+        startAt: slot,
+        customerName: clienteNome.trim(),
+        customerPhone: telefone.trim(),
+        customerId: clienteId,
+        notes: observacao.trim() || undefined,
       })
       navigate('/agendamentos')
     } catch (e) {
@@ -205,7 +238,7 @@ export default function NovoAgendamento() {
         >
           <option value="">Selecionar profissional...</option>
           {profissionaisAtivos.map(p => (
-            <option key={p.id} value={p.id}>{p.nome}</option>
+            <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
         {erros.profissional && <p className="text-xs text-destructive">{erros.profissional}</p>}
@@ -220,7 +253,7 @@ export default function NovoAgendamento() {
         >
           <option value="">Selecionar serviço...</option>
           {servicos.map(s => (
-            <option key={s.id} value={s.id}>{s.nome} ({s.duracaoMinutos} min)</option>
+            <option key={s.id} value={s.id}>{s.name} ({s.durationMinutes} min)</option>
           ))}
         </select>
         {erros.servico && <p className="text-xs text-destructive">{erros.servico}</p>}
@@ -267,13 +300,31 @@ export default function NovoAgendamento() {
 
       <div className="space-y-2">
         <Label>Nome do Cliente *</Label>
-        <Input
-          value={clienteNome}
-          onChange={e => setClienteNome(e.target.value)}
-          placeholder="Nome completo"
-        />
+        <div className="relative" ref={nomeSugRef}>
+          <Input
+            value={clienteNome}
+            onChange={e => handleNomeChange(e.target.value)}
+            placeholder="Digite o nome para buscar..."
+            autoComplete="off"
+          />
+          {showSugestoes && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border bg-popover shadow-lg overflow-hidden">
+              {sugestoes.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onMouseDown={e => { e.preventDefault(); selecionarSugestao(c) }}
+                  className="w-full flex flex-col px-3 py-2 text-sm text-left hover:bg-accent transition-colors"
+                >
+                  <span className="font-medium">{c.name}</span>
+                  {c.whatsApp && <span className="text-xs text-muted-foreground">{c.whatsApp}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {clienteId && (
-          <p className="text-xs text-muted-foreground">Cliente existente encontrado.</p>
+          <p className="text-xs text-green-600 dark:text-green-400">✓ Cliente existente vinculado</p>
         )}
         {erros.clienteNome && <p className="text-xs text-destructive">{erros.clienteNome}</p>}
       </div>

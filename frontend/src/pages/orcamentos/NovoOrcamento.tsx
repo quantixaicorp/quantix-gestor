@@ -35,19 +35,19 @@ export default function NovoOrcamento() {
     if (!produtoId) return
     const produto = produtos.find(p => p.id === produtoId)
     if (!produto) return
-    const jaExiste = itens.find(i => i.produtoId === produtoId)
+    const jaExiste = itens.find(i => i.productId === produtoId)
     if (jaExiste) return
     setItens(prev => [...prev, {
-      tipo: 'Produto',
-      produtoId,
-      descricao: produto.nome,
-      quantidade: 1,
-      valorUnitario: produto.precoVenda,
+      type: 'Produto',
+      productId: produtoId,
+      description: produto.name,
+      quantity: 1,
+      unitPrice: produto.salePrice,
     }])
   }
 
   function adicionarLivre() {
-    setItens(prev => [...prev, { tipo: 'Livre', descricao: '', quantidade: 1, valorUnitario: 0 }])
+    setItens(prev => [...prev, { type: 'Livre', description: '', quantity: 1, unitPrice: 0 }])
   }
 
   function atualizarItem(index: number, campo: keyof OrcamentoItemRequest, valor: string | number) {
@@ -60,7 +60,7 @@ export default function NovoOrcamento() {
     setItens(prev => prev.filter((_, i) => i !== index))
   }
 
-  const total = itens.reduce((acc, i) => acc + i.quantidade * i.valorUnitario, 0)
+  const total = itens.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -71,11 +71,11 @@ export default function NovoOrcamento() {
     setSalvando(true)
     try {
       const result = await create({
-        clienteId: clienteId || undefined,
-        titulo: titulo.trim(),
-        dataValidade,
-        observacao: observacao.trim() || undefined,
-        itens,
+        customerId: clienteId || undefined,
+        title: titulo.trim(),
+        expirationDate: dataValidade,
+        notes: observacao.trim() || undefined,
+        items: itens,
       })
       navigate(`/orcamentos/${result.id}`)
     } catch (e) {
@@ -103,7 +103,7 @@ export default function NovoOrcamento() {
               <select value={clienteId} onChange={e => setClienteId(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
                 <option value="">Sem cliente</option>
-                {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="grid gap-2">
@@ -130,8 +130,8 @@ export default function NovoOrcamento() {
               <select onChange={e => { adicionarProduto(e.target.value); e.target.value = '' }}
                 className="h-9 rounded-md border border-input bg-transparent px-3 text-sm">
                 <option value="">+ Produto do estoque</option>
-                {produtos.filter(p => p.ativo).map(p =>
-                  <option key={p.id} value={p.id}>{p.nome} — {fmt(p.precoVenda)}</option>
+                {produtos.filter(p => p.isActive).map(p =>
+                  <option key={p.id} value={p.id}>{p.name} — {fmt(p.salePrice)}</option>
                 )}
               </select>
               <Button type="button" variant="outline" size="sm" onClick={adicionarLivre}>
@@ -150,33 +150,33 @@ export default function NovoOrcamento() {
             {itens.map((item, i) => (
               <div key={i} className="flex items-center gap-3 border-b px-4 py-3 last:border-0">
                 <span className="w-16 rounded bg-muted px-2 py-0.5 text-center text-xs font-medium">
-                  {item.tipo}
+                  {item.type}
                 </span>
                 <Input
                   className="flex-1"
-                  value={item.descricao}
-                  onChange={e => atualizarItem(i, 'descricao', e.target.value)}
+                  value={item.description}
+                  onChange={e => atualizarItem(i, 'description', e.target.value)}
                   placeholder="Descrição"
-                  disabled={item.tipo === 'Produto'}
+                  disabled={item.type === 'Produto'}
                 />
                 <Input
                   className="w-20"
                   type="number"
                   min="0.01"
                   step="0.01"
-                  value={item.quantidade}
-                  onChange={e => atualizarItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                  value={item.quantity}
+                  onChange={e => atualizarItem(i, 'quantity', parseFloat(e.target.value) || 0)}
                 />
                 <Input
                   className="w-28"
                   type="number"
                   min="0"
                   step="0.01"
-                  value={item.valorUnitario}
-                  onChange={e => atualizarItem(i, 'valorUnitario', parseFloat(e.target.value) || 0)}
+                  value={item.unitPrice}
+                  onChange={e => atualizarItem(i, 'unitPrice', parseFloat(e.target.value) || 0)}
                 />
                 <span className="w-28 text-right text-sm font-medium">
-                  {fmt(item.quantidade * item.valorUnitario)}
+                  {fmt(item.quantity * item.unitPrice)}
                 </span>
                 <Button type="button" variant="ghost" size="sm" onClick={() => removerItem(i)}>
                   <Trash2 size={14} />

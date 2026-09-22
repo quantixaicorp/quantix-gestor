@@ -9,24 +9,24 @@ namespace GestorAI.API.Services.Estoque;
 public class CategoriaService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<CategoriaResponse>> ListAsync(CancellationToken ct) =>
-        await db.Categorias
-            .OrderBy(c => c.Nome)
-            .Select(c => new CategoriaResponse(c.Id, c.Nome))
+        await db.Categories
+            .OrderBy(c => c.Name)
+            .Select(c => new CategoriaResponse(c.Id, c.Name))
             .ToListAsync(ct);
 
     public async Task<CategoriaResponse> CreateAsync(CreateCategoriaRequest req, CancellationToken ct)
     {
-        var categoria = new Categoria { Nome = req.Nome, EmpresaId = tenantContext.EmpresaId };
-        db.Categorias.Add(categoria);
+        var categoria = new Category { Name = req.Name, CompanyId = tenantContext.CompanyId };
+        db.Categories.Add(categoria);
         await db.SaveChangesAsync(ct);
-        return new CategoriaResponse(categoria.Id, categoria.Nome);
+        return new CategoriaResponse(categoria.Id, categoria.Name);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var categoria = await db.Categorias.FirstOrDefaultAsync(c => c.Id == id, ct)
-            ?? throw new InvalidOperationException("Categoria não encontrada");
-        db.Categorias.Remove(categoria);
+        var categoria = await db.Categories.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new InvalidOperationException("Category não encontrada");
+        db.Categories.Remove(categoria);
         await db.SaveChangesAsync(ct);
     }
 }

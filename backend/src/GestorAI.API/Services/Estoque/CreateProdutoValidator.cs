@@ -7,12 +7,12 @@ public class CreateProdutoValidator : AbstractValidator<CreateProdutoRequest>
 {
     public CreateProdutoValidator()
     {
-        RuleFor(x => x.Nome).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.PrecoVenda).GreaterThan(0);
-        RuleFor(x => x.CustoMedio).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.EstoqueAtual).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.EstoqueMinimo).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.CategoriaId).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.SalePrice).GreaterThan(0);
+        RuleFor(x => x.AverageCost).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.CurrentStock).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.MinimumStock).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.CategoryId).NotEmpty();
     }
 }
 
@@ -20,8 +20,8 @@ public class EntradaEstoqueValidator : AbstractValidator<EntradaEstoqueRequest>
 {
     public EntradaEstoqueValidator()
     {
-        RuleFor(x => x.ProdutoId).NotEmpty();
-        RuleFor(x => x.Quantidade).GreaterThan(0);
+        RuleFor(x => x.ProductId).NotEmpty();
+        RuleFor(x => x.Quantity).GreaterThan(0);
         RuleFor(x => x.CustoUnitario).GreaterThanOrEqualTo(0).When(x => x.CustoUnitario.HasValue);
     }
 }

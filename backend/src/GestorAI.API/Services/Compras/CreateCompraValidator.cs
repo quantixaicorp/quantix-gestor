@@ -10,26 +10,26 @@ public class CreateCompraValidator : AbstractValidator<CreateCompraRequest>
 
     public CreateCompraValidator()
     {
-        RuleFor(x => x.FornecedorId).NotEmpty();
-        RuleFor(x => x.Data).NotEmpty();
-        RuleFor(x => x.TipoCompra).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.CondicaoPagamento).Must(v => CondicoesPagamento.Contains(v))
+        RuleFor(x => x.SupplierId).NotEmpty();
+        RuleFor(x => x.Date).NotEmpty();
+        RuleFor(x => x.PurchaseType).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.PaymentTerms).Must(v => CondicoesPagamento.Contains(v))
             .WithMessage("Condição de pagamento inválida.");
-        RuleFor(x => x.FormaPagamento).NotEmpty();
-        RuleFor(x => x.Itens).NotEmpty().WithMessage("A compra deve ter ao menos um item.");
-        RuleForEach(x => x.Itens).ChildRules(item =>
+        RuleFor(x => x.PaymentMethod).NotEmpty();
+        RuleFor(x => x.Items).NotEmpty().WithMessage("A compra deve ter ao menos um item.");
+        RuleForEach(x => x.Items).ChildRules(item =>
         {
-            item.RuleFor(i => i.Descricao).NotEmpty().MaximumLength(200);
-            item.RuleFor(i => i.Quantidade).GreaterThan(0);
-            item.RuleFor(i => i.ValorUnitario).GreaterThanOrEqualTo(0);
+            item.RuleFor(i => i.Description).NotEmpty().MaximumLength(200);
+            item.RuleFor(i => i.Quantity).GreaterThan(0);
+            item.RuleFor(i => i.UnitPrice).GreaterThanOrEqualTo(0);
         });
-        RuleFor(x => x.QtdParcelas)
+        RuleFor(x => x.InstallmentCount)
             .GreaterThan(0)
-            .When(x => x.CondicaoPagamento == "Parcelado")
+            .When(x => x.PaymentTerms == "Parcelado")
             .WithMessage("Informe a quantidade de parcelas.");
         RuleFor(x => x.ParcelasPersonalizadas)
             .NotEmpty()
-            .When(x => x.CondicaoPagamento == "Personalizado")
+            .When(x => x.PaymentTerms == "Personalizado")
             .WithMessage("Informe as parcelas personalizadas.");
     }
 }

@@ -4,28 +4,28 @@ export type Periodicidade = 'Mensal' | 'Trimestral' | 'Semestral' | 'Anual'
 
 export interface ContratoItemResponse {
   id: string
-  descricao: string
-  quantidade: number
-  valorUnitario: number
+  description: string
+  quantity: number
+  unitPrice: number
 }
 
 export interface ContratoResponse {
   id: string
-  numero: number
-  clienteNome: string
+  number: number
+  customerName: string
   clienteWhatsapp: string
-  titulo: string
-  objeto: string
-  tipoCobranca: TipoCobranca
-  valor: number
-  dataInicio: string
-  dataFim: string | null
-  periodicidade: Periodicidade
-  diaVencimento: number
+  title: string
+  subject: string
+  chargeType: TipoCobranca
+  amount: number
+  startDate: string
+  endDate: string | null
+  frequency: Periodicidade
+  dueDay: number
   status: ContratoStatus
-  observacao: string | null
-  criadoEm: string
-  itens: ContratoItemResponse[]
+  notes: string | null
+  createdAt: string
+  items: ContratoItemResponse[]
   total: number
   clickSignStatus: string | null
   clickSignViewerUrl: string | null
@@ -33,34 +33,34 @@ export interface ContratoResponse {
 
 export interface ContratoListItem {
   id: string
-  numero: number
-  clienteNome: string
-  titulo: string
-  tipoCobranca: TipoCobranca
-  valor: number
+  number: number
+  customerName: string
+  title: string
+  chargeType: TipoCobranca
+  amount: number
   status: ContratoStatus
-  dataInicio: string
-  dataFim: string | null
+  startDate: string
+  endDate: string | null
 }
 
 export interface ContratoItemRequest {
-  descricao: string
-  quantidade: number
-  valorUnitario: number
+  description: string
+  quantity: number
+  unitPrice: number
 }
 
 export interface CreateContratoRequest {
-  clienteId: string
-  titulo: string
-  objeto: string
-  tipoCobranca: TipoCobranca
-  valor: number
-  dataInicio: string
-  dataFim?: string
-  periodicidade: Periodicidade
-  diaVencimento: number
-  observacao?: string
-  itens: ContratoItemRequest[]
+  customerId: string
+  title: string
+  subject: string
+  chargeType: TipoCobranca
+  amount: number
+  startDate: string
+  endDate?: string
+  frequency: Periodicidade
+  dueDay: number
+  notes?: string
+  items: ContratoItemRequest[]
 }
 
 export interface GerarCobrancasRequest {

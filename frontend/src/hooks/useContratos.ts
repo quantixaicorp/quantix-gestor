@@ -9,11 +9,11 @@ import type { CobrancaListItem } from '@/types/cobranca'
 
 interface ContratoVencendoItem {
   id: string
-  numero: number
-  clienteNome: string
-  titulo: string
-  dataFim: string
-  valor: number
+  number: number
+  customerName: string
+  title: string
+  endDate: string
+  amount: number
 }
 
 export function useContratos() {

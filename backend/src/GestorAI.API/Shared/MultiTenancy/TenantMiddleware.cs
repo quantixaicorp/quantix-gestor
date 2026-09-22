@@ -6,7 +6,7 @@ public class TenantMiddleware(RequestDelegate next)
     {
         var claim = context.User.FindFirst("company_id")?.Value;
         if (Guid.TryParse(claim, out var id))
-            tenantContext.EmpresaId = id;
+            tenantContext.CompanyId = id;
         await next(context);
     }
 }

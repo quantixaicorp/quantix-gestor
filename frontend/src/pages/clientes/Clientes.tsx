@@ -38,7 +38,7 @@ export default function Clientes() {
   async function handleRemove(c: ClienteResponse) {
     const ok = await confirm({
       title: 'Excluir cliente?',
-      description: `${c.nome} será removido permanentemente.`,
+      description: `${c.name} será removido permanentemente.`,
       variant: 'destructive',
     })
     if (!ok) return
@@ -51,8 +51,8 @@ export default function Clientes() {
   }
 
   const filtrados = clientes.filter(c =>
-    c.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    c.whatsapp.includes(busca))
+    c.name.toLowerCase().includes(busca.toLowerCase()) ||
+    c.whatsApp.includes(busca))
 
   return (
     <div className="space-y-4">
@@ -66,11 +66,11 @@ export default function Clientes() {
       <KpiRow items={[
         { label: 'Total de clientes', value: String(clientes.length) },
         { label: 'Novos este mês', value: String(clientes.filter(c => {
-          const d = new Date(c.dataCadastro); const n = new Date()
+          const d = new Date(c.createdAt); const n = new Date()
           return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear()
         }).length) },
         { label: 'Com e-mail', value: String(clientes.filter(c => c.email).length) },
-        { label: 'Com WhatsApp', value: String(clientes.filter(c => c.whatsapp).length) },
+        { label: 'Com WhatsApp', value: String(clientes.filter(c => c.whatsApp).length) },
       ]} />
 
       <div className="relative max-w-sm">
@@ -94,11 +94,11 @@ export default function Clientes() {
             {filtrados.map(c => (
               <div key={c.id} className="rounded-lg border bg-card p-4 flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-1">
-                  <p className="font-medium truncate">{c.nome}</p>
-                  <p className="text-sm text-muted-foreground">{c.whatsapp}</p>
+                  <p className="font-medium truncate">{c.name}</p>
+                  <p className="text-sm text-muted-foreground">{c.whatsApp}</p>
                   {c.email && <p className="text-sm text-muted-foreground truncate">{c.email}</p>}
                   <p className="text-xs text-muted-foreground">
-                    Cadastrado em {new Date(c.dataCadastro).toLocaleDateString('pt-BR')}
+                    Cadastrado em {new Date(c.createdAt).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
@@ -129,11 +129,11 @@ export default function Clientes() {
               <tbody>
                 {filtrados.map(c => (
                   <tr key={c.id} className="border-b hover:bg-muted/30">
-                    <td className="px-4 py-3 font-medium">{c.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.whatsapp}</td>
+                    <td className="px-4 py-3 font-medium">{c.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{c.whatsApp}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.email ?? '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {new Date(c.dataCadastro).toLocaleDateString('pt-BR')}
+                      {new Date(c.createdAt).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
@@ -168,10 +168,10 @@ export default function Clientes() {
             <ClienteForm
               key={editando.id}
               defaultValues={{
-                nome: editando.nome,
-                whatsapp: editando.whatsapp,
+                name: editando.name,
+                whatsApp: editando.whatsApp,
                 email: editando.email ?? '',
-                observacoes: editando.observacoes ?? '',
+                notes: editando.notes ?? '',
               }}
               onSubmit={handleEdit}
               onCancel={() => setEditando(null)}

@@ -41,12 +41,12 @@ function AppointmentCard({ a, onClick }: { a: AgendamentoListItem; onClick: () =
       className="w-full text-left rounded-xl border bg-card hover:bg-accent/50 transition-colors p-3 space-y-1.5"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold text-sm leading-tight truncate">{a.clienteNome}</p>
+        <p className="font-semibold text-sm leading-tight truncate">{a.customerName}</p>
         <StatusBadge status={a.status} />
       </div>
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <Clock size={11} className="shrink-0" />
-        <span>{fmtHora(a.dataHoraInicio)} – {fmtHora(a.dataHoraFim)}</span>
+        <span>{fmtHora(a.startAt)} – {fmtHora(a.endAt)}</span>
       </div>
       <p className="text-xs text-muted-foreground truncate">{a.servicoNome}</p>
     </button>
@@ -60,17 +60,17 @@ function AppointmentCardWithProf({ a, onClick }: { a: AgendamentoListItem; onCli
       className="w-full text-left rounded-xl border bg-card hover:bg-accent/50 transition-colors p-3 space-y-1.5"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold text-sm leading-tight truncate">{a.clienteNome}</p>
+        <p className="font-semibold text-sm leading-tight truncate">{a.customerName}</p>
         <StatusBadge status={a.status} />
       </div>
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <Clock size={11} className="shrink-0" />
-        <span>{fmtHora(a.dataHoraInicio)} – {fmtHora(a.dataHoraFim)}</span>
+        <span>{fmtHora(a.startAt)} – {fmtHora(a.endAt)}</span>
       </div>
       <p className="text-xs text-muted-foreground truncate">{a.servicoNome}</p>
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <User size={11} className="shrink-0" />
-        <span className="truncate">{a.profissionalNome}</span>
+        <span className="truncate">{a.professionalName}</span>
       </div>
     </button>
   )
@@ -97,7 +97,7 @@ export default function Agendamentos() {
     setDataStr(toDateStr(d))
   }
 
-  const ativos = profissionais.filter(p => p.ativo)
+  const ativos = profissionais.filter(p => p.isActive)
   const isHoje = dataStr === toDateStr(new Date())
 
   if (error) return <p className="text-destructive p-4">{error}</p>
@@ -168,12 +168,12 @@ export default function Agendamentos() {
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-background rounded-lg border px-3 py-3"
               >
                 <div className="min-w-0">
-                  <p className="font-semibold text-sm">{a.clienteNome}</p>
+                  <p className="font-semibold text-sm">{a.customerName}</p>
                   <p className="text-muted-foreground text-xs mt-0.5">
-                    {a.servicoNome} · {a.profissionalNome}
+                    {a.servicoNome} · {a.professionalName}
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    {new Date(a.dataHoraInicio).toLocaleString('pt-BR', {
+                    {new Date(a.startAt).toLocaleString('pt-BR', {
                       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
                     })}
                   </p>
@@ -231,7 +231,7 @@ export default function Agendamentos() {
               </div>
             ) : (
               [...agendamentos]
-                .sort((a, b) => a.dataHoraInicio.localeCompare(b.dataHoraInicio))
+                .sort((a, b) => a.startAt.localeCompare(b.startAt))
                 .map(a => (
                   <AppointmentCardWithProf
                     key={a.id}
@@ -255,17 +255,17 @@ export default function Agendamentos() {
               >
                 {ativos.map(prof => {
                   const cards = agendamentos
-                    .filter(a => a.profissionalId === prof.id)
-                    .sort((a, b) => a.dataHoraInicio.localeCompare(b.dataHoraInicio))
+                    .filter(a => a.professionalId === prof.id)
+                    .sort((a, b) => a.startAt.localeCompare(b.startAt))
                   return (
                     <div key={prof.id} className="rounded-xl border bg-card/50 overflow-hidden">
                       <div className="bg-muted/60 border-b px-3 py-2.5 flex items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                           <span className="text-[10px] font-bold text-primary uppercase">
-                            {prof.nome.charAt(0)}
+                            {prof.name.charAt(0)}
                           </span>
                         </div>
-                        <span className="font-semibold text-sm truncate">{prof.nome}</span>
+                        <span className="font-semibold text-sm truncate">{prof.name}</span>
                         {cards.length > 0 && (
                           <span className="ml-auto text-xs text-muted-foreground font-medium shrink-0">
                             {cards.length}

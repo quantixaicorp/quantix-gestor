@@ -2,20 +2,20 @@ namespace GestorAI.API.DTOs.Clientes;
 
 public record ClienteResponse(
     Guid Id,
-    string Nome,
-    string Whatsapp,
+    string Name,
+    string WhatsApp,
     string? Email,
-    string? Observacoes,
-    DateTime DataCadastro);
+    string? Notes,
+    DateTime CreatedAt);
 
 public record CreateClienteRequest(
-    string Nome,
-    string Whatsapp,
+    string Name,
+    string WhatsApp,
     string? Email,
-    string? Observacoes);
+    string? Notes);
 
 public record UpdateClienteRequest(
-    string Nome,
-    string Whatsapp,
+    string Name,
+    string WhatsApp,
     string? Email,
-    string? Observacoes);
+    string? Notes);

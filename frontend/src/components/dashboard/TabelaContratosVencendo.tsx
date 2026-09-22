@@ -23,9 +23,9 @@ export default function TabelaContratosVencendo({ dados }: Props) {
         <tbody>
           {(dados ?? []).map((c, i) => (
             <tr key={i} className="border-t hover:bg-muted/20">
-              <td className="px-4 py-2 font-medium">{c.titulo}</td>
-              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{c.clienteNome}</td>
-              <td className="px-4 py-2 text-right font-medium">{fmt(c.valor)}</td>
+              <td className="px-4 py-2 font-medium">{c.title}</td>
+              <td className="px-4 py-2 hidden sm:table-cell text-muted-foreground">{c.customerName}</td>
+              <td className="px-4 py-2 text-right font-medium">{fmt(c.amount)}</td>
               <td className="px-4 py-2 text-right">
                 <span className={cn('text-xs px-1.5 py-0.5 rounded font-medium',
                   c.diasRestantes <= 7 ? 'bg-red-100 text-red-700' :

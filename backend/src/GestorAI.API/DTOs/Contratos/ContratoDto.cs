@@ -1,26 +1,26 @@
 namespace GestorAI.API.DTOs.Contratos;
 
 public record ContratoItemRequest(
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorUnitario);
+    string Description,
+    decimal Quantity,
+    decimal UnitPrice);
 
 public record CreateContratoRequest(
-    Guid ClienteId,
-    string Titulo,
-    string Objeto,
-    string TipoCobranca,
-    decimal Valor,
-    DateOnly DataInicio,
-    DateOnly? DataFim,
-    string Periodicidade,
-    int DiaVencimento,
-    string? Observacao,
-    List<ContratoItemRequest> Itens);
+    Guid CustomerId,
+    string Title,
+    string Subject,
+    string ChargeType,
+    decimal Amount,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    string Frequency,
+    int DueDay,
+    string? Notes,
+    List<ContratoItemRequest> Items);
 
 public record UpdateContratoRequest(
-    string? Observacao,
-    List<ContratoItemRequest>? Itens);
+    string? Notes,
+    List<ContratoItemRequest>? Items);
 
 public record GerarCobrancasRequest(
     DateOnly De,
@@ -28,27 +28,27 @@ public record GerarCobrancasRequest(
 
 public record ContratoItemResponse(
     Guid Id,
-    string Descricao,
-    decimal Quantidade,
-    decimal ValorUnitario);
+    string Description,
+    decimal Quantity,
+    decimal UnitPrice);
 
 public record ContratoResponse(
     Guid Id,
-    int Numero,
-    string ClienteNome,
+    int Number,
+    string CustomerName,
     string ClienteWhatsapp,
-    string Titulo,
-    string Objeto,
-    string TipoCobranca,
-    decimal Valor,
-    DateOnly DataInicio,
-    DateOnly? DataFim,
-    string Periodicidade,
-    int DiaVencimento,
+    string Title,
+    string Subject,
+    string ChargeType,
+    decimal Amount,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    string Frequency,
+    int DueDay,
     string Status,
-    string? Observacao,
-    DateTime CriadoEm,
-    List<ContratoItemResponse> Itens,
+    string? Notes,
+    DateTime CreatedAt,
+    List<ContratoItemResponse> Items,
     decimal Total,
     string? ClickSignStatus,
     string? ClickSignViewerUrl);
@@ -59,19 +59,19 @@ public record EnviarAssinaturaResponse(string DocKey, string ViewerUrl, string S
 
 public record ContratoListItem(
     Guid Id,
-    int Numero,
-    string ClienteNome,
-    string Titulo,
-    string TipoCobranca,
-    decimal Valor,
+    int Number,
+    string CustomerName,
+    string Title,
+    string ChargeType,
+    decimal Amount,
     string Status,
-    DateOnly DataInicio,
-    DateOnly? DataFim);
+    DateOnly StartDate,
+    DateOnly? EndDate);
 
 public record ContratoVencendoItem(
     Guid Id,
-    int Numero,
-    string ClienteNome,
-    string Titulo,
-    DateOnly DataFim,
-    decimal Valor);
+    int Number,
+    string CustomerName,
+    string Title,
+    DateOnly EndDate,
+    decimal Amount);

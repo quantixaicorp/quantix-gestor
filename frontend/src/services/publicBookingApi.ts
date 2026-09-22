@@ -13,40 +13,40 @@ async function publicRequest<T>(path: string, options: RequestInit = {}): Promis
 }
 
 export interface PublicEmpresaInfo {
-  nome: string
+  name: string
   logoUrl: string | null
-  corPrimaria: string | null
-  descricao: string | null
+  primaryColor: string | null
+  description: string | null
 }
 
 export interface PublicServicoResponse {
   id: string
-  nome: string
-  preco: number
-  duracaoMinutos: number | null
+  name: string
+  price: number
+  durationMinutes: number | null
 }
 
 export interface PublicProfissionalResponse {
   id: string
-  nome: string
+  name: string
 }
 
 export interface PublicAgendamentoConfirmado {
   id: string
   servicoNome: string
-  profissionalNome: string
-  dataHoraInicio: string
-  dataHoraFim: string
-  sinalPixQrCode?: string
+  professionalName: string
+  startAt: string
+  endAt: string
+  depositPixQrCode?: string
   sinalValor?: number
 }
 
 export interface PublicCriarAgendamentoRequest {
-  servicoId: string
-  profissionalId: string
-  dataHoraInicio: string
-  clienteNome: string
-  clienteTelefone: string
+  serviceId: string
+  professionalId: string
+  startAt: string
+  customerName: string
+  customerPhone: string
 }
 
 export const publicBookingApi = {

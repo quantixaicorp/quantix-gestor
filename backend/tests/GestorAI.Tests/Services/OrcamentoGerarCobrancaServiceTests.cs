@@ -13,37 +13,37 @@ public class OrcamentoGerarCobrancaServiceTests
 
     private (AppDbContext db, OrcamentoService svc) Setup()
     {
-        var tenant = new TenantContext { EmpresaId = _empresaId };
+        var tenant = new TenantContext { CompanyId = _empresaId };
         var db = new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, tenant);
         return (db, new OrcamentoService(db, tenant));
     }
 
-    private async Task<(Orcamento orc, Cliente cliente)> CriarOrcamentoAsync(
+    private async Task<(Quote orc, Customer cliente)> CriarOrcamentoAsync(
         AppDbContext db, OrcamentoStatus status)
     {
-        var cliente = new Cliente { EmpresaId = _empresaId, Nome = "João", Whatsapp = "11988880000" };
-        db.Clientes.Add(cliente);
+        var cliente = new Customer { CompanyId = _empresaId, Name = "João", WhatsApp = "11988880000" };
+        db.Customers.Add(cliente);
         await db.SaveChangesAsync();
 
-        var orc = new Orcamento
+        var orc = new Quote
         {
-            EmpresaId = _empresaId,
-            ClienteId = cliente.Id,
-            Numero = 1,
-            Titulo = "Desenvolvimento de Site",
-            DataValidade = DateTime.UtcNow.AddDays(30),
+            CompanyId = _empresaId,
+            CustomerId = cliente.Id,
+            Number = 1,
+            Title = "Desenvolvimento de Site",
+            ExpirationDate = DateTime.UtcNow.AddDays(30),
             Status = status,
         };
-        orc.Itens.Add(new OrcamentoItem
+        orc.Items.Add(new QuoteItem
         {
-            Tipo = OrcamentoItemTipo.Livre,
-            Descricao = "Desenvolvimento",
-            Quantidade = 1,
-            ValorUnitario = 2500m,
+            Type = OrcamentoItemTipo.Livre,
+            Description = "Desenvolvimento",
+            Quantity = 1,
+            UnitPrice = 2500m,
         });
-        db.Orcamentos.Add(orc);
+        db.Quotes.Add(orc);
         await db.SaveChangesAsync();
         return (orc, cliente);
     }
@@ -57,9 +57,9 @@ public class OrcamentoGerarCobrancaServiceTests
 
         var cobranca = await svc.GerarCobrancaAsync(orc.Id, vencimento, default);
 
-        Assert.Equal(2500m, cobranca.Valor);
-        Assert.Equal(vencimento, cobranca.DataVencimento);
-        Assert.Contains("ORC-001", cobranca.Referencia);
+        Assert.Equal(2500m, cobranca.Amount);
+        Assert.Equal(vencimento, cobranca.DueDate);
+        Assert.Contains("ORC-001", cobranca.Reference);
         Assert.Equal("Pendente", cobranca.Status);
     }
 
@@ -81,7 +81,7 @@ public class OrcamentoGerarCobrancaServiceTests
 
         await svc.GerarCobrancaAsync(orc.Id, new DateOnly(2026, 8, 1), default);
 
-        var orcAtualizado = await db.Orcamentos.FindAsync(orc.Id);
+        var orcAtualizado = await db.Quotes.FindAsync(orc.Id);
         Assert.Equal(OrcamentoStatus.Aprovado, orcAtualizado!.Status);
     }
 }

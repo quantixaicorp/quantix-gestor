@@ -17,7 +17,9 @@ import AbaAssinaturas from '@/components/relatorios/AbaAssinaturas'
 import AbaCurvaABC from '@/components/relatorios/AbaCurvaABC'
 import AbaDRE from '@/components/relatorios/AbaDRE'
 import AbaCompras from '@/components/relatorios/AbaCompras'
+import AbaHistoricoClientes from '@/components/relatorios/AbaHistoricoClientes'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import type { RelatorioTabId } from '@/types/relatorios'
 
 const TAB_META: Record<RelatorioTabId, string> = {
@@ -34,6 +36,7 @@ const TAB_META: Record<RelatorioTabId, string> = {
   'curva-abc': 'Curva ABC',
   'dre': 'DRE',
   'compras': 'Compras',
+  'historico-clientes': 'Histórico de Clientes',
 }
 
 function exportarCSV(nome: string, linhas: string[][]) {
@@ -48,6 +51,11 @@ function exportarCSV(nome: string, linhas: string[][]) {
 export default function Relatorios() {
   const { data, loadingTab, setPeriodo, loadTab } = useRelatorios()
   const { tabs, load: loadLayout } = useRelatorioLayout()
+  const { enabledModules, modulesLoaded } = useAuth()
+  // Sem módulo de vendas contratado, oculta KPIs e gráficos de vendas.
+  // (vazio/não carregado = sem restrição, igual ao gating do menu)
+  const hasVendas = !modulesLoaded || enabledModules.size === 0 || enabledModules.has('vendas')
+  const visibleTabs = hasVendas ? tabs : tabs.filter(t => t !== 'vendas')
   const [aba, setAba] = useState<RelatorioTabId | null>(null)
   const [periodo, setPeriodoState] = useState({ de: '', ate: '' })
   const [tipoDataFinanceiro, setTipoDataFinanceiro] = useState('pagamento')
@@ -59,14 +67,14 @@ export default function Relatorios() {
 
   // Quando o layout carrega, ativa a primeira aba e carrega os dados
   useEffect(() => {
-    if (tabs.length > 0 && aba === null) {
-      const primeiraAba = tabs[0]
+    if (visibleTabs.length > 0 && aba === null) {
+      const primeiraAba = visibleTabs[0]
       setAba(primeiraAba)
       setPeriodo(inicioMes, hoje)
       setPeriodoState({ de: inicioMes, ate: hoje })
       void loadTab(primeiraAba)
     }
-  }, [tabs])
+  }, [tabs, hasVendas])
 
   function handlePeriodo(de: string, ate: string) {
     setPeriodoState({ de, ate })
@@ -82,7 +90,7 @@ export default function Relatorios() {
 
   function handleAba(nova: RelatorioTabId) {
     setAba(nova)
-    if (nova !== 'compras') void loadTab(nova)
+    if (nova !== 'compras' && nova !== 'historico-clientes') void loadTab(nova)
   }
 
   function handleExportar() {
@@ -90,7 +98,7 @@ export default function Relatorios() {
     if (aba === 'vendas' && data.vendas) {
       exportarCSV(`relatorio-vendas-${periodo.de}-${periodo.ate}`, [
         ['Data', 'Total', 'Quantidade'],
-        ...data.vendas.tendencia.map(d => [d.data, d.total.toString(), d.quantidade.toString()]),
+        ...data.vendas.tendencia.map(d => [d.data, d.total.toString(), d.quantity.toString()]),
       ])
     } else if (aba === 'financeiro' && data.financeiro) {
       exportarCSV(`relatorio-financeiro-${periodo.de}-${periodo.ate}`, [
@@ -101,49 +109,49 @@ export default function Relatorios() {
       exportarCSV(`relatorio-clientes-${periodo.de}-${periodo.ate}`, [
         ['#', 'Cliente', 'WhatsApp', 'Compras', 'Total'],
         ...data.clientes.topClientes.map((c, i) => [
-          String(i + 1), c.nome, c.whatsapp, c.compras.toString(), c.totalGasto.toString(),
+          String(i + 1), c.name, c.whatsApp, c.compras.toString(), c.totalGasto.toString(),
         ]),
       ])
     } else if (aba === 'agendamentos' && data.agendamentos) {
       exportarCSV(`relatorio-agendamentos-${periodo.de}-${periodo.ate}`, [
         ['Profissional', 'Total', 'Concluídos', 'Taxa de Conclusão'],
         ...data.agendamentos.porProfissional.map(p => [
-          p.profissional, p.total.toString(), p.concluidos.toString(), `${p.taxaConclusao.toFixed(1)}%`,
+          p.professional, p.total.toString(), p.concluidos.toString(), `${p.taxaConclusao.toFixed(1)}%`,
         ]),
       ])
     } else if (aba === 'contratos' && data.contratos) {
       exportarCSV(`relatorio-contratos`, [
         ['Título', 'Cliente', 'Valor', 'Periodicidade', 'Vencimento', 'Status'],
         ...data.contratos.contratos.map(c => [
-          c.titulo, c.clienteNome, c.valor.toString(), c.periodicidade, c.dataFim ?? '—', c.status,
+          c.title, c.customerName, c.amount.toString(), c.frequency, c.endDate ?? '—', c.status,
         ]),
       ])
     } else if (aba === 'cobrancas' && data.cobrancas) {
       exportarCSV(`relatorio-cobrancas`, [
         ['Referência', 'Cliente', 'Valor', 'Vencimento', 'Status', 'Dias Atraso'],
-        ...data.cobrancas.cobrancas.map(c => [
-          c.referencia, c.clienteNome, c.valor.toString(), c.dataVencimento, c.status, c.diasAtraso.toString(),
+        ...data.cobrancas.charges.map(c => [
+          c.reference, c.customerName, c.amount.toString(), c.dueDate, c.status, c.diasAtraso.toString(),
         ]),
       ])
     } else if (aba === 'orcamentos' && data.orcamentos) {
       exportarCSV(`relatorio-orcamentos-${periodo.de}-${periodo.ate}`, [
         ['#', 'Título', 'Cliente', 'Total', 'Status', 'Criado em'],
         ...data.orcamentos.orcamentos.map(o => [
-          String(o.numero), o.titulo, o.clienteNome, o.valorTotal.toString(), o.status, o.criadoEm,
+          String(o.number), o.title, o.customerName, o.totalAmount.toString(), o.status, o.createdAt,
         ]),
       ])
     } else if (aba === 'assinaturas' && data.assinaturas) {
       exportarCSV(`relatorio-assinaturas-${periodo.de}-${periodo.ate}`, [
         ['Cliente', 'Plano', 'Valor', 'Periodicidade', 'Início', 'Renovação', 'Status'],
         ...data.assinaturas.assinaturas.map(a => [
-          a.clienteNome, a.plano, a.valor.toString(), a.periodicidade, a.dataInicio, a.dataRenovacao, a.status,
+          a.customerName, a.plan, a.amount.toString(), a.frequency, a.startDate, a.renewalDate, a.status,
         ]),
       ])
     } else if (aba === 'curva-abc' && data['curva-abc']) {
       exportarCSV(`curva-abc-${periodo.de}-${periodo.ate}`, [
         ['Posição', 'Produto', 'Qtd Vendida', 'Total', '% Individual', '% Acumulado', 'Classe'],
-        ...data['curva-abc'].produtos.itens.map((i, idx) => [
-          String(idx + 1), i.nome, i.quantidade.toString(),
+        ...data['curva-abc'].produtos.items.map((i, idx) => [
+          String(idx + 1), i.name, i.quantity.toString(),
           i.total.toString(), i.percentual.toFixed(2), i.percentualAcumulado.toFixed(2), i.classe,
         ]),
       ])
@@ -158,7 +166,7 @@ export default function Relatorios() {
         ['CMV', `-${d.cmv}`],
         ['Lucro Bruto', d.lucroBruto.toString()],
         ['Margem Bruta (%)', d.margemBruta.toString()],
-        ...d.despesasOperacionais.map(x => [x.descricao, `-${x.valor}`]),
+        ...d.despesasOperacionais.map(x => [x.description, `-${x.amount}`]),
         ['Total Despesas Operacionais', `-${d.totalDespesasOperacionais}`],
         ['Resultado Operacional', d.resultadoOperacional.toString()],
         ['Margem Operacional (%)', d.margemOperacional.toString()],
@@ -168,7 +176,7 @@ export default function Relatorios() {
     }
   }
 
-  const isLoading = aba !== 'compras' && loadingTab === aba
+  const isLoading = aba !== 'compras' && aba !== 'historico-clientes' && loadingTab === aba
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -183,7 +191,7 @@ export default function Relatorios() {
       <div className="rounded-xl border bg-card p-4 space-y-3 print:hidden">
         <FiltrosPeriodo onChange={handlePeriodo} />
         <div className="flex gap-1 border-b overflow-x-auto">
-          {tabs.map(id => (
+          {visibleTabs.map(id => (
             <button
               key={id}
               onClick={() => handleAba(id)}
@@ -211,7 +219,7 @@ export default function Relatorios() {
           </div>
         ) : (
           <>
-            {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} />}
+            {aba === 'visao-geral' && data['visao-geral'] && <AbaVisaoGeral kpis={data['visao-geral']} showVendas={hasVendas} />}
             {aba === 'vendas' && data.vendas && <AbaVendas dados={data.vendas} />}
             {aba === 'financeiro' && data.financeiro && <AbaFinanceiro dados={data.financeiro} tipoData={tipoDataFinanceiro} onChangeTipoData={handleTipoDataFinanceiro} />}
             {aba === 'estoque' && data.estoque && <AbaEstoque dados={data.estoque} />}
@@ -226,6 +234,7 @@ export default function Relatorios() {
             )}
             {aba === 'dre' && data.dre && <AbaDRE dados={data.dre} />}
             {aba === 'compras' && <AbaCompras />}
+            {aba === 'historico-clientes' && <AbaHistoricoClientes />}
           </>
         )}
       </div>

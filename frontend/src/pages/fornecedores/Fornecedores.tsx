@@ -51,7 +51,7 @@ export default function Fornecedores() {
   }
 
   const filtrados = fornecedores.filter(f =>
-    f.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    f.name.toLowerCase().includes(busca.toLowerCase()) ||
     (f.cnpjCpf ?? '').includes(busca))
 
   return (
@@ -67,7 +67,7 @@ export default function Fornecedores() {
         { label: 'Total', value: String(fornecedores.length) },
         { label: 'Com CNPJ/CPF', value: String(fornecedores.filter(f => f.cnpjCpf).length) },
         { label: 'Com e-mail', value: String(fornecedores.filter(f => f.email).length) },
-        { label: 'Com telefone', value: String(fornecedores.filter(f => f.telefone).length) },
+        { label: 'Com telefone', value: String(fornecedores.filter(f => f.phone).length) },
       ]} />
 
       <div className="relative max-w-sm">
@@ -91,12 +91,12 @@ export default function Fornecedores() {
             {filtrados.map(f => (
               <div key={f.id} className="rounded-lg border bg-card p-4 flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-1">
-                  <p className="font-medium truncate">{f.nome}</p>
+                  <p className="font-medium truncate">{f.name}</p>
                   {f.cnpjCpf && <p className="text-sm text-muted-foreground">{f.cnpjCpf}</p>}
-                  {f.telefone && <p className="text-sm text-muted-foreground">{f.telefone}</p>}
-                  {(f.cidade || f.uf) && (
+                  {f.phone && <p className="text-sm text-muted-foreground">{f.phone}</p>}
+                  {(f.city || f.uf) && (
                     <p className="text-sm text-muted-foreground">
-                      {f.cidade && f.uf ? `${f.cidade} / ${f.uf}` : f.cidade ?? f.uf}
+                      {f.city && f.uf ? `${f.city} / ${f.uf}` : f.city ?? f.uf}
                     </p>
                   )}
                 </div>
@@ -129,13 +129,13 @@ export default function Fornecedores() {
               <tbody>
                 {filtrados.map(f => (
                   <tr key={f.id} className="border-b hover:bg-muted/30">
-                    <td className="px-4 py-3 font-medium">{f.nome}</td>
+                    <td className="px-4 py-3 font-medium">{f.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{f.cnpjCpf ?? '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{f.telefone ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.phone ?? '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {f.cidade && f.uf ? `${f.cidade} / ${f.uf}` : f.cidade ?? '—'}
+                      {f.city && f.uf ? `${f.city} / ${f.uf}` : f.city ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{f.contato ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.contactPerson ?? '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" onClick={() => setEditando(f)}>
@@ -169,16 +169,16 @@ export default function Fornecedores() {
           {editando && (
             <FornecedorForm
               defaultValues={{
-                nome: editando.nome,
+                name: editando.name,
                 cnpjCpf: editando.cnpjCpf ?? '',
-                telefone: editando.telefone ?? '',
+                phone: editando.phone ?? '',
                 email: editando.email ?? '',
-                contato: editando.contato ?? '',
+                contactPerson: editando.contactPerson ?? '',
                 logradouro: editando.logradouro ?? '',
-                cidade: editando.cidade ?? '',
+                city: editando.city ?? '',
                 uf: editando.uf ?? '',
                 cep: editando.cep ?? '',
-                observacoes: editando.observacoes ?? '',
+                notes: editando.notes ?? '',
               }}
               onSubmit={handleUpdate}
               onCancel={() => setEditando(null)}
@@ -192,7 +192,7 @@ export default function Fornecedores() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Excluir fornecedor?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja excluir <strong>{confirmandoDelete?.nome}</strong>? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir <strong>{confirmandoDelete?.name}</strong>? Esta ação não pode ser desfeita.
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setConfirmandoDelete(null)}>Cancelar</Button>

@@ -14,9 +14,9 @@ export default function Movimentacoes() {
 
       <KpiRow items={[
         { label: 'Total', value: String(movimentacoes.length) },
-        { label: 'Entradas', value: String(movimentacoes.filter(m => m.tipo === 'Entrada').length), color: 'text-green-600 dark:text-green-400' },
-        { label: 'Saídas', value: String(movimentacoes.filter(m => m.tipo !== 'Entrada').length), color: 'text-red-600 dark:text-red-400' },
-        { label: 'Produtos movimentados', value: String(new Set(movimentacoes.map(m => m.produtoId)).size) },
+        { label: 'Entradas', value: String(movimentacoes.filter(m => m.type === 'Entrada').length), color: 'text-green-600 dark:text-green-400' },
+        { label: 'Saídas', value: String(movimentacoes.filter(m => m.type !== 'Entrada').length), color: 'text-red-600 dark:text-red-400' },
+        { label: 'Produtos movimentados', value: String(new Set(movimentacoes.map(m => m.productId)).size) },
       ]} />
 
       {loading ? (
@@ -31,17 +31,17 @@ export default function Movimentacoes() {
               <div key={m.id} className="rounded-lg border bg-card p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium truncate flex-1">{m.produtoNome}</p>
-                  <Badge variant={m.tipo === 'Entrada' ? 'secondary' : 'destructive'}>
-                    {m.tipo}
+                  <Badge variant={m.type === 'Entrada' ? 'secondary' : 'destructive'}>
+                    {m.type}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{m.origem}</span>
-                  <span className="font-semibold">Qtd: {m.quantidade}</span>
+                  <span className="text-muted-foreground">{m.source}</span>
+                  <span className="font-semibold">Qtd: {m.quantity}</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(m.dataHora).toLocaleString('pt-BR')}
-                  {m.observacao && <span> · {m.observacao}</span>}
+                  {new Date(m.movementDate).toLocaleString('pt-BR')}
+                  {m.notes && <span> · {m.notes}</span>}
                 </div>
               </div>
             ))}
@@ -65,16 +65,16 @@ export default function Movimentacoes() {
                   <tr key={m.id} className="border-b">
                     <td className="px-4 py-3 font-medium">{m.produtoNome}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={m.tipo === 'Entrada' ? 'secondary' : 'destructive'}>
-                        {m.tipo}
+                      <Badge variant={m.type === 'Entrada' ? 'secondary' : 'destructive'}>
+                        {m.type}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right">{m.quantidade}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{m.origem}</td>
+                    <td className="px-4 py-3 text-right">{m.quantity}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{m.source}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {new Date(m.dataHora).toLocaleString('pt-BR')}
+                      {new Date(m.movementDate).toLocaleString('pt-BR')}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{m.observacao ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{m.notes ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>

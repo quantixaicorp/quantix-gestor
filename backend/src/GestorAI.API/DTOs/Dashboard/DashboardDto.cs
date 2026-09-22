@@ -25,11 +25,11 @@ public record KpiResponse(
     decimal Inadimplencia,
     decimal SaldoProjetado);
 
-public record VendasDiaResponse(DateTime Data, decimal Total, int Quantidade);
+public record VendasDiaResponse(DateTime Data, decimal Total, int Quantity);
 public record FluxoDiaResponse(DateTime Data, decimal Receitas, decimal Despesas);
-public record TopProdutoResponse(string Nome, decimal QuantidadeVendida, decimal TotalFaturado);
-public record TopClienteResponse(string Nome, decimal TotalGasto);
-public record CategoriaDespesaDashResponse(string Categoria, decimal Total);
+public record TopProdutoResponse(string Name, decimal QuantidadeVendida, decimal TotalFaturado);
+public record TopClienteResponse(string Name, decimal TotalGasto);
+public record CategoriaDespesaDashResponse(string Category, decimal Total);
 
 public record DashboardResponse(
     KpiResponse Kpis,
@@ -39,16 +39,16 @@ public record DashboardResponse(
     List<TopClienteResponse> TopClientes,
     List<CategoriaDespesaDashResponse> DespesasPorCategoria);
 
-// Agendamentos estendido
+// Appointments estendido
 public record AgendamentoStatusItem(string Status, int Count);
-public record AgendamentoProfissionalItem(string Profissional, int Total, int Concluidos);
-public record AgendamentoDoDiaItem(string ClienteNome, string Servico, string HoraInicio, string Status);
+public record AgendamentoProfissionalItem(string Professional, int Total, int Concluidos);
+public record AgendamentoDoDiaItem(string CustomerName, string Service, string StartTime, string Status);
 
 // Contratos estendido
-public record ContratoVencendoItem(string Titulo, string ClienteNome, decimal Valor, DateOnly DataFim, int DiasRestantes);
+public record ContratoVencendoItem(string Title, string CustomerName, decimal Amount, DateOnly EndDate, int DiasRestantes);
 
 // Cobranças estendido
-public record CobrancaVencidaItem(string Referencia, string ClienteNome, decimal Valor, DateOnly DataVencimento, int DiasAtraso);
+public record CobrancaVencidaItem(string Reference, string CustomerName, decimal Amount, DateOnly DueDate, int DiasAtraso);
 public record AgingFaixa(string Faixa, int Count, decimal Total);
 
 // Orçamentos estendido
@@ -95,8 +95,8 @@ public record AssinaturasDashResponse(
     List<EvolucaoAssinaturaMes> Evolucao12Meses);
 
 public record ModulosDashboardResponse(
-    AgendamentosDashResponse Agendamentos,
+    AgendamentosDashResponse Appointments,
     ContratosDashResponse Contratos,
-    CobrancasDashResponse Cobrancas,
+    CobrancasDashResponse Charges,
     OrcamentosDashResponse Orcamentos,
     AssinaturasDashResponse Assinaturas);

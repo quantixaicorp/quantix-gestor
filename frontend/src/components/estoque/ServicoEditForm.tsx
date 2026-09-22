@@ -7,12 +7,12 @@ import { Label } from '@/components/ui/label'
 import type { CategoriaResponse, ProdutoResponse, UpdateProdutoRequest } from '@/types/estoque'
 
 const schema = z.object({
-  categoriaId: z.string().min(1, 'Selecione uma categoria'),
-  nome: z.string().min(1, 'Nome obrigatório').max(200),
-  descricao: z.string().optional(),
-  precoVenda: z.number().positive('Preço deve ser maior que zero'),
-  duracaoMinutos: z.number().int().min(1, 'Informe a duração'),
-  ativo: z.boolean(),
+  categoryId: z.string().min(1, 'Selecione uma categoria'),
+  name: z.string().min(1, 'Nome obrigatório').max(200),
+  description: z.string().optional(),
+  salePrice: z.number().positive('Preço deve ser maior que zero'),
+  durationMinutes: z.number().int().min(1, 'Informe a duração'),
+  isActive: z.boolean(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -29,25 +29,25 @@ export default function ServicoEditForm({ servico, categorias, onSubmit, onCance
     useForm<FormValues>({
       resolver: zodResolver(schema),
       defaultValues: {
-        categoriaId: servico.categoriaId,
-        nome: servico.nome,
-        descricao: servico.descricao ?? '',
-        precoVenda: servico.precoVenda,
-        duracaoMinutos: servico.duracaoMinutos ?? 60,
-        ativo: servico.ativo,
+        categoryId: servico.categoryId,
+        name: servico.name,
+        description: servico.description ?? '',
+        salePrice: servico.salePrice,
+        durationMinutes: servico.durationMinutes ?? 60,
+        isActive: servico.isActive,
       },
     })
 
   async function submit(values: FormValues) {
     await onSubmit(servico.id, {
-      categoriaId: values.categoriaId,
-      nome: values.nome,
-      descricao: values.descricao || undefined,
-      precoVenda: values.precoVenda,
-      estoqueMinimo: 0,
-      codigoBarras: undefined,
-      ativo: values.ativo,
-      duracaoMinutos: values.duracaoMinutos,
+      categoryId: values.categoryId,
+      name: values.name,
+      description: values.description || undefined,
+      salePrice: values.salePrice,
+      minimumStock: 0,
+      barcode: undefined,
+      isActive: values.isActive,
+      durationMinutes: values.durationMinutes,
     })
   }
 
@@ -56,41 +56,41 @@ export default function ServicoEditForm({ servico, categorias, onSubmit, onCance
       <div className="grid gap-2">
         <Label>Categoria</Label>
         <select
-          {...register('categoriaId')}
+          {...register('categoryId')}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
         >
           <option value="">Selecione...</option>
-          {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          {categorias.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {errors.categoriaId && <p className="text-xs text-destructive">{errors.categoriaId.message}</p>}
+        {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
       </div>
 
       <div className="grid gap-2">
         <Label>Nome do Serviço</Label>
-        <Input {...register('nome')} />
-        {errors.nome && <p className="text-xs text-destructive">{errors.nome.message}</p>}
+        <Input {...register('name')} />
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Preço (R$)</Label>
-          <Input type="number" step="0.01" {...register('precoVenda', { valueAsNumber: true })} />
-          {errors.precoVenda && <p className="text-xs text-destructive">{errors.precoVenda.message}</p>}
+          <Input type="number" step="0.01" {...register('salePrice', { valueAsNumber: true })} />
+          {errors.salePrice && <p className="text-xs text-destructive">{errors.salePrice.message}</p>}
         </div>
         <div className="grid gap-2">
           <Label>Duração (minutos)</Label>
-          <Input type="number" {...register('duracaoMinutos', { valueAsNumber: true })} placeholder="Ex: 60" />
-          {errors.duracaoMinutos && <p className="text-xs text-destructive">{errors.duracaoMinutos.message}</p>}
+          <Input type="number" {...register('durationMinutes', { valueAsNumber: true })} placeholder="Ex: 60" />
+          {errors.durationMinutes && <p className="text-xs text-destructive">{errors.durationMinutes.message}</p>}
         </div>
       </div>
 
       <div className="grid gap-2">
         <Label>Descrição (opcional)</Label>
-        <Input {...register('descricao')} placeholder="Detalhes do serviço" />
+        <Input {...register('description')} placeholder="Detalhes do serviço" />
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="ativo-servico" {...register('ativo')} className="h-4 w-4 rounded border" />
+        <input type="checkbox" id="ativo-servico" {...register('isActive')} className="h-4 w-4 rounded border" />
         <Label htmlFor="ativo-servico">Serviço ativo</Label>
       </div>
 

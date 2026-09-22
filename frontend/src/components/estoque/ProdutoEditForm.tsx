@@ -7,13 +7,13 @@ import { Label } from '@/components/ui/label'
 import type { CategoriaResponse, ProdutoResponse, UpdateProdutoRequest } from '@/types/estoque'
 
 const schema = z.object({
-  categoriaId: z.string().min(1, 'Selecione uma categoria'),
-  nome: z.string().min(1, 'Nome obrigatório').max(200),
-  descricao: z.string().optional(),
-  precoVenda: z.number().positive('Preço deve ser maior que zero'),
-  estoqueMinimo: z.number().min(0),
-  codigoBarras: z.string().optional(),
-  ativo: z.boolean(),
+  categoryId: z.string().min(1, 'Selecione uma categoria'),
+  name: z.string().min(1, 'Nome obrigatório').max(200),
+  description: z.string().optional(),
+  salePrice: z.number().positive('Preço deve ser maior que zero'),
+  minimumStock: z.number().min(0),
+  barcode: z.string().optional(),
+  isActive: z.boolean(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -30,26 +30,26 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
     useForm<FormValues>({
       resolver: zodResolver(schema),
       defaultValues: {
-        categoriaId: produto.categoriaId,
-        nome: produto.nome,
-        descricao: produto.descricao ?? '',
-        precoVenda: produto.precoVenda,
-        estoqueMinimo: produto.estoqueMinimo,
-        codigoBarras: produto.codigoBarras ?? '',
-        ativo: produto.ativo,
+        categoryId: produto.categoryId,
+        name: produto.name,
+        description: produto.description ?? '',
+        salePrice: produto.salePrice,
+        minimumStock: produto.minimumStock,
+        barcode: produto.barcode ?? '',
+        isActive: produto.isActive,
       },
     })
 
   async function submit(values: FormValues) {
     await onSubmit(produto.id, {
-      categoriaId: values.categoriaId,
-      nome: values.nome,
-      descricao: values.descricao || undefined,
-      precoVenda: values.precoVenda,
-      estoqueMinimo: values.estoqueMinimo,
-      codigoBarras: values.codigoBarras || undefined,
-      ativo: values.ativo,
-      duracaoMinutos: null,
+      categoryId: values.categoryId,
+      name: values.name,
+      description: values.description || undefined,
+      salePrice: values.salePrice,
+      minimumStock: values.minimumStock,
+      barcode: values.barcode || undefined,
+      isActive: values.isActive,
+      durationMinutes: null,
     })
   }
 
@@ -58,40 +58,40 @@ export default function ProdutoEditForm({ produto, categorias, onSubmit, onCance
       <div className="grid gap-2">
         <Label>Categoria</Label>
         <select
-          {...register('categoriaId')}
+          {...register('categoryId')}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
         >
           <option value="">Selecione...</option>
-          {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          {categorias.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {errors.categoriaId && <p className="text-xs text-destructive">{errors.categoriaId.message}</p>}
+        {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
       </div>
 
       <div className="grid gap-2">
         <Label>Nome</Label>
-        <Input {...register('nome')} />
-        {errors.nome && <p className="text-xs text-destructive">{errors.nome.message}</p>}
+        <Input {...register('name')} />
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Preço de Venda (R$)</Label>
-          <Input type="number" step="0.01" {...register('precoVenda', { valueAsNumber: true })} />
-          {errors.precoVenda && <p className="text-xs text-destructive">{errors.precoVenda.message}</p>}
+          <Input type="number" step="0.01" {...register('salePrice', { valueAsNumber: true })} />
+          {errors.salePrice && <p className="text-xs text-destructive">{errors.salePrice.message}</p>}
         </div>
         <div className="grid gap-2">
           <Label>Estoque Mínimo</Label>
-          <Input type="number" step="0.01" {...register('estoqueMinimo', { valueAsNumber: true })} />
+          <Input type="number" step="0.01" {...register('minimumStock', { valueAsNumber: true })} />
         </div>
       </div>
 
       <div className="grid gap-2">
         <Label>Código de Barras (opcional)</Label>
-        <Input {...register('codigoBarras')} placeholder="EAN-13" />
+        <Input {...register('barcode')} placeholder="EAN-13" />
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="ativo-produto" {...register('ativo')} className="h-4 w-4 rounded border" />
+        <input type="checkbox" id="ativo-produto" {...register('isActive')} className="h-4 w-4 rounded border" />
         <Label htmlFor="ativo-produto">Produto ativo</Label>
       </div>
 

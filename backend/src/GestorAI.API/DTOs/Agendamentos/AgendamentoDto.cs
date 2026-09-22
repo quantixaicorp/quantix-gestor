@@ -4,41 +4,41 @@ namespace GestorAI.API.DTOs.Agendamentos;
 
 public record AgendamentoListItem(
     Guid Id,
-    Guid ProfissionalId,
-    string ProfissionalNome,
-    string ClienteNome,
+    Guid ProfessionalId,
+    string ProfessionalName,
+    string CustomerName,
     string ServicoNome,
-    DateTime DataHoraInicio,
-    DateTime DataHoraFim,
+    DateTime StartAt,
+    DateTime EndAt,
     AgendamentoStatus Status
 );
 
 public record AgendamentoResponse(
     Guid Id,
-    string ProfissionalNome,
-    string ClienteNome,
-    string ClienteTelefone,
-    Guid? ClienteId,
+    string ProfessionalName,
+    string CustomerName,
+    string CustomerPhone,
+    Guid? CustomerId,
     string ServicoNome,
-    int DuracaoMinutos,
-    DateTime DataHoraInicio,
-    DateTime DataHoraFim,
+    int DurationMinutes,
+    DateTime StartAt,
+    DateTime EndAt,
     AgendamentoStatus Status,
-    string? Observacao,
-    Guid? VendaId,
-    DateTime CriadoEm
+    string? Notes,
+    Guid? SaleId,
+    DateTime CreatedAt
 );
 
 public record CriarAgendamentoRequest(
-    Guid ProfissionalId,
-    string ClienteNome,
-    string ClienteTelefone,
-    Guid? ClienteId,
-    Guid ServicoId,
-    DateTime DataHoraInicio,
-    string? Observacao
+    Guid ProfessionalId,
+    string CustomerName,
+    string CustomerPhone,
+    Guid? CustomerId,
+    Guid ServiceId,
+    DateTime StartAt,
+    string? Notes
 );
 
-public record AtualizarAgendamentoRequest(string? Observacao);
+public record AtualizarAgendamentoRequest(string? Notes);
 
-public record ConcluirResponse(Guid VendaId);
+public record ConcluirResponse(Guid SaleId);

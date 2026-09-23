@@ -5,7 +5,7 @@ import {
   CalendarDays, UserCog, Package, ArrowDownToLine, Wallet, TrendingDown,
   TrendingUp, Tag, Users, BarChart3, Scissors, Receipt, DollarSign,
   Truck, Plug, Bot, Building2, CreditCard, LogOut, Sun, Moon, ChevronDown,
-  Link as LinkIcon, MoreHorizontal, Landmark, GitMerge,
+  Link as LinkIcon, MoreHorizontal, Landmark, GitMerge, BookOpen, ArrowLeftRight,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -100,9 +100,11 @@ const SECONDARY_GROUPS: NavGroup[] = [
     label: 'Config',
     moduleSlug: 'configuracoes',
     items: [
-      { icon: Building2, label: 'Empresa',            path: '/configuracoes/empresa' },
-      { icon: LinkIcon,  label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
-      { icon: Plug,      label: 'Integrações',        path: '/configuracoes/integracoes' },
+      { icon: Building2,       label: 'Empresa',            path: '/configuracoes/empresa' },
+      { icon: LinkIcon,        label: 'Agendamento Online', path: '/configuracoes/agendamento-publico' },
+      { icon: Plug,            label: 'Integrações',        path: '/configuracoes/integracoes' },
+      { icon: BookOpen,        label: 'Plano de Contas',    path: '/configuracoes/contabilidade/plano-de-contas' },
+      { icon: ArrowLeftRight,  label: 'Mapeamento Contábil', path: '/configuracoes/contabilidade/mapeamento' },
     ],
   },
   {

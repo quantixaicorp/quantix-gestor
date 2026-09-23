@@ -6,6 +6,7 @@ import {
   TrendingUp, Tag, Users, BarChart3, Scissors, Receipt, DollarSign,
   Truck, Plug, Bot, Building2, CreditCard, LogOut, Sun, Moon, ChevronDown,
   Link as LinkIcon, MoreHorizontal, Landmark, GitMerge, BookOpen, ArrowLeftRight,
+  FileDown,
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -60,6 +61,7 @@ const PRIMARY_GROUPS: NavGroup[] = [
       { icon: Tag,          label: 'Categorias',       path: '/financeiro/categorias' },
       { icon: Landmark, label: 'Contas Bancárias', path: '/financeiro/contas-bancarias' },
       { icon: GitMerge,  label: 'Conciliação',      path: '/financeiro/conciliacao' },
+      { icon: FileDown,  label: 'Exportar Contador', path: '/financeiro/exportar-contador' },
     ],
   },
   {

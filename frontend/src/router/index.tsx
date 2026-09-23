@@ -57,6 +57,7 @@ import PlanoWizard from '@/pages/planos/PlanoWizard'
 import PlanoDetalhe from '@/pages/planos/PlanoDetalhe'
 import PlanoDeContas from '@/pages/configuracoes/PlanoDeContas'
 import MapeamentoContabil from '@/pages/configuracoes/MapeamentoContabil'
+import ExportarContador from '@/pages/financeiro/ExportarContador'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth />, errorElement: <ErrorPage /> },
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
       { path: '/financeiro/contas-bancarias', element: <ContasBancarias /> },
       { path: '/financeiro/conciliacao', element: <Conciliacao /> },
       { path: '/financeiro/conciliacao/:id', element: <ConciliacaoRevisao /> },
+      { path: '/financeiro/exportar-contador', element: <ExportarContador /> },
       { path: '/clientes', element: <Clientes /> },
       { path: '/fornecedores', element: <Fornecedores /> },
       { path: '/compras', element: <Compras /> },

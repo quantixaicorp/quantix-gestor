@@ -8,14 +8,29 @@ namespace GestorAI.API.Services.Contabilidade;
 
 public class AccountMappingService(AppDbContext db, TenantContext tenantContext)
 {
-    public async Task<List<AccountMappingResponse>> ListAsync(CancellationToken ct) =>
-        await db.AccountMappings
-            .Include(m => m.Account)
-            .OrderBy(m => m.CategoryName)
-            .Select(m => new AccountMappingResponse(
-                m.Id, m.CategoryName, m.AccountId,
-                m.Account!.Code, m.Account.Name))
+    public async Task<List<AccountMappingResponse>> ListAsync(CancellationToken ct)
+    {
+        var categories = await db.TransactionCategories
+            .OrderBy(c => c.Name)
             .ToListAsync(ct);
+
+        var mappings = await db.AccountMappings
+            .Include(m => m.Account)
+            .ToListAsync(ct);
+
+        var mappingDict = mappings.ToDictionary(m => m.CategoryName);
+
+        return categories.Select(c =>
+        {
+            mappingDict.TryGetValue(c.Name, out var mapping);
+            return new AccountMappingResponse(
+                mapping?.Id ?? Guid.Empty,
+                c.Name,
+                mapping?.AccountId ?? Guid.Empty,
+                mapping?.Account?.Code ?? "",
+                mapping?.Account?.Name ?? "");
+        }).ToList();
+    }
 
     public async Task BulkUpsertAsync(BulkUpsertAccountMappingsRequest req, CancellationToken ct)
     {

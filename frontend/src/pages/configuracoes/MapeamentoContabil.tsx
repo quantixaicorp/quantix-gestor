@@ -20,13 +20,19 @@ export default function MapeamentoContabil() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
+
   useEffect(() => {
     Promise.all([listAccounts(), listMappings(), getSettings()])
       .then(([accs, maps, settings]) => {
         setAccounts(accs)
         setMappings(maps)
         const d: Record<string, string> = {}
-        maps.forEach(m => { d[m.categoryName] = m.accountId })
+        maps.forEach(m => {
+          if (m.accountId && m.accountId !== EMPTY_GUID) {
+            d[m.categoryName] = m.accountId
+          }
+        })
         setDraft(d)
         setCashAccountId(settings.defaultCashAccountId ?? '')
         setPreferredSystem(settings.preferredAccountingSystem ?? '')
@@ -36,7 +42,7 @@ export default function MapeamentoContabil() {
   }, [])
 
   const flatAccounts = flattenAccounts(accounts)
-  const categories = Array.from(new Set(mappings.map(m => m.categoryName)))
+  const categories = mappings.map(m => m.categoryName)
 
   const handleSave = async () => {
     setSaving(true)

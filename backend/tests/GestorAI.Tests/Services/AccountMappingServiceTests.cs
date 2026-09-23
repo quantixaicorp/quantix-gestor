@@ -1,3 +1,4 @@
+using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Contabilidade;
 using GestorAI.API.Services.Contabilidade;
@@ -11,6 +12,14 @@ public class AccountMappingServiceTests
     public async Task BulkUpsertAsync_CreatesMappings()
     {
         var (db, tenant) = TestDbHelper.Create();
+        db.TransactionCategories.Add(new TransactionCategory
+        {
+            CompanyId = tenant.CompanyId,
+            Name = "Vendas",
+            Type = TipoLancamento.Receita,
+        });
+        await db.SaveChangesAsync();
+
         var coaSvc = new ChartOfAccountService(db, tenant);
         var account = await coaSvc.CreateAsync(
             new CreateChartOfAccountRequest("4.1.1", "Receita Vendas", AccountType.Receita, null), default);
@@ -29,6 +38,14 @@ public class AccountMappingServiceTests
     public async Task BulkUpsertAsync_UpdatesExistingMapping()
     {
         var (db, tenant) = TestDbHelper.Create();
+        db.TransactionCategories.Add(new TransactionCategory
+        {
+            CompanyId = tenant.CompanyId,
+            Name = "Vendas",
+            Type = TipoLancamento.Receita,
+        });
+        await db.SaveChangesAsync();
+
         var coaSvc = new ChartOfAccountService(db, tenant);
         var acc1 = await coaSvc.CreateAsync(
             new CreateChartOfAccountRequest("4.1.1", "Receita A", AccountType.Receita, null), default);

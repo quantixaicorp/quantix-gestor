@@ -42,7 +42,8 @@ public class AccountingExportService(AppDbContext db, TenantContext tenantContex
         var transactions = await db.Transactions
             .Where(t => statusFilter.Contains(t.Status)
                      && t.PaymentDate >= fromDate
-                     && t.PaymentDate <= toDate)
+                     && t.PaymentDate <= toDate
+                     && !string.IsNullOrEmpty(t.Category))
             .OrderBy(t => t.PaymentDate)
             .ToListAsync(ct);
 

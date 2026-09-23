@@ -55,6 +55,9 @@ import LogAutomacao from '@/pages/automacao/LogAutomacao'
 import PlanosList from '@/pages/planos/PlanosList'
 import PlanoWizard from '@/pages/planos/PlanoWizard'
 import PlanoDetalhe from '@/pages/planos/PlanoDetalhe'
+import PlanoDeContas from '@/pages/configuracoes/PlanoDeContas'
+import MapeamentoContabil from '@/pages/configuracoes/MapeamentoContabil'
+import ExportarContador from '@/pages/financeiro/ExportarContador'
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <Auth />, errorElement: <ErrorPage /> },
@@ -89,6 +92,7 @@ export const router = createBrowserRouter([
       { path: '/financeiro/contas-bancarias', element: <ContasBancarias /> },
       { path: '/financeiro/conciliacao', element: <Conciliacao /> },
       { path: '/financeiro/conciliacao/:id', element: <ConciliacaoRevisao /> },
+      { path: '/financeiro/exportar-contador', element: <ExportarContador /> },
       { path: '/clientes', element: <Clientes /> },
       { path: '/fornecedores', element: <Fornecedores /> },
       { path: '/compras', element: <Compras /> },
@@ -111,6 +115,8 @@ export const router = createBrowserRouter([
       { path: '/configuracoes/agendamento-publico', element: <AgendamentoPublicoConfig /> },
       { path: '/configuracoes/integracoes', element: <Integracoes /> },
       { path: '/configuracoes/automacao', element: <Automacao /> },
+      { path: '/configuracoes/contabilidade/plano-de-contas', element: <PlanoDeContas /> },
+      { path: '/configuracoes/contabilidade/mapeamento', element: <MapeamentoContabil /> },
       { path: '/automacao/log', element: <LogAutomacao /> },
       { path: '/planos', element: <PlanosList /> },
       { path: '/planos/novo', element: <PlanoWizard /> },

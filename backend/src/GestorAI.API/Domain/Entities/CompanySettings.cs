@@ -1,3 +1,5 @@
+using GestorAI.API.Domain.Enums;
+
 namespace GestorAI.API.Domain.Entities;
 
 public class CompanySettings : ITenantEntity
@@ -60,4 +62,8 @@ public class CompanySettings : ITenantEntity
     public string? CustomDomain { get; set; }
 
     public string TipoNegocio { get; set; } = "Lojista";
+
+    // Accounting export
+    public Guid? DefaultCashAccountId { get; set; }
+    public AccountingSystem? PreferredAccountingSystem { get; set; }
 }

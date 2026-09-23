@@ -171,7 +171,7 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
 
         var preco = a.Service!.SalePrice;
 
-        var profissional = await db.Professionals.FindAsync([a.ProfessionalId], ct);
+        var profissional = await db.Professionals.FirstOrDefaultAsync(p => p.Id == a.ProfessionalId, ct);
 
         var venda = new Sale
         {

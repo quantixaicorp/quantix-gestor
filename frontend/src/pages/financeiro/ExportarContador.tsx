@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FileDown, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { toast } from '@/hooks/useToast'
 import { useContabilidade } from '@/hooks/useContabilidade'
 import type { AccountingSystem } from '@/types/contabilidade'
 
@@ -36,7 +37,10 @@ export default function ExportarContador() {
     )
 
   const handleExport = async () => {
-    if (selectedMonths.length === 0) return
+    if (selectedMonths.length === 0) {
+      toast.error('Selecione pelo menos um mês')
+      return
+    }
     setError(null)
     setLoading(true)
     try {
@@ -44,6 +48,7 @@ export default function ExportarContador() {
         `${year}-${String(m).padStart(2, '0')}`
       )
       await downloadExport({ system, months, includePending })
+      toast.success('Arquivo gerado com sucesso')
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erro ao gerar arquivo'
       setError(msg)

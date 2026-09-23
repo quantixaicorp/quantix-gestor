@@ -1,3 +1,4 @@
+using GestorAI.API.Domain.Entities;
 using GestorAI.API.DTOs.Contabilidade;
 using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Shared.Exceptions;
@@ -29,8 +30,17 @@ public class AccountingSettingsService(AppDbContext db, TenantContext tenantCont
 
     public async Task<AccountingSettingsResponse> UpdateAsync(UpdateAccountingSettingsRequest req, CancellationToken ct)
     {
-        var settings = await db.CompanySettings.FirstOrDefaultAsync(ct)
-            ?? throw new AppException("Configurações da empresa não encontradas.", 404);
+        var settings = await db.CompanySettings.FirstOrDefaultAsync(ct);
+
+        if (settings is null)
+        {
+            settings = new CompanySettings
+            {
+                Id = Guid.NewGuid(),
+                CompanyId = tenantContext.CompanyId,
+            };
+            db.CompanySettings.Add(settings);
+        }
 
         settings.DefaultCashAccountId = req.DefaultCashAccountId;
         settings.PreferredAccountingSystem = req.PreferredAccountingSystem;

@@ -71,9 +71,9 @@ public class ChartOfAccountService(AppDbContext db, TenantContext tenantContext)
                 ParentId = parentId,
             };
             db.ChartOfAccounts.Add(account);
-            await db.SaveChangesAsync(ct);
             idMap[code] = account.Id;
         }
+        await db.SaveChangesAsync(ct);
     }
 
     private static List<ChartOfAccountResponse> BuildTree(List<ChartOfAccount> all, Guid? parentId) =>

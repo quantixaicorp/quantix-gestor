@@ -239,7 +239,7 @@ public class BankReconciliationService(
             // remove previous tentative reconciliation if CreatedByImport
             if (item.Reconciliation.CreatedByImport)
             {
-                var oldTx = await db.Transactions.FindAsync([item.Reconciliation.TransactionId], ct);
+                var oldTx = await db.Transactions.FirstOrDefaultAsync(t => t.Id == item.Reconciliation.TransactionId, ct);
                 if (oldTx != null) db.Transactions.Remove(oldTx);
             }
             db.BankReconciliations.Remove(item.Reconciliation);
@@ -272,7 +272,7 @@ public class BankReconciliationService(
         if (recon.CreatedByImport)
         {
             // delete the auto-generated transaction and return item to Unmatched
-            var tx = await db.Transactions.FindAsync([recon.TransactionId], ct);
+            var tx = await db.Transactions.FirstOrDefaultAsync(t => t.Id == recon.TransactionId, ct);
             if (tx != null) db.Transactions.Remove(tx);
             recon.BankStatementItem!.Status = BankStatementItemStatus.Unmatched;
         }
@@ -302,7 +302,7 @@ public class BankReconciliationService(
             db.BankReconciliations.Remove(item.Reconciliation);
             if (item.Reconciliation.CreatedByImport)
             {
-                var tx = await db.Transactions.FindAsync([item.Reconciliation.TransactionId], ct);
+                var tx = await db.Transactions.FirstOrDefaultAsync(t => t.Id == item.Reconciliation.TransactionId, ct);
                 if (tx != null) db.Transactions.Remove(tx);
             }
         }

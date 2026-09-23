@@ -42,6 +42,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
     public DbSet<BankStatement> BankStatements => Set<BankStatement>();
     public DbSet<BankStatementItem> BankStatementItems => Set<BankStatementItem>();
     public DbSet<BankReconciliation> BankReconciliations => Set<BankReconciliation>();
+    public DbSet<ChartOfAccount> ChartOfAccounts => Set<ChartOfAccount>();
+    public DbSet<AccountMapping> AccountMappings => Set<AccountMapping>();
     public DbSet<Purchase> Purchases => Set<Purchase>();
     public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
@@ -228,6 +230,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, TenantContext 
             .HasOne(r => r.Transaction)
             .WithMany()
             .HasForeignKey(r => r.TransactionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Accounting Export
+        modelBuilder.Entity<ChartOfAccount>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+        modelBuilder.Entity<AccountMapping>().HasQueryFilter(e => e.CompanyId == tenantContext.CompanyId);
+
+        modelBuilder.Entity<ChartOfAccount>()
+            .HasIndex(c => new { c.CompanyId, c.Code })
+            .IsUnique();
+
+        modelBuilder.Entity<ChartOfAccount>()
+            .HasOne(c => c.Parent)
+            .WithMany(c => c.Children)
+            .HasForeignKey(c => c.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AccountMapping>()
+            .HasIndex(m => new { m.CompanyId, m.CategoryName })
+            .IsUnique();
+
+        modelBuilder.Entity<AccountMapping>()
+            .HasOne(m => m.Account)
+            .WithMany()
+            .HasForeignKey(m => m.AccountId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

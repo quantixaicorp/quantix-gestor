@@ -10,9 +10,18 @@ public class AccountMappingService(AppDbContext db, TenantContext tenantContext)
 {
     public async Task<List<AccountMappingResponse>> ListAsync(CancellationToken ct)
     {
-        var categories = await db.TransactionCategories
-            .OrderBy(c => c.Name)
+        // Registered categories + any ad-hoc categories used directly on transactions (e.g. "Importado" from bank import)
+        var registered = await db.TransactionCategories
+            .Select(c => c.Name)
             .ToListAsync(ct);
+
+        var fromTransactions = await db.Transactions
+            .Where(t => !string.IsNullOrEmpty(t.Category))
+            .Select(t => t.Category!)
+            .Distinct()
+            .ToListAsync(ct);
+
+        var allCategories = registered.Union(fromTransactions).OrderBy(c => c).ToList();
 
         var mappings = await db.AccountMappings
             .Include(m => m.Account)
@@ -20,12 +29,12 @@ public class AccountMappingService(AppDbContext db, TenantContext tenantContext)
 
         var mappingDict = mappings.ToDictionary(m => m.CategoryName);
 
-        return categories.Select(c =>
+        return allCategories.Select(name =>
         {
-            mappingDict.TryGetValue(c.Name, out var mapping);
+            mappingDict.TryGetValue(name, out var mapping);
             return new AccountMappingResponse(
                 mapping?.Id ?? Guid.Empty,
-                c.Name,
+                name,
                 mapping?.AccountId ?? Guid.Empty,
                 mapping?.Account?.Code ?? "",
                 mapping?.Account?.Name ?? "");

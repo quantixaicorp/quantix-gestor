@@ -12,15 +12,29 @@ public class CategoriaLancamentoService(AppDbContext db, TenantContext tenantCon
 {
     public async Task<List<CategoriaLancamentoResponse>> ListAsync(string? tipo, CancellationToken ct)
     {
-        var query = db.TransactionCategories.AsQueryable();
-
+        TipoLancamento? tipoFilter = null;
         if (!string.IsNullOrEmpty(tipo) && Enum.TryParse<TipoLancamento>(tipo, out var t))
-            query = query.Where(c => c.Type == t);
+            tipoFilter = t;
 
-        return await query
-            .OrderBy(c => c.Name)
+        var regQuery = db.TransactionCategories.AsQueryable();
+        if (tipoFilter.HasValue) regQuery = regQuery.Where(c => c.Type == tipoFilter.Value);
+        var registered = await regQuery.OrderBy(c => c.Name)
             .Select(c => new CategoriaLancamentoResponse(c.Id, c.Name, c.Type.ToString()))
             .ToListAsync(ct);
+
+        // Also include ad-hoc categories used directly on transactions (e.g. "Importado" from bank import)
+        var registeredNames = registered.Select(c => c.Name).ToHashSet();
+
+        var txQuery = db.Transactions.Where(t => !string.IsNullOrEmpty(t.Category));
+        if (tipoFilter.HasValue) txQuery = txQuery.Where(t => t.Type == tipoFilter.Value);
+        var txCategoryNames = await txQuery.Select(t => t.Category!).Distinct().ToListAsync(ct);
+
+        var adHoc = txCategoryNames
+            .Where(n => !registeredNames.Contains(n))
+            .Select(n => new CategoriaLancamentoResponse(Guid.Empty, n, tipoFilter?.ToString() ?? "Receita"))
+            .ToList();
+
+        return registered.Concat(adHoc).OrderBy(c => c.Name).ToList();
     }
 
     public async Task<CategoriaLancamentoResponse> CreateAsync(

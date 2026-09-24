@@ -127,21 +127,28 @@ export default function Categorias() {
           {/* Mobile: card list */}
           <div className="md:hidden space-y-2">
             {categorias.map(cat => (
-              <div key={cat.id} className="rounded-lg border bg-card p-4 flex items-center justify-between gap-3">
+              <div key={cat.id || cat.name} className="rounded-lg border bg-card p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{cat.name}</p>
-                  <p className="text-sm text-muted-foreground">{cat.type}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {cat.type}
+                    {cat.id === '00000000-0000-0000-0000-000000000000' && (
+                      <span className="ml-2 text-xs text-muted-foreground/70">(importado)</span>
+                    )}
+                  </p>
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
-                    <Pencil size={14} />
-                  </Button>
-                  <Button size="sm" variant="ghost" disabled={excluindo === cat.id}
-                    onClick={() => void handleExcluir(cat)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                    {excluindo === cat.id ? '...' : <Trash2 size={14} />}
-                  </Button>
-                </div>
+                {cat.id !== '00000000-0000-0000-0000-000000000000' && (
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
+                      <Pencil size={14} />
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={excluindo === cat.id}
+                      onClick={() => void handleExcluir(cat)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                      {excluindo === cat.id ? '...' : <Trash2 size={14} />}
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -157,24 +164,32 @@ export default function Categorias() {
                 </tr>
               </thead>
               <tbody>
-                {categorias.map(cat => (
-                  <tr key={cat.id} className="border-b">
-                    <td className="px-4 py-3 font-medium">{cat.name}</td>
+                {categorias.map(cat => {
+                  const isAdHoc = cat.id === '00000000-0000-0000-0000-000000000000'
+                  return (
+                  <tr key={cat.id || cat.name} className="border-b">
+                    <td className="px-4 py-3 font-medium">
+                      {cat.name}
+                      {isAdHoc && <span className="ml-2 text-xs text-muted-foreground/70">(importado)</span>}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{cat.type}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 justify-end">
-                        <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
-                          <Pencil size={14} />
-                        </Button>
-                        <Button size="sm" variant="ghost" disabled={excluindo === cat.id}
-                          onClick={() => void handleExcluir(cat)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                          {excluindo === cat.id ? '...' : <Trash2 size={14} />}
-                        </Button>
-                      </div>
+                      {!isAdHoc && (
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => abrirEditar(cat)}>
+                            <Pencil size={14} />
+                          </Button>
+                          <Button size="sm" variant="ghost" disabled={excluindo === cat.id}
+                            onClick={() => void handleExcluir(cat)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            {excluindo === cat.id ? '...' : <Trash2 size={14} />}
+                          </Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

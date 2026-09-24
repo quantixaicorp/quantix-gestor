@@ -33,7 +33,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
     public async Task<LancamentoResponse> GetAsync(Guid id, CancellationToken ct)
     {
         var hoje = DateTime.UtcNow.Date;
-        var l = await db.Transactions.FindAsync([id], ct)
+        var l = await db.Transactions.FirstOrDefaultAsync(t => t.Id == id, ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
         return ToResponse(l, hoje);
     }
@@ -160,11 +160,14 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var lancamento = await db.Transactions.FindAsync([id], ct)
+        var lancamento = await db.Transactions.FirstOrDefaultAsync(t => t.Id == id, ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
         if (lancamento.SaleId.HasValue)
             throw new AppException("Lançamentos gerados por vendas não podem ser excluídos diretamente.", 400);
+
+        if (lancamento.Source == TransactionSource.BankImport)
+            throw new AppException("Lançamentos importados de extrato bancário não podem ser excluídos diretamente. Use a tela de Conciliação Bancária.", 400);
 
         db.Transactions.Remove(lancamento);
         await db.SaveChangesAsync(ct);
@@ -226,7 +229,7 @@ public class LancamentoService(AppDbContext db, TenantContext tenantContext, Par
 
     public async Task<LancamentoResponse> UpdateAsync(Guid id, UpdateLancamentoRequest req, CancellationToken ct)
     {
-        var l = await db.Transactions.FindAsync([id], ct)
+        var l = await db.Transactions.FirstOrDefaultAsync(t => t.Id == id, ct)
             ?? throw new AppException("Lançamento não encontrado.", 404);
 
         if (l.Status != StatusLancamento.Pendente)

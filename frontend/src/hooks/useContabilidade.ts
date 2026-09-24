@@ -53,7 +53,14 @@ export function useContabilidade() {
     })
     if (!res.ok) {
       const text = await res.text().catch(() => '')
-      throw new Error(text || `Erro ${res.status}`)
+      let msg = text
+      try {
+        const body = JSON.parse(text)
+        if (body.error) msg = body.error
+        else if (body.title) msg = body.title
+        else if (body.errors) msg = (Object.values(body.errors) as string[][]).flat().join('; ') || body.title || 'Erro de validação'
+      } catch { /* plain text */ }
+      throw new Error(msg || `Erro ${res.status}`)
     }
     const blob = await res.blob()
     const disposition = res.headers.get('Content-Disposition') ?? ''

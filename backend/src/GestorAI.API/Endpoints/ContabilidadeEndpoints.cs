@@ -36,7 +36,7 @@ public static class ContabilidadeEndpoints
             ChartOfAccountService svc, CancellationToken ct) =>
         {
             await svc.LoadTemplateAsync(ct);
-            return Results.Ok();
+            return Results.NoContent();
         }).RequireAuthorization("AdminOnly");
 
         // Account Mappings
@@ -48,7 +48,7 @@ public static class ContabilidadeEndpoints
             BulkUpsertAccountMappingsRequest req, AccountMappingService svc, CancellationToken ct) =>
         {
             await svc.BulkUpsertAsync(req, ct);
-            return Results.Ok();
+            return Results.NoContent();
         });
 
         // Accounting Settings

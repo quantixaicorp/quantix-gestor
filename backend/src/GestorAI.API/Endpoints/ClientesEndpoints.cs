@@ -24,7 +24,8 @@ public static class ClientesEndpoints
 
         group.MapPut("/{id:guid}", async (
             Guid id, UpdateClienteRequest req, ClienteService svc, CancellationToken ct) =>
-            Results.Ok(await svc.UpdateAsync(id, req, ct)));
+            Results.Ok(await svc.UpdateAsync(id, req, ct)))
+            .AddEndpointFilter<ValidationFilter<UpdateClienteRequest>>();
 
         group.MapDelete("/{id:guid}", async (Guid id, ClienteService svc, CancellationToken ct) =>
         {

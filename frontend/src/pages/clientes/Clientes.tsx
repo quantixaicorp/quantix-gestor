@@ -9,6 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import ClienteForm from '@/components/clientes/ClienteForm'
 import type { CreateClienteRequest, UpdateClienteRequest, ClienteResponse } from '@/types/clientes'
 import { KpiRow } from '@/components/ui/KpiRow'
+import { labelDocumento, maskDocumento } from '@/lib/documento'
+
+function documentoDe(c: ClienteResponse) {
+  if (!c.personType || !c.cnpjCpf) return null
+  return `${labelDocumento(c.personType)} ${maskDocumento(c.personType, c.cnpjCpf)}`
+}
 
 export default function Clientes() {
   const { clientes, loading, list, create, update, remove } = useClientes()
@@ -52,7 +58,8 @@ export default function Clientes() {
 
   const filtrados = clientes.filter(c =>
     c.name.toLowerCase().includes(busca.toLowerCase()) ||
-    c.whatsApp.includes(busca))
+    c.whatsApp.includes(busca) ||
+    (c.cnpjCpf?.includes(busca.replace(/[^A-Za-z0-9]/g, '').toUpperCase()) ?? false))
 
   return (
     <div className="space-y-4">
@@ -77,7 +84,7 @@ export default function Clientes() {
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Buscar por nome ou WhatsApp..."
+          placeholder="Buscar por nome, WhatsApp ou CPF/CNPJ..."
           value={busca}
           onChange={e => setBusca(e.target.value)}
         />
@@ -96,6 +103,7 @@ export default function Clientes() {
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="font-medium truncate">{c.name}</p>
                   <p className="text-sm text-muted-foreground">{c.whatsApp}</p>
+                  {documentoDe(c) && <p className="text-sm text-muted-foreground">{documentoDe(c)}</p>}
                   {c.email && <p className="text-sm text-muted-foreground truncate">{c.email}</p>}
                   <p className="text-xs text-muted-foreground">
                     Cadastrado em {new Date(c.createdAt).toLocaleDateString('pt-BR')}
@@ -121,6 +129,7 @@ export default function Clientes() {
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-3 text-left font-medium">Nome</th>
                   <th className="px-4 py-3 text-left font-medium">WhatsApp</th>
+                  <th className="px-4 py-3 text-left font-medium">CPF/CNPJ</th>
                   <th className="px-4 py-3 text-left font-medium">E-mail</th>
                   <th className="px-4 py-3 text-left font-medium">Cadastrado em</th>
                   <th className="px-4 py-3" />
@@ -131,6 +140,7 @@ export default function Clientes() {
                   <tr key={c.id} className="border-b hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{c.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.whatsApp}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{documentoDe(c) ?? '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.email ?? '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {new Date(c.createdAt).toLocaleDateString('pt-BR')}
@@ -172,6 +182,10 @@ export default function Clientes() {
                 whatsApp: editando.whatsApp,
                 email: editando.email ?? '',
                 notes: editando.notes ?? '',
+                personType: editando.personType ?? 'PF',
+                cnpjCpf: editando.personType && editando.cnpjCpf
+                  ? maskDocumento(editando.personType, editando.cnpjCpf)
+                  : '',
               }}
               onSubmit={handleEdit}
               onCancel={() => setEditando(null)}

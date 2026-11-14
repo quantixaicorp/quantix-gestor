@@ -922,6 +922,10 @@ namespace GestorAI.API.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CnpjCpf")
+                        .HasColumnType("text")
+                        .HasColumnName("cnpj_cpf");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
@@ -942,6 +946,10 @@ namespace GestorAI.API.Infrastructure.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("text")
                         .HasColumnName("notes");
+
+                    b.Property<string>("PersonType")
+                        .HasColumnType("text")
+                        .HasColumnName("person_type");
 
                     b.Property<string>("WhatsApp")
                         .IsRequired()

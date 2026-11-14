@@ -13,7 +13,10 @@ public class ClienteService(AppDbContext db, TenantContext tenantContext)
     {
         var query = db.Customers.AsQueryable();
         if (!string.IsNullOrWhiteSpace(busca))
-            query = query.Where(c => c.Name.Contains(busca) || c.WhatsApp.Contains(busca));
+            query = query.Where(c =>
+                c.Name.Contains(busca) ||
+                c.WhatsApp.Contains(busca) ||
+                (c.CnpjCpf != null && c.CnpjCpf.Contains(busca)));
 
         return await query
             .OrderBy(c => c.Name)
@@ -30,12 +33,15 @@ public class ClienteService(AppDbContext db, TenantContext tenantContext)
 
     public async Task<ClienteResponse> CreateAsync(CreateClienteRequest req, CancellationToken ct)
     {
+        var (personType, cnpjCpf) = ClienteDocumento.Normalize(req.PersonType, req.CnpjCpf);
         var cliente = new Customer
         {
             CompanyId = tenantContext.CompanyId,
             Name = req.Name,
             WhatsApp = req.WhatsApp,
             Email = req.Email,
+            PersonType = personType,
+            CnpjCpf = cnpjCpf,
             Notes = req.Notes,
         };
         db.Customers.Add(cliente);
@@ -48,9 +54,12 @@ public class ClienteService(AppDbContext db, TenantContext tenantContext)
         var cliente = await db.Customers.FindAsync([id], ct)
             ?? throw new AppException("Customer não encontrado", 404);
 
+        var (personType, cnpjCpf) = ClienteDocumento.Normalize(req.PersonType, req.CnpjCpf);
         cliente.Name = req.Name;
         cliente.WhatsApp = req.WhatsApp;
         cliente.Email = req.Email;
+        cliente.PersonType = personType;
+        cliente.CnpjCpf = cnpjCpf;
         cliente.Notes = req.Notes;
 
         await db.SaveChangesAsync(ct);
@@ -78,5 +87,5 @@ public class ClienteService(AppDbContext db, TenantContext tenantContext)
     }
 
     private static ClienteResponse ToResponse(Customer c) =>
-        new(c.Id, c.Name, c.WhatsApp, c.Email, c.Notes, c.CreatedAt);
+        new(c.Id, c.Name, c.WhatsApp, c.Email, c.Notes, c.CreatedAt, c.PersonType, c.CnpjCpf);
 }

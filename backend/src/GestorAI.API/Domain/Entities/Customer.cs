@@ -7,6 +7,8 @@ public class Customer : ITenantEntity
     public required string Name { get; set; }
     public required string WhatsApp { get; set; }
     public string? Email { get; set; }
+    public string? PersonType { get; set; }
+    public string? CnpjCpf { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public ICollection<Sale> Sales { get; set; } = [];

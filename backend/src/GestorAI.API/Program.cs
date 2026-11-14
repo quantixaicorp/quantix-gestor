@@ -149,6 +149,7 @@ builder.Services.AddScoped<IValidator<CriarAgendamentoRequest>, CriarAgendamento
 builder.Services.AddScoped<IValidator<CreateProdutoRequest>, CreateProdutoValidator>();
 builder.Services.AddScoped<IValidator<EntradaEstoqueRequest>, EntradaEstoqueValidator>();
 builder.Services.AddScoped<IValidator<CreateClienteRequest>, CreateClienteValidator>();
+builder.Services.AddScoped<IValidator<UpdateClienteRequest>, UpdateClienteValidator>();
 builder.Services.AddScoped<IValidator<CreateFornecedorRequest>, CreateFornecedorValidator>();
 builder.Services.AddScoped<IValidator<CreateVendaRequest>, CreateVendaValidator>();
 builder.Services.AddScoped<IValidator<CreateCompraRequest>, CreateCompraValidator>();

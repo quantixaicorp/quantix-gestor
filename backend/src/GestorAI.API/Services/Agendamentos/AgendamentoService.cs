@@ -2,13 +2,14 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.Agendamentos;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Clientes;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.Agendamentos;
 
-public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
+public class AgendamentoService(AppDbContext db, TenantContext tenantContext, ClienteLookup clienteLookup)
 {
     public async Task<List<AgendamentoListItem>> ListAsync(DateOnly data, CancellationToken ct)
     {
@@ -111,13 +112,19 @@ public class AgendamentoService(AppDbContext db, TenantContext tenantContext)
         if (conflito)
             throw new AppException("Conflito de horário com outro agendamento.", 400);
 
+        // Cliente informado como texto livre entra na base, para o agendamento não
+        // ficar órfão e a venda gerada na conclusão sair com cliente vinculado.
+        var customerId = req.CustomerId
+            ?? (await clienteLookup.GetOrCreateAsync(
+                tenantContext.CompanyId, req.CustomerName, req.CustomerPhone, ct)).Id;
+
         var agendamento = new Appointment
         {
             CompanyId = tenantContext.CompanyId,
             ProfessionalId = req.ProfessionalId,
             CustomerName = req.CustomerName,
             CustomerPhone = req.CustomerPhone,
-            CustomerId = req.CustomerId,
+            CustomerId = customerId,
             ServiceId = req.ServiceId,
             StartAt = req.StartAt,
             EndAt = dataHoraFim,

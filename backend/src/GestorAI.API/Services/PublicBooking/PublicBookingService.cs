@@ -3,12 +3,13 @@ using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.PublicBooking;
 using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Services.Asaas;
+using GestorAI.API.Services.Clientes;
 using GestorAI.API.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorAI.API.Services.PublicBooking;
 
-public class PublicBookingService(AppDbContext db, AsaasService asaasService)
+public class PublicBookingService(AppDbContext db, AsaasService asaasService, ClienteLookup clienteLookup)
 {
     public async Task<Guid> ResolveEmpresaAsync(string slug, CancellationToken ct)
     {
@@ -161,12 +162,17 @@ public class PublicBookingService(AppDbContext db, AsaasService asaasService)
             ? AgendamentoStatus.Agendado
             : AgendamentoStatus.AguardandoConfirmacao;
 
+        // Mesmo tratamento da tela interna: quem agenda pelo link público entra na base.
+        var cliente = await clienteLookup.GetOrCreateAsync(
+            empresaId, req.CustomerName, req.CustomerPhone, ct);
+
         var agendamento = new Appointment
         {
             CompanyId = empresaId,
             ProfessionalId = req.ProfessionalId,
             CustomerName = req.CustomerName,
             CustomerPhone = req.CustomerPhone,
+            CustomerId = cliente.Id,
             ServiceId = req.ServiceId,
             StartAt = req.StartAt,
             EndAt = dataHoraFim,

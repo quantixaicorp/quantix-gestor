@@ -2,6 +2,7 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.DTOs.PublicBooking;
 using GestorAI.API.Infrastructure.Data;
+using GestorAI.API.Services.Clientes;
 using GestorAI.API.Services.PublicBooking;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
@@ -20,7 +21,7 @@ public class PublicBookingServiceTests
             new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options,
             tenantContext);
-        return (db, new PublicBookingService(db, null!));
+        return (db, new PublicBookingService(db, null!, new ClienteLookup(db)));
     }
 
     [Fact]

@@ -76,14 +76,34 @@ public class ClienteService(AppDbContext db, TenantContext tenantContext)
             await db.Contracts.AnyAsync(c => c.CustomerId == id, ct) ||
             await db.Charges.AnyAsync(c => c.CustomerId == id, ct) ||
             await db.Quotes.AnyAsync(o => o.CustomerId == id, ct) ||
-            await db.Sales.AnyAsync(v => v.CustomerId == id, ct);
+            await db.Sales.AnyAsync(v => v.CustomerId == id, ct) ||
+            await db.CustomerSubscriptions.AnyAsync(a => a.CustomerId == id, ct);
 
         if (temVinculos)
             throw new AppException(
-                "Este cliente possui dados vinculados (contratos, cobranças, orçamentos ou vendas) e não pode ser excluído.", 400);
+                "Este cliente possui dados vinculados (contratos, cobranças, orçamentos, vendas ou assinaturas) e não pode ser excluído.", 400);
+
+        // Agendamento guarda nome e telefone na própria linha e o vínculo é opcional,
+        // então desvinculamos em vez de bloquear — é o ClientSetNull que o modelo já
+        // declara, que o EF só aplica a entidades carregadas.
+        var agendamentos = await db.Appointments
+            .Where(a => a.CustomerId == id)
+            .ToListAsync(ct);
+        foreach (var agendamento in agendamentos)
+            agendamento.CustomerId = null;
 
         db.Customers.Remove(cliente);
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Rede de segurança: qualquer vínculo não previsto acima viraria 500.
+            throw new AppException(
+                "Este cliente possui dados vinculados e não pode ser excluído.", 400);
+        }
     }
 
     private static ClienteResponse ToResponse(Customer c) =>

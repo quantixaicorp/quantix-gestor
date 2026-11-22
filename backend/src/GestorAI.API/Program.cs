@@ -94,6 +94,7 @@ builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<ProdutoService>();
 // Services — Clientes
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<ClienteLookup>();
 // Services — Fornecedores
 builder.Services.AddScoped<FornecedorService>();
 // Services — Compras

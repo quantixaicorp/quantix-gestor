@@ -2,6 +2,7 @@ using GestorAI.API.Domain.Entities;
 using GestorAI.API.Domain.Enums;
 using GestorAI.API.Infrastructure.Data;
 using GestorAI.API.Services.Agendamentos;
+using GestorAI.API.Services.Clientes;
 using GestorAI.API.Shared.Exceptions;
 using GestorAI.API.Shared.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
@@ -57,7 +58,7 @@ public class AgendamentoCancelamentoTests
         var db = CreateDb(horasLimite: 24);
         var inicio = DateTime.UtcNow.AddHours(2);
         var ag = await CriarAgendamentoAsync(db, inicio);
-        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId });
+        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId }, new ClienteLookup(db));
         await Assert.ThrowsAsync<AppException>(() => svc.CancelarPublicoAsync(ag.Id, default));
     }
 
@@ -67,7 +68,7 @@ public class AgendamentoCancelamentoTests
         var db = CreateDb(horasLimite: 24);
         var inicio = DateTime.UtcNow.AddHours(48);
         var ag = await CriarAgendamentoAsync(db, inicio);
-        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId });
+        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId }, new ClienteLookup(db));
         var result = await svc.CancelarPublicoAsync(ag.Id, default);
         Assert.Equal(AgendamentoStatus.Cancelado, result.Status);
     }
@@ -78,7 +79,7 @@ public class AgendamentoCancelamentoTests
         var db = CreateDb(horasLimite: null);
         var inicio = DateTime.UtcNow.AddHours(1);
         var ag = await CriarAgendamentoAsync(db, inicio);
-        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId });
+        var svc = new AgendamentoService(db, new TenantContext { CompanyId = _empresaId }, new ClienteLookup(db));
         var result = await svc.CancelarPublicoAsync(ag.Id, default);
         Assert.Equal(AgendamentoStatus.Cancelado, result.Status);
     }
